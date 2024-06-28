@@ -37,5 +37,5 @@ interface activity {
     rules: Rule[];
     deleted?: boolean;
     replaced?: boolean;
-    replaceActivity?: String;
+    replaceActivity?: string;
 }

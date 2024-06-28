@@ -9,6 +9,8 @@
     let searchQuery = "";
     let xmlBpmn: string = "";
     let taskNames: Writable<activity[]> = writable([]);
+    let showModal = false;
+    let idactividad_eliminar: number;
 
     // cuando montamos la pagina recolectamos los datos y los guardamos en el store
     onMount(async () => {
@@ -100,7 +102,9 @@
                               })
                               .join("")
                         : "";
-                return `<ContentRule xsi:type="ContentRule" id="${regla.id}" name="${regla.name}">
+                        const deletedAttribute = regla.deleted !== undefined ? ` deleted="${regla.deleted}"` : "";
+                        const replaceActivityAttribute = regla.replaceActivity !== undefined ? ` replace="${regla.replaceActivity}"` : "";
+                return `<ContentRule xsi:type="ContentRule" id="${regla.id}" name="${regla.name}"${deletedAttribute}${replaceActivityAttribute}>
             ${detallesRegla}
         </ContentRule>`;
             })
@@ -166,6 +170,22 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }
+
+    function clearRulesById(taskId: number): void {
+        var tasks = JSON.parse(localStorage.getItem("taskNames")!);
+        tasks.forEach((task: any) => {
+            if(task.id === taskId) {
+                task.rules = [];
+                task.replaceActivity = undefined;
+                task.deleted = undefined;
+                task.replaced= undefined;
+            }
+        });
+        localStorage.setItem("taskNames", JSON.stringify(tasks));
+        taskNames.set(tasks);
+    }
+
+
 </script>
 
 <div class="flex flex-col h-full w-full">
@@ -254,11 +274,15 @@
                                         ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                         : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                     on:click={() => {
+                                        localStorage.setItem(
+                                            "activitySelect",
+                                            JSON.stringify(activity),
+                                        );
                                         goto("/createrules");
                                     }}
                                 >
                                     <div class="flex mx-10 text-sm">
-                                        <h1 class="mx-auto">Edit rule</h1>
+                                        <h1 class="mx-auto">Edit</h1>
                                     </div>
                                 </button>
                                 <!-- Tambien el boton de eliminar -->
@@ -268,11 +292,12 @@
                                         ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                         : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                     on:click={() => {
-                                        goto("/createrules");
+                                        idactividad_eliminar = activity.id;
+                                        showModal = true;
                                     }}
                                 >
                                     <div class="flex mx-10 text-sm">
-                                        <h1 class="mx-auto">Delete rule</h1>
+                                        <h1 class="mx-auto">Delete</h1>
                                     </div>
                                 </button>
                             {:else}
@@ -336,3 +361,31 @@
         </div>
     </div>
 </div>
+
+<!-- Modal -->
+{#if showModal}
+    <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div class="relative border rounded-lg shadow-lg p-8 w-1/2 {$themeStore ===
+        'Light'
+            ? 'bg-[#ffffff] border-[#f0eaf9] shadow-[0_0_30px_#f0eaf9]'
+            : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c]'}">
+            <h1 class="text-lg font-bold mb-4 {$themeStore ===
+                    'Light'
+                        ? 'text-[#14111b]'
+                        : 'text-[#b498df]'}">Are you sure you want to delete everything from this activity?</h1>
+            <div class="flex justify-end">
+                <button class="border rounded-md px-4 py-2 mr-2 {$themeStore ===
+                    'Light'
+                        ? 'bg-[#efe9f8] border-[#5e3fa1] text-[#5e3fa1] hover:shadow-[0_0_2px_#7443bf]'
+                        : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300" on:click={() => showModal = false}>Cancel</button>
+                <button class="border rounded-md px-4 py-2 bg-red-500 text-white {$themeStore ===
+                    'Light'
+                        ? 'bg-[#efe9f8] border-[#5e3fa1] text-[#5e3fa1] hover:shadow-[0_0_2px_#7443bf]'
+                        : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300"  on:click={() => {
+                    clearRulesById(idactividad_eliminar);
+                    showModal = false;
+                }}>Delete</button>
+            </div>
+        </div>
+    </div>
+{/if}

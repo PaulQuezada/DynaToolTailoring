@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { goto } from "$app/navigation";
     import { XMLParser } from "fast-xml-parser";
     import { writable, get, type Writable } from "svelte/store";
     import "../types";
@@ -195,6 +196,15 @@
         var activitySelect = localStorage.getItem("activitySelect")!;
         if (activitySelect != null) {
             activity = JSON.parse(activitySelect);
+            if(activity.rules != null){
+                rules.set(activity.rules);
+                selectedAction1 = activity.deleted ? "Delete Action" : "Replace Action";
+                if(selectedAction1 === "Delete Action"){
+                    selectedAction2 = activity.deleted ? "Delete this activity" : "Not delete this activity";
+                }else if(selectedAction1 === "Replace Action" && activity.replaceActivity != null){
+                    selectedAction2 = activity.replaceActivity;
+                }
+            }
         }
         const handleScroll = () => {
             const scrollPosition = divElement.scrollTop; // Cambiamos a usar scrollTop del div
@@ -352,10 +362,38 @@
         jsonTask.forEach((task: activity) => {
             if (task.id === activity.id) {
                 task.rules = get(rules);
+                if(selectedAction1==="Delete Action" && selectedAction2==="Not delete this activity"){
+                    task.deleted = false;
+                    task.replaceActivity = undefined;
+                    task.replaced = undefined;
+                }else if(selectedAction1==="Delete Action" && selectedAction2==="Delete this activity"){
+                    task.deleted = true;
+                    task.replaceActivity = undefined;
+                    task.replaced = undefined;
+                }else if(selectedAction1==="Replace Action"){
+                    task.replaced = true;
+                    task.replaceActivity = selectedAction2;
+                    task.deleted = undefined;
+                }
             }
         });
         // Guardamos el objeto con las reglas en el localStorage
         localStorage.setItem("taskNames", JSON.stringify(jsonTask));
+    }
+    function clearAllRules(): void {
+        var tasks = JSON.parse(localStorage.getItem("taskNames")!);
+        var activitySelect = JSON.parse(localStorage.getItem("activitySelect")!);
+        tasks.forEach((task: any) => {
+            if(task.id === activitySelect.id){ {
+                task.rules = [];
+                task.replaceActivity = undefined;
+                task.deleted = undefined;
+                task.replaced= undefined;
+            }
+        }
+        });
+        localStorage.setItem("taskNames", JSON.stringify(tasks));
+        taskNames.set(tasks);
     }
 </script>
 
@@ -927,7 +965,7 @@
                         class="flex text-center items-center justify-center my-auto"
                     >
                         <span class="material-symbols-outlined">check_box</span>
-                        <h1 class="ml-5">Create rule</h1>
+                        <h1 class="ml-5">Save rule</h1>
                     </div>
                 </button>
                 <button
@@ -935,6 +973,9 @@
                     'Light'
                         ? 'bg-[#ce4f2c] text-[#ffffff]'
                         : 'border border-[#8e3b33] text-[#8e3b33] bg-[#42201b]'}"
+                    on:click={() => {
+                       toggleModalEliminar();
+                    }}
                 >
                     <div
                         class="flex text-center items-center justify-center my-auto"
@@ -1485,7 +1526,7 @@
                         ? 'text-[#14111b]'
                         : 'text-[#b498df]'}"
                 >
-                    Do you want to create the rule?
+                    Do you want to save the rule?
                 </h2>
                 <p
                     class="mx-auto text-center mt-5 text-sm {$themeStore ===
@@ -1506,6 +1547,7 @@
                             showModal = false;
                             showModalCrear = false;
                             addRulesLocalStorage();
+                            goto("/definingrules");
                         }}
                     >
                         <div class="flex flex-row my-auto">
@@ -1515,7 +1557,7 @@
                                 check
                             </span>
                             <h1 class="my-auto mr-2 text-sm font-bold">
-                                Yes, I want to create the rule
+                                Yes, I want to save the rule
                             </h1>
                         </div>
                     </button>
@@ -1534,11 +1576,41 @@
                                 block
                             </span>
                             <h1 class="my-auto mr-2 text-sm font-bold">
-                                No, I don't want to create it yet
+                                No, I don't want to save it yet
                             </h1>
                         </div>
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+{/if}
+
+<!-- Modal -->
+{#if showModalEliminar}
+    <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div class="relative border rounded-lg shadow-lg p-8 w-1/2 {$themeStore ===
+        'Light'
+            ? 'bg-[#ffffff] border-[#f0eaf9] shadow-[0_0_30px_#f0eaf9]'
+            : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c]'}">
+            <h1 class="text-lg font-bold mb-4 {$themeStore ===
+                    'Light'
+                        ? 'text-[#14111b]'
+                        : 'text-[#b498df]'}">Are you sure you want to delete all activities?</h1>
+            <div class="flex justify-end">
+                <button class="border rounded-md px-4 py-2 mr-2 {$themeStore ===
+                    'Light'
+                        ? 'bg-[#efe9f8] border-[#5e3fa1] text-[#5e3fa1] hover:shadow-[0_0_2px_#7443bf]'
+                        : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300" on:click={() => showModal = false}>Cancel</button>
+                <button class="border rounded-md px-4 py-2 bg-red-500 text-white {$themeStore ===
+                    'Light'
+                        ? 'bg-[#efe9f8] border-[#5e3fa1] text-[#5e3fa1] hover:shadow-[0_0_2px_#7443bf]'
+                        : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300"  on:click={() => {
+                    clearAllRules();
+                    showModal = false;
+                    showModalEliminar = false;
+                    goto("/definingrules");
+                }}>Delete</button>
             </div>
         </div>
     </div>
