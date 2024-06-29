@@ -12,14 +12,10 @@
 
     // Variables que contendran los contenidos del contexto organizacional y del BPMN
     let files: FileList | undefined;
-    let nameFileContex = writable("");
-    let xmlContext: string = "";
-    let xmlBpmn: string = "";
-
-    let attributesContext: any[] = [];
-    let taskNames = writable([]);
-
-    let verifyContext = writable(false);
+    let nameFileModel = writable("");
+    let xmlModel: string = "";
+    let verifyModel = writable(false);
+    let taskNames = writable([] as activity[]);
 
     // Función para manejar el avance a la siguiente etapa
     function handleNext() {
@@ -60,52 +56,120 @@
         // Lectura de archivos
         const input = event.target as HTMLInputElement;
         // Actualiza el nombre del archivo
-        nameFileContex.set(input.files![0].name);
+        nameFileModel.set(input.files![0].name);
         if (input.files && input.files.length > 0) {
             const file = input.files[0];
-            xmlContext = await file.text();
+            xmlModel = await file.text();
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlModel, "text/xml");
 
-            // Backend para procesar el archivo XML
-            const jsonObj = parser.parse(xmlContext);
-            console.log(jsonObj);
-            const dimensions = Array.isArray(
-                jsonObj["spcm:Context"].myDimensions,
-            )
-                ? jsonObj["spcm:Context"].myDimensions
-                : [jsonObj["spcm:Context"].myDimensions];
+            // Extraer los modelos de contexto, bpmn y reglas
+            const contextModelNode = xmlDoc.querySelector("ContextModel");
+            const bpmnModelNode = xmlDoc.querySelector("BPMNModel");
+            const rulesModelNode = xmlDoc.querySelector("RulesModel");
 
-            let newAttributesContext: any[] = []; // Usar una variable temporal para almacenar los nuevos datos
+            let contextModel = contextModelNode
+                ? contextModelNode.innerHTML.trim()
+                : "";
+            let bpmnModel = bpmnModelNode ? bpmnModelNode.innerHTML.trim() : "";
+            let rulesModel = rulesModelNode
+                ? rulesModelNode.innerHTML.trim()
+                : "";
 
-            dimensions.forEach((dim: any) => {
-                const contextAttributes = Array.isArray(dim.myContextAttributes)
-                    ? dim.myContextAttributes
-                    : [dim.myContextAttributes];
+            // Le agregamos el encabezado a los modelos
+            contextModel = contextModel
+                ? `<?xml version="1.0" encoding="UTF-8"?>\n${contextModel}`
+                : "";
+            bpmnModel = bpmnModel
+                ? `<?xml version="1.0" encoding="UTF-8"?>\n${bpmnModel}`
+                : "";
+            rulesModel = rulesModel
+                ? `<?xml version="1.0" encoding="UTF-8"?>\n<RulesModel>${rulesModel}</RulesModel>`
+                : "";
 
-                contextAttributes.forEach((attr: any) => {
-                    const values = Array.isArray(attr.posibleValues)
-                        ? attr.posibleValues
-                        : attr.posibleValues
-                          ? [attr.posibleValues]
-                          : [];
-                    const attributeData = {
-                        Attribute: attr.name,
-                        values: values.map((val: any) =>
-                            val.name ? val.name : "Unknown",
-                        ),
-                    };
-                    newAttributesContext.push(attributeData); // Agregar a la variable temporal
-                });
-            });
-
-            attributesContext = newAttributesContext; // Reasignar a la variable original
-            // RETURN del backend (EMULADO)
-            console.log(JSON.stringify(attributesContext, null, 2));
+            // Verificar si el archivo tiene datos y si los tiene lo agregamos al localStorage
+            if (contextModel && bpmnModel && rulesModel) {
+                localStorage.setItem("xmlContext", contextModel);
+                localStorage.setItem("xmlBpmn", bpmnModel);
+                convertRulesModel(rulesModel);
+                verifyModel.set(true);
+            } else {
+                verifyModel.set(false);
+            }
         }
-        // Verificar si el attributeContext tiene datos entonces es correcto
-        verifyContext.set(input.files!.length > 0);
+    }
+    // Función para convertir el XML de RulesModel a la variable taskNames
+    export function convertRulesModel(xml: string): void {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xml, "text/xml");
+        const contentRules = xmlDoc.querySelectorAll("ContentRule");
+        let activities: activity[] = [];
+
+        contentRules.forEach((contentRule, index) => {
+            const activity: activity = {
+                id: index,
+                name: contentRule.getAttribute("name") || "",
+                rules: parseRules(contentRule),
+                replaced: contentRule.getAttribute("replace") ? true : false,
+                replaceActivity: contentRule.getAttribute("replace") || "",
+            };
+            activities.push(activity);
+        });
+        taskNames.set(activities);
+        console.log(activities);
+        localStorage.setItem("taskNames", JSON.stringify(activities));
     }
 
+    function parseRules(contentRule: Element): Rule[] {
+        const rules: Rule[] = [];
+        const ruleElements = contentRule.querySelectorAll("Rule, ComplexRule");
+        ruleElements.forEach((ruleElement, index) => {
+            const type = ruleElement.getAttribute("xsi:type");
+            const typeRule = ruleElement.getAttribute("type");
+            let rule: Rule | undefined = undefined;
 
+            if (type === "Rule") {
+                if (typeRule === "Simple") {
+                    rule = {
+                        id: ruleElement.getAttribute("id") || "",
+                        type: "Simple",
+                        numberRule: index + 1,
+                        attribute: ruleElement.getAttribute("attribute") || "",
+                        value: ruleElement.getAttribute("value") || "",
+                        attributes: [
+                            "Project type",
+                            "Technology knowledge",
+                            "Domain knowledge",
+                            "Team size",
+                            "Usability",
+                        ],
+                        values: ["New", "Old", "High", "Average", "Low"],
+                    } as SimpleRule;
+                } else if (typeRule === "Conector") {
+                    rule = {
+                        id: ruleElement.getAttribute("id") || "",
+                        type: "Conector",
+                        logical_operator:
+                            ruleElement.getAttribute("logical_operator") ||
+                            "And",
+                        logicals: ["And", "Or"],
+                    } as ConnectorRule;
+                }
+            } else if (type === "ComplexRule") {
+                rule = {
+                    id: ruleElement.getAttribute("id") || "",
+                    type: "Complex",
+                    numberRule: index + 1,
+                    rules: parseRules(ruleElement),
+                } as ComplexRule;
+            } else {
+                console.error("Rule type not found");
+            }
+            rules.push(rule as Rule);
+        });
+
+        return rules;
+    }
 </script>
 
 <div class="flex flex-col h-full w-full">
@@ -229,7 +293,7 @@
                         <h1 class="my-auto text-sm mx-2">Back</h1>
                     </div>
                 </button>
-                {#if $nameFileContex != ""}
+                {#if $nameFileModel != ""}
                     <button
                         class="font-bold border rounded-md p-2 hover:shadow-2xl transition duration-300 {$themeStore ===
                         'Light'
@@ -281,7 +345,7 @@
                         ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                         : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                 >
-                    {#if $verifyContext}
+                    {#if $verifyModel}
                         <div class="flex flex-row">
                             <span
                                 class="mx-2 my-auto text-3xl material-symbols-outlined"
@@ -322,7 +386,7 @@
                                 ? 'text-[#7f5fc0]'
                                 : 'text-[#6746b4]'}"
                         >
-                            Filename: {$nameFileContex}
+                            Filename: {$nameFileModel}
                         </h1>
                     </div>
                 </div>
@@ -349,10 +413,7 @@
                         ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                         : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                     on:click={() => {
-                        (async () => {
-                            await localStorage.setItem("xmlContext", xmlContext);
-                            await localStorage.setItem("xmlBpmn", xmlBpmn);
-                        })();
+                        (async () => {})();
                         goto("/definingrules");
                     }}
                 >

@@ -92,7 +92,7 @@
                                       subRegla.rules.length > 0
                                   ) {
                                       // Si tiene subreglas, es una ComplexRule y se manejan sus subreglas recursivamente
-                                      return `<ComplexRule xsi:type="ComplexRule" id="${subRegla.id}" name="${subRegla.name}">
+                                      return `<ComplexRule xsi:type="ComplexRule" id="${subRegla.id}">
                     ${renderizarSubReglas(subRegla.rules)}
                 </ComplexRule>`;
                                   } else {
@@ -117,12 +117,12 @@
                 .map((subRegla) => {
                     if (subRegla.rules && subRegla.rules.length > 0) {
                         // ComplexRule puede tener más reglas dentro
-                        return `<ComplexRule xsi:type="ComplexRule" id="${subRegla.id}" name="${subRegla.name}">
+                        return `<ComplexRule xsi:type="ComplexRule" id="${subRegla.id}" >
                     ${renderizarSubReglas(subRegla.rules)}
                 </ComplexRule>`;
                     } else {
                         // Simple Rule sin subreglas
-                        return `<Rule xsi:type="Rule" id="${subRegla.id}" name="${subRegla.name}" type="${subRegla.type}" attribute="${subRegla.attribute}" value="${subRegla.value || ""}"></Rule>`;
+                        return `<Rule xsi:type="Rule" id="${subRegla.id}"  type="${subRegla.type}" attribute="${subRegla.attribute}" value="${subRegla.value || ""}"></Rule>`;
                     }
                 })
                 .join("");
