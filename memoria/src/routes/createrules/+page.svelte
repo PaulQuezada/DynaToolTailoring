@@ -41,13 +41,21 @@
     }
 
     let rules = writable<Rule[]>([]);
-    let nextId = 1;
 
-    function getUniqueId() {
-        return nextId++;
+    function getUniqueId(): string {
+        const characters =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        let result = "";
+        const charactersLength = characters.length;
+        for (let i = 0; i < 20; i++) {
+            result += characters.charAt(
+                Math.floor(Math.random() * charactersLength),
+            );
+        }
+        return result;
     }
 
-    function addConnectorRule(parentComplexRuleId?: number) {
+    function addConnectorRule(parentComplexRuleId?: string) {
         const newRule: ConnectorRule = {
             id: getUniqueId(),
             type: "Conector",
@@ -57,7 +65,7 @@
         updateRuleInComplex(newRule, parentComplexRuleId);
     }
 
-    function addSimpleRule(parentComplexRuleId?: number, id?: number) {
+    function addSimpleRule(parentComplexRuleId?: string, id?: string) {
         console.log(parentComplexRuleId, id);
         if (parentComplexRuleId != null) {
             if (shouldAddConnector(parentComplexRuleId)) {
@@ -80,7 +88,7 @@
         updateRuleInComplex(newRule, parentComplexRuleId);
     }
 
-    function addComplexRule(parentComplexRuleId?: number) {
+    function addComplexRule(parentComplexRuleId?: string) {
         console.log(parentComplexRuleId);
         if (parentComplexRuleId != null) {
             if (shouldAddConnector(parentComplexRuleId)) {
@@ -100,13 +108,13 @@
         updateRuleInComplex(newRule, parentComplexRuleId);
     }
 
-    function deleteRuleById(ruleId: number) {
+    function deleteRuleById(ruleId: string) {
         rules.update((currentRules) => {
             return removeRule(currentRules, ruleId);
         });
     }
 
-    function removeRule(rulesList: Rule[], ruleId: number): Rule[] {
+    function removeRule(rulesList: Rule[], ruleId: string): Rule[] {
         for (let i = 0; i < rulesList.length; i++) {
             const rule = rulesList[i];
             if (rule.id === ruleId) {
@@ -129,7 +137,7 @@
         return rulesList;
     }
 
-    function shouldAddConnector(parentComplexRuleId: number): boolean {
+    function shouldAddConnector(parentComplexRuleId: string): boolean {
         const parentRule = findRuleById(get(rules), parentComplexRuleId);
         return (
             parentRule !== null &&
@@ -149,7 +157,7 @@
 
     function updateRuleInComplex(
         newRule: Rule,
-        parentComplexRuleId: number | undefined,
+        parentComplexRuleId: string | undefined,
     ) {
         if (parentComplexRuleId != null) {
             rules.update((rs) => {
@@ -164,7 +172,7 @@
         }
     }
 
-    function findRuleById(rules: Rule[], id: number): Rule | null {
+    function findRuleById(rules: Rule[], id: string): Rule | null {
         for (let rule of rules) {
             if (rule.id === id) {
                 return rule;
@@ -196,12 +204,19 @@
         var activitySelect = localStorage.getItem("activitySelect")!;
         if (activitySelect != null) {
             activity = JSON.parse(activitySelect);
-            if(activity.rules != null){
+            if (activity.rules != null) {
                 rules.set(activity.rules);
-                selectedAction1 = activity.deleted ? "Delete Action" : "Replace Action";
-                if(selectedAction1 === "Delete Action"){
-                    selectedAction2 = activity.deleted ? "Delete this activity" : "Not delete this activity";
-                }else if(selectedAction1 === "Replace Action" && activity.replaceActivity != null){
+                selectedAction1 = activity.deleted
+                    ? "Delete Action"
+                    : "Replace Action";
+                if (selectedAction1 === "Delete Action") {
+                    selectedAction2 = activity.deleted
+                        ? "Delete this activity"
+                        : "Not delete this activity";
+                } else if (
+                    selectedAction1 === "Replace Action" &&
+                    activity.replaceActivity != null
+                ) {
                     selectedAction2 = activity.replaceActivity;
                 }
             }
@@ -362,15 +377,21 @@
         jsonTask.forEach((task: activity) => {
             if (task.id === activity.id) {
                 task.rules = get(rules);
-                if(selectedAction1==="Delete Action" && selectedAction2==="Not delete this activity"){
+                if (
+                    selectedAction1 === "Delete Action" &&
+                    selectedAction2 === "Not delete this activity"
+                ) {
                     task.deleted = false;
                     task.replaceActivity = undefined;
                     task.replaced = undefined;
-                }else if(selectedAction1==="Delete Action" && selectedAction2==="Delete this activity"){
+                } else if (
+                    selectedAction1 === "Delete Action" &&
+                    selectedAction2 === "Delete this activity"
+                ) {
                     task.deleted = true;
                     task.replaceActivity = undefined;
                     task.replaced = undefined;
-                }else if(selectedAction1==="Replace Action"){
+                } else if (selectedAction1 === "Replace Action") {
                     task.replaced = true;
                     task.replaceActivity = selectedAction2;
                     task.deleted = undefined;
@@ -382,15 +403,18 @@
     }
     function clearAllRules(): void {
         var tasks = JSON.parse(localStorage.getItem("taskNames")!);
-        var activitySelect = JSON.parse(localStorage.getItem("activitySelect")!);
+        var activitySelect = JSON.parse(
+            localStorage.getItem("activitySelect")!,
+        );
         tasks.forEach((task: any) => {
-            if(task.id === activitySelect.id){ {
-                task.rules = [];
-                task.replaceActivity = undefined;
-                task.deleted = undefined;
-                task.replaced= undefined;
+            if (task.id === activitySelect.id) {
+                {
+                    task.rules = [];
+                    task.replaceActivity = undefined;
+                    task.deleted = undefined;
+                    task.replaced = undefined;
+                }
             }
-        }
         });
         localStorage.setItem("taskNames", JSON.stringify(tasks));
         taskNames.set(tasks);
@@ -974,7 +998,7 @@
                         ? 'bg-[#ce4f2c] text-[#ffffff]'
                         : 'border border-[#8e3b33] text-[#8e3b33] bg-[#42201b]'}"
                     on:click={() => {
-                       toggleModalEliminar();
+                        toggleModalEliminar();
                     }}
                 >
                     <div
@@ -1572,7 +1596,9 @@
                         }}
                     >
                         <div class="flex flex-row my-auto">
-                            <span class="my-auto mx-2 material-symbols-outlined">
+                            <span
+                                class="my-auto mx-2 material-symbols-outlined"
+                            >
                                 block
                             </span>
                             <h1 class="my-auto mr-2 text-sm font-bold">
@@ -1588,29 +1614,42 @@
 
 <!-- Modal -->
 {#if showModalEliminar}
-    <div class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-        <div class="relative border rounded-lg shadow-lg p-8 w-1/2 {$themeStore ===
-        'Light'
-            ? 'bg-[#ffffff] border-[#f0eaf9] shadow-[0_0_30px_#f0eaf9]'
-            : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c]'}">
-            <h1 class="text-lg font-bold mb-4 {$themeStore ===
-                    'Light'
-                        ? 'text-[#14111b]'
-                        : 'text-[#b498df]'}">Are you sure you want to delete all activities?</h1>
+    <div
+        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+    >
+        <div
+            class="relative border rounded-lg shadow-lg p-8 w-1/2 {$themeStore ===
+            'Light'
+                ? 'bg-[#ffffff] border-[#f0eaf9] shadow-[0_0_30px_#f0eaf9]'
+                : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c]'}"
+        >
+            <h1
+                class="text-lg font-bold mb-4 {$themeStore === 'Light'
+                    ? 'text-[#14111b]'
+                    : 'text-[#b498df]'}"
+            >
+                Are you sure you want to delete all activities?
+            </h1>
             <div class="flex justify-end">
-                <button class="border rounded-md px-4 py-2 mr-2 {$themeStore ===
+                <button
+                    class="border rounded-md px-4 py-2 mr-2 {$themeStore ===
                     'Light'
                         ? 'bg-[#efe9f8] border-[#5e3fa1] text-[#5e3fa1] hover:shadow-[0_0_2px_#7443bf]'
-                        : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300" on:click={() => showModal = false}>Cancel</button>
-                <button class="border rounded-md px-4 py-2 bg-red-500 text-white {$themeStore ===
+                        : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300"
+                    on:click={() => (showModal = false)}>Cancel</button
+                >
+                <button
+                    class="border rounded-md px-4 py-2 bg-red-500 text-white {$themeStore ===
                     'Light'
                         ? 'bg-[#efe9f8] border-[#5e3fa1] text-[#5e3fa1] hover:shadow-[0_0_2px_#7443bf]'
-                        : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300"  on:click={() => {
-                    clearAllRules();
-                    showModal = false;
-                    showModalEliminar = false;
-                    goto("/definingrules");
-                }}>Delete</button>
+                        : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300"
+                    on:click={() => {
+                        clearAllRules();
+                        showModal = false;
+                        showModalEliminar = false;
+                        goto("/definingrules");
+                    }}>Delete</button
+                >
             </div>
         </div>
     </div>

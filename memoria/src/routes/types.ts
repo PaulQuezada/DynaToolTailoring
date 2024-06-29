@@ -1,6 +1,6 @@
 // Interfaz base para todos los tipos de reglas
 interface BaseRule {
-    id: number;
+    id: string;
     type: 'Simple' | 'Conector' | 'Complex';
 }
 

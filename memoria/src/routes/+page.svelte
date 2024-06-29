@@ -103,7 +103,7 @@
                 ? 'bg-[#ffffff] border-[#f3ecfa] shadow-[0_0_30px_#f3ecfa] hover:shadow-[0_0_2px_#812fc9]'
                 : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c] hover:shadow-[0_0_2px_#f3ecfa]'} border-2 mr-2 rounded-lg transition duration-300"
             on:click={() => {
-                goto("/createnewmodel");
+                goto("/importmodel");
             }}
         >
             <div

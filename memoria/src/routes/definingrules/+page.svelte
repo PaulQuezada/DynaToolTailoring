@@ -97,7 +97,7 @@
                 </ComplexRule>`;
                                   } else {
                                       // Si no tiene subreglas, es una Rule simple
-                                      return `<Rule xsi:type="Rule" id="${subRegla.id}" name="${subRegla.name}" type="${subRegla.type}" attribute="${subRegla.attribute}" value="${subRegla.value || ""}"></Rule>`;
+                                      return `<Rule xsi:type="Rule" id="${subRegla.id}" type="${subRegla.type}" attribute="${subRegla.attribute}" value="${subRegla.value || ""}"></Rule>`;
                                   }
                               })
                               .join("")
