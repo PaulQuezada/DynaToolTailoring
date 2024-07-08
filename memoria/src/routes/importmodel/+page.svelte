@@ -16,6 +16,9 @@
     let xmlModel: string = "";
     let verifyModel = writable(false);
     let taskNames = writable([] as activity[]);
+    let xmlContext: string = "";
+    let attributesContext: any[] = [];
+    let onlyAttributes: any[] = [];
 
     // Función para manejar el avance a la siguiente etapa
     function handleNext() {
@@ -91,6 +94,7 @@
             if (contextModel && bpmnModel && rulesModel) {
                 localStorage.setItem("xmlContext", contextModel);
                 localStorage.setItem("xmlBpmn", bpmnModel);
+                loadAtributtes();
                 convertRulesModel(rulesModel);
                 verifyModel.set(true);
             } else {
@@ -104,8 +108,9 @@
         const xmlDoc = parser.parseFromString(xml, "text/xml");
         const contentRules = xmlDoc.querySelectorAll("ContentRule");
         let activities: activity[] = [];
-
+        console.log(xml);
         contentRules.forEach((contentRule, index) => {
+            console.log(contentRule);
             const activity: activity = {
                 id: index,
                 name: contentRule.getAttribute("name") || "",
@@ -116,59 +121,105 @@
             activities.push(activity);
         });
         taskNames.set(activities);
-        console.log(activities);
         localStorage.setItem("taskNames", JSON.stringify(activities));
     }
 
-    function parseRules(contentRule: Element): Rule[] {
+    function parseRules(element: Element): Rule[] {
         const rules: Rule[] = [];
-        const ruleElements = contentRule.querySelectorAll("Rule, ComplexRule");
-        ruleElements.forEach((ruleElement, index) => {
-            const type = ruleElement.getAttribute("xsi:type");
-            const typeRule = ruleElement.getAttribute("type");
-            let rule: Rule | undefined = undefined;
 
-            if (type === "Rule") {
-                if (typeRule === "Simple") {
-                    rule = {
-                        id: ruleElement.getAttribute("id") || "",
-                        type: "Simple",
-                        numberRule: index + 1,
-                        attribute: ruleElement.getAttribute("attribute") || "",
-                        value: ruleElement.getAttribute("value") || "",
-                        attributes: [
-                            "Project type",
-                            "Technology knowledge",
-                            "Domain knowledge",
-                            "Team size",
-                            "Usability",
-                        ],
-                        values: ["New", "Old", "High", "Average", "Low"],
-                    } as SimpleRule;
-                } else if (typeRule === "Conector") {
-                    rule = {
-                        id: ruleElement.getAttribute("id") || "",
-                        type: "Conector",
-                        logical_operator:
-                            ruleElement.getAttribute("logical_operator") ||
-                            "And",
-                        logicals: ["And", "Or"],
-                    } as ConnectorRule;
+        // Iterar sobre todos los nodos Rule y ComplexRule directos de este elemento
+        element.childNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                const ruleElement = node as Element;
+                const ruleType = ruleElement.tagName;
+
+                const id = ruleElement.getAttribute("id") || "";
+                const typeAttribute = ruleElement.getAttribute("type") || "";
+
+                console.log(ruleType);
+
+                if (ruleType === "Rule" || ruleType === "ComplexRule") {
+                    if (typeAttribute === "Simple") {
+                        const simpleRule: SimpleRule = {
+                            id: id,
+                            type: "Simple",
+                            numberRule: 1,
+                            attribute:
+                                ruleElement.getAttribute("attribute") || "",
+                            value: ruleElement.getAttribute("value") || "",
+                            attributes: onlyAttributes,
+                            values: searchValues(
+                                ruleElement.getAttribute("attribute") || "",
+                            )
+                        };
+                        rules.push(simpleRule);
+                    } else if (typeAttribute === "Conector") {
+                        const connectorRule: ConnectorRule = {
+                            id: id,
+                            type: "Conector",
+                            logical_operator: ruleElement.getAttribute("value") || "And", // Asumir un valor por defecto o ajustar según el XML
+                            logicals: ["And", "Or"],
+                        };
+                        rules.push(connectorRule);
+                    } else if (ruleType === "ComplexRule") {
+                        const complexRule: ComplexRule = {
+                            id: id,
+                            type: "Complex",
+                            numberRule: 2,
+                            rules: parseRules(ruleElement), // Recursividad para manejar reglas anidadas
+                        };
+                        rules.push(complexRule);
+                    }
                 }
-            } else if (type === "ComplexRule") {
-                rule = {
-                    id: ruleElement.getAttribute("id") || "",
-                    type: "Complex",
-                    numberRule: index + 1,
-                    rules: parseRules(ruleElement),
-                } as ComplexRule;
-            } else {
-                console.error("Rule type not found");
             }
-            rules.push(rule as Rule);
         });
 
         return rules;
+    }
+
+    // Función para manejar la carga de archivos contexto organizacional
+    function loadAtributtes() {
+        xmlContext = localStorage.getItem("xmlContext")!;
+        // Backend para procesar el archivo XML
+        const jsonObj = parser.parse(xmlContext);
+        console.log(jsonObj);
+        const dimensions = Array.isArray(jsonObj["spcm:Context"].myDimensions)
+            ? jsonObj["spcm:Context"].myDimensions
+            : [jsonObj["spcm:Context"].myDimensions];
+
+        let newAttributesContext: any[] = []; // Usar una variable temporal para almacenar los nuevos datos
+
+        dimensions.forEach((dim: any) => {
+            const contextAttributes = Array.isArray(dim.myContextAttributes)
+                ? dim.myContextAttributes
+                : [dim.myContextAttributes];
+
+            contextAttributes.forEach((attr: any) => {
+                const values = Array.isArray(attr.posibleValues)
+                    ? attr.posibleValues
+                    : attr.posibleValues
+                      ? [attr.posibleValues]
+                      : [];
+                const attributeData = {
+                    Attribute: attr.name,
+                    values: values.map((val: any) =>
+                        val.name ? val.name : "Unknown",
+                    ),
+                };
+                newAttributesContext.push(attributeData); // Agregar a la variable temporal
+            });
+        });
+        let attributes: any[] = [];
+        newAttributesContext.forEach((data) => {
+            attributes.push(data.Attribute);
+        });
+        attributesContext = newAttributesContext; // Reasignar a la variable original
+        onlyAttributes = attributes;
+    }
+
+    function searchValues(value: String): any[] {
+        return attributesContext.filter((attr) => attr.Attribute === value)[0]
+            .values;
     }
 </script>
 
