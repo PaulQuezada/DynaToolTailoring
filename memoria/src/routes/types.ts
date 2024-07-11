@@ -34,6 +34,7 @@ type Rule = SimpleRule | ConnectorRule | ComplexRule;
 interface activity {
     id: number;
     name: string;
+    subname: string;
     rules: Rule[];
     deleted?: boolean;
     replaced?: boolean;

@@ -61,6 +61,7 @@
         // Actualiza el nombre del archivo
         nameFileModel.set(input.files![0].name);
         if (input.files && input.files.length > 0) {
+
             const file = input.files[0];
             xmlModel = await file.text();
             const parser = new DOMParser();
@@ -114,6 +115,7 @@
             const activity: activity = {
                 id: index,
                 name: contentRule.getAttribute("name") || "",
+                subname: contentRule.getAttribute("subname") || "",
                 rules: parseRules(contentRule),
                 replaced: contentRule.getAttribute("replace") ? true : false,
                 replaceActivity: contentRule.getAttribute("replace") || "",

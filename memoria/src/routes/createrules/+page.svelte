@@ -197,6 +197,7 @@
     let activity: activity = {
         id: 0,
         name: "Default Activity - No activity selected",
+        subname: "",
         rules: [],
     };
     // Efecto parallax, ademas, recolectaremos los datos contenidos en el localstorage
@@ -310,6 +311,7 @@
             return {
                 id: i++,
                 name: task,
+                subname: "Default Subname",
                 rules: [],
             };
         });
