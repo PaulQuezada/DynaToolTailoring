@@ -66,7 +66,6 @@
     }
 
     function addSimpleRule(parentComplexRuleId?: string, id?: string) {
-        console.log(parentComplexRuleId, id);
         if (parentComplexRuleId != null) {
             if (shouldAddConnector(parentComplexRuleId)) {
                 addConnectorRule(parentComplexRuleId);
@@ -89,7 +88,6 @@
     }
 
     function addComplexRule(parentComplexRuleId?: string) {
-        console.log(parentComplexRuleId);
         if (parentComplexRuleId != null) {
             if (shouldAddConnector(parentComplexRuleId)) {
                 addConnectorRule(parentComplexRuleId);
@@ -207,18 +205,19 @@
             activity = JSON.parse(activitySelect);
             if (activity.rules != null) {
                 rules.set(activity.rules);
-                selectedAction1 = activity.deleted
-                    ? "Delete Action"
-                    : "Replace Action";
-                if (selectedAction1 === "Delete Action") {
+                console.log(activity);
+                if (activity.deleted != null) {
+                    console.log("deleted");
+                    selectedAction1 = "Delete Action";
                     selectedAction2 = activity.deleted
                         ? "Delete this activity"
                         : "Not delete this activity";
-                } else if (
-                    selectedAction1 === "Replace Action" &&
-                    activity.replaceActivity != null
-                ) {
-                    selectedAction2 = activity.replaceActivity;
+                } else if (activity.replaced) {
+                    console.log("replaced");
+                    selectedAction1 = "Replace Action";
+                    selectedAction2 = activity.replaceActivity ?? "";
+                } else {
+                    console.log("ERROR: No action");
                 }
             }
         }
@@ -236,7 +235,6 @@
         handleFileUploadBpmn();
         // guardo solo los nombres del taskName
         replaceaction = get(taskNames).map((task) => task.name);
-        console.log(replaceaction);
         return () => {
             divElement.removeEventListener("scroll", handleScroll);
         };
@@ -256,7 +254,6 @@
     function handleFileUploadContext() {
         // Backend para procesar el archivo XML
         const jsonObj = parser.parse(xmlContext);
-        console.log(jsonObj);
         const dimensions = Array.isArray(jsonObj["spcm:Context"].myDimensions)
             ? jsonObj["spcm:Context"].myDimensions
             : [jsonObj["spcm:Context"].myDimensions];
@@ -285,8 +282,6 @@
         });
 
         attributesContext = newAttributesContext; // Reasignar a la variable original
-        // RETURN del backend (EMULADO)
-        console.log(JSON.stringify(attributesContext, null, 2));
     }
 
     // Función para manejar la carga de archivos BPMN
@@ -320,52 +315,47 @@
     }
 
     function attributeRuleSelected(event: Event, rule_selected: SimpleRule) {
-        const selectElement = event.target as HTMLSelectElement;
-        (rule_selected as SimpleRule).attribute = selectElement.value;
+        let attributeSelect = (event.target as HTMLSelectElement).value;
         // Buscamos la regla seleccionada y modificamos el valor del atributo
         rules.update((rs) => {
             const rule = findRuleById(rs, rule_selected.id);
-            if (rule && rule.type === "Simple") {
-                rule.attribute = selectElement.value;
-                rule.values = attributesContext.find(
-                    (attr) => attr.Attribute === selectElement.value,
-                )?.values;
+            if (rule && rule.type == "Simple") {
+                rule.attribute = attributeSelect;
+                const attribute = attributesContext.find(
+                    (attr) => attr.Attribute == attributeSelect,
+                );
+                rule.values = attribute ? attribute.values : [];
+            } else {
+                console.log("No se encontro la regla");
             }
             return rs;
         });
-        // Mostramos todos los valores de las reglas
-        console.log(JSON.stringify(get(rules), null, 2));
     }
 
     function valueRuleSelected(event: Event, rule_selected: SimpleRule) {
-        const selectElement = event.target as HTMLSelectElement;
-        (rule_selected as SimpleRule).value = selectElement.value;
+        let valueSelect = (event.target as HTMLSelectElement).value;
         // Buscamos la regla seleccionada y modificamos el valor del atributo
         rules.update((rs) => {
             const rule = findRuleById(rs, rule_selected.id);
             if (rule && rule.type === "Simple") {
-                rule.value = selectElement.value;
+                rule.value = valueSelect;
+            } else {
+                console.log("No se encontro la regla");
             }
             return rs;
         });
-        // Mostramos todos los valores de las reglas
-        console.log(JSON.stringify(get(rules), null, 2));
     }
 
     function conectorRuleSelected(event: Event, rule_selected: ConnectorRule) {
-        const selectElement = event.target as HTMLSelectElement;
-        (rule_selected as ConnectorRule).logical_operator = selectElement.value;
-        console.log(selectElement.value);
+        let conectorSelect = (event.target as HTMLSelectElement).value;
         // Buscamos la regla seleccionada y modificamos el valor del atributo
         rules.update((rs) => {
             const rule = findRuleById(rs, rule_selected.id);
-            if (rule && rule.type === "Conector") {
-                rule.logical_operator = selectElement.value;
+            if (rule && rule.type == "Conector") {
+                rule.logical_operator = conectorSelect;
             }
             return rs;
         });
-        // Mostramos todos los valores de las reglas
-        console.log(JSON.stringify(get(rules), null, 2));
     }
 
     function addRulesLocalStorage() {
