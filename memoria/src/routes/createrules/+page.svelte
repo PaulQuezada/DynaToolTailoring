@@ -324,6 +324,7 @@
                 const attribute = attributesContext.find(
                     (attr) => attr.Attribute == attributeSelect,
                 );
+                rule.value = "";
                 rule.values = attribute ? attribute.values : [];
             } else {
                 console.log("No se encontro la regla");
@@ -337,8 +338,12 @@
         // Buscamos la regla seleccionada y modificamos el valor del atributo
         rules.update((rs) => {
             const rule = findRuleById(rs, rule_selected.id);
-            if (rule && rule.type === "Simple") {
+            if (rule && rule.type == "Simple") {
                 rule.value = valueSelect;
+                console.log("Cambia el valor de la regla");
+                console.log(rule);
+                console.log(valueSelect);
+                console.log("--------------------");
             } else {
                 console.log("No se encontro la regla");
             }
