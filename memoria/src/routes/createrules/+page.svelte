@@ -318,14 +318,16 @@
         let attributeSelect = (event.target as HTMLSelectElement).value;
         // Buscamos la regla seleccionada y modificamos el valor del atributo
         rules.update((rs) => {
-            const rule = findRuleById(rs, rule_selected.id);
+            let rule = findRuleById(rs, rule_selected.id);
             if (rule && rule.type == "Simple") {
                 rule.attribute = attributeSelect;
+                rule.value = "";
                 const attribute = attributesContext.find(
                     (attr) => attr.Attribute == attributeSelect,
                 );
-                rule.value = "";
                 rule.values = attribute ? attribute.values : [];
+                console.log("Cambia el atributo de la regla");
+                console.log(rule);
             } else {
                 console.log("No se encontro la regla");
             }
@@ -482,7 +484,7 @@
                                 </div>
                                 <div class="flex justify-between -my-5 mb-5">
                                     <select
-                                        value={rule.attribute}
+                                        bind:value={rule.attribute}
                                         id="actions"
                                         class="mt-5 w-1/2 mx-2 h-[30px]"
                                         on:change={(e) =>
@@ -495,8 +497,7 @@
                                         {/each}
                                     </select>
                                     <select
-                                        value={rule.value}
-                                        placeholder="Value"
+                                        bind:value={rule.value}
                                         id="actions"
                                         class="mt-5 w-1/2 mx-2 h-[30px]"
                                         on:change={(e) =>
@@ -587,7 +588,7 @@
                                                     class="flex justify-between -my-5 mb-5"
                                                 >
                                                     <select
-                                                        value={rulep1.attribute}
+                                                        bind:value={rulep1.attribute}
                                                         id="actions"
                                                         class="mt-5 w-1/2 mx-2 h-[30px]"
                                                         on:change={(e) =>
@@ -604,7 +605,7 @@
                                                         {/each}
                                                     </select>
                                                     <select
-                                                        value={rulep1.value}
+                                                        bind:value={rulep1.value}
                                                         placeholder="Value"
                                                         id="actions"
                                                         class="mt-5 w-1/2 mx-2 h-[30px]"
@@ -713,7 +714,7 @@
                                                                     class="flex justify-between -my-5 mb-5"
                                                                 >
                                                                     <select
-                                                                        value={rulep2.attribute}
+                                                                        bind:value={rulep2.attribute}
                                                                         id="actions"
                                                                         class="mt-5 w-1/2 mx-2 h-[30px]"
                                                                         on:change={(
@@ -732,7 +733,7 @@
                                                                         {/each}
                                                                     </select>
                                                                     <select
-                                                                        value={rulep2.value}
+                                                                        bind:value={rulep2.value}
                                                                         placeholder="Value"
                                                                         id="actions"
                                                                         class="mt-5 w-1/2 mx-2 h-[30px]"
@@ -771,7 +772,7 @@
                                                                     Operator
                                                                 </h1>
                                                                 <select
-                                                                    value={rulep2.logical_operator}
+                                                                    value=""
                                                                     id="actions"
                                                                     class="my-2 w-2/3 mx-auto h-[30px]"
                                                                     on:change={(
@@ -834,7 +835,7 @@
                                                     Logical Operator
                                                 </h1>
                                                 <select
-                                                    value={rulep1.logical_operator}
+                                                    value=""
                                                     id="actions"
                                                     class="my-2 w-2/3 mx-auto h-[30px]"
                                                     on:change={(e) =>
@@ -888,7 +889,7 @@
                                     Logical Operator
                                 </h1>
                                 <select
-                                    value={rule.logical_operator}
+                                    value=""
                                     id="actions"
                                     class="my-2 w-2/3 mx-auto h-[30px]"
                                     on:change={(e) =>
