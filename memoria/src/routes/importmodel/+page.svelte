@@ -117,8 +117,9 @@
                 name: contentRule.getAttribute("name") || "",
                 subname: contentRule.getAttribute("subname") || "",
                 rules: parseRules(contentRule),
-                replaced: contentRule.getAttribute("replace") ? true : false,
-                replaceActivity: contentRule.getAttribute("replace") || "",
+                deleted: contentRule.getAttribute("deleted") === "true" ? true : contentRule.getAttribute("deleted") === "false" ? false : undefined,
+                replaced: contentRule.getAttribute("replace") ? true : undefined,
+                replaceActivity: contentRule.getAttribute("replace") || undefined,
             };
             activities.push(activity);
         });
@@ -159,7 +160,7 @@
                         const connectorRule: ConnectorRule = {
                             id: id,
                             type: "Conector",
-                            logical_operator: ruleElement.getAttribute("value") || "And", // Asumir un valor por defecto o ajustar según el XML
+                            logical_operator: ruleElement.getAttribute("attribute") || "Or", // Asumir un valor por defecto o ajustar según el XML
                             logicals: ["And", "Or"],
                         };
                         rules.push(connectorRule);

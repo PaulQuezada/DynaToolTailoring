@@ -772,7 +772,7 @@
                                                                     Operator
                                                                 </h1>
                                                                 <select
-                                                                    value=""
+                                                                    bind:value={rulep2.logical_operator}
                                                                     id="actions"
                                                                     class="my-2 w-2/3 mx-auto h-[30px]"
                                                                     on:change={(
@@ -835,7 +835,7 @@
                                                     Logical Operator
                                                 </h1>
                                                 <select
-                                                    value=""
+                                                    bind:value={rulep1.logical_operator}
                                                     id="actions"
                                                     class="my-2 w-2/3 mx-auto h-[30px]"
                                                     on:change={(e) =>
@@ -889,7 +889,7 @@
                                     Logical Operator
                                 </h1>
                                 <select
-                                    value=""
+                                    bind:value={rule.logical_operator}
                                     id="actions"
                                     class="my-2 w-2/3 mx-auto h-[30px]"
                                     on:change={(e) =>

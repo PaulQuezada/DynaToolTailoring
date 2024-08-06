@@ -126,6 +126,7 @@
                                       type: any;
                                       attribute: any;
                                       value: any;
+                                      logical_operator: any;
                                   }) => {
                                       if (
                                           subRegla.rules &&
@@ -137,7 +138,7 @@
                 </ComplexRule>`;
                                       } else {
                                           // Si no tiene subreglas, es una Rule simple
-                                          return `<Rule xsi:type="Rule" id="${subRegla.id}" type="${subRegla.type}" attribute="${subRegla.attribute}" value="${subRegla.value || ""}"></Rule>`;
+                                          return `<Rule xsi:type="Rule" id="${subRegla.id}" type="${subRegla.type}" attribute="${subRegla.attribute || subRegla.logical_operator}" value="${subRegla.value || "No value"}"></Rule>`;
                                       }
                                   },
                               )
@@ -169,7 +170,7 @@
                 </ComplexRule>`;
                     } else {
                         // Simple Rule sin subreglas
-                        return `<Rule xsi:type="Rule" id="${subRegla.id}"  type="${subRegla.type}" attribute="${subRegla.attribute}" value="${subRegla.value || ""}"></Rule>`;
+                        return `<Rule xsi:type="Rule" id="${subRegla.id}"  type="${subRegla.type}" attribute="${subRegla.attribute || subRegla.logical_operator}" value="${subRegla.value || "No value"}"></Rule>`;
                     }
                 })
                 .join("");
