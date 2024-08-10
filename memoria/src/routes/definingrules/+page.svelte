@@ -71,7 +71,7 @@
             return {
                 id: id++,
                 name: task,
-                subname: "Default Name",
+                subname: "Task: " + task,
                 rules: [],
             };
         });
