@@ -1569,7 +1569,7 @@
                             showModal = false;
                             showModalCrear = false;
                             addRulesLocalStorage();
-                            goto("/definingrules");
+                            goto("/listofrules");
                         }}
                     >
                         <div class="flex flex-row my-auto">
@@ -1645,7 +1645,7 @@
                         clearAllRules();
                         showModal = false;
                         showModalEliminar = false;
-                        goto("/definingrules");
+                        goto("/listofrules");
                     }}>Delete</button
                 >
             </div>

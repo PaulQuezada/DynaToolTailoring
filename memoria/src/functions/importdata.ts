@@ -1,5 +1,4 @@
 import { XMLParser } from "fast-xml-parser";
-import { writable, type Writable } from "svelte/store";
 
 // Creando la instancia del parser y del builder que se utilizará para procesar los archivos XML
 const parserOptions = {
@@ -18,14 +17,21 @@ export async function nameFileUpload(event: Event) {
     return nameFileContex;
 }
 
-// Función para manejar la carga de archivos contexto organizacional
-export async function fileUploadContext(event: Event) {
-    let xmlContext: string = ""; // Variable para almacenar los datos del archivo de contexto organizacional
-    let attributesContext: any[] = []; // Variable para almacenar los datos del contexto organizacional
+// Función para extraer los datos de un archivo XMI
+export async function fileUpload(event: Event) {
+    let xml: string = ""; // Variable para almacenar los datos del archivo
     const input = event.target as HTMLInputElement; // Lectura del archivo
     if (input.files && input.files.length > 0) {
         const file = input.files[0];
-        xmlContext = await file.text();
+        xml = await file.text();
+    }
+    return xml;
+}
+
+// Función para extraer los datos del archivo contexto organizacional
+export async function fileUploadContext(xmlContext: string) {
+    let attributesContext: any[] = []; // Variable para almacenar los datos del contexto organizacional
+    if (xmlContext !== "") {
         const jsonObj = parser.parse(xmlContext);
         // se obtienen los datos que nos interesan del contexto organizacional
         const dimensions = Array.isArray(
@@ -58,17 +64,13 @@ export async function fileUploadContext(event: Event) {
         });
     }
     // Retorna los datos del contexto organizacional y los datos extraidos del archivo
-    return [attributesContext, xmlContext];
+    return attributesContext;
 }
 
-// Función para manejar la carga de archivos BPMN
-export async function fileUploadBpmn(event: Event) {
+// Función para extraer los datos del archivo BPMN
+export async function fileUploadBpmn(xmlBpmn: string) {
     let task: any = []; // Variable para almacenar los nombres de las tareas
-    let xmlBpmn: string = ""; // Variable para almacenar los datos del archivo BPMN
-    const input = event.target as HTMLInputElement;// Lectura del archivo
-    if (input.files && input.files.length > 0) {
-        const file = input.files[0];
-        xmlBpmn = await file.text();
+    if (xmlBpmn !== "") {
         const jsonObj = parser.parse(xmlBpmn);
         const rootElements = jsonObj["bpmn2:Definitions"].rootElements;
         const flowElements = Array.isArray(rootElements.flowElements)
@@ -85,5 +87,5 @@ export async function fileUploadBpmn(event: Event) {
         task = newTaskNames;
     }
     // Retorna los datos del archivo BPMN y los datos extraidos del archivo
-    return [task, xmlBpmn];
+    return task;
 }

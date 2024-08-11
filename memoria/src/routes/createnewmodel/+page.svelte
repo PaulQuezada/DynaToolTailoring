@@ -5,7 +5,7 @@
     import { writable } from "svelte/store";
     import { themeStore } from "../../stores";
     import "../../app.css";
-    import { fileUploadContext, fileUploadBpmn, nameFileUpload } from "../../functions/importdata";
+    import { fileUploadContext, fileUploadBpmn, nameFileUpload, fileUpload } from "../../functions/importdata";
 
     // Estado de la etapa actual
     let currentStage = writable(1);
@@ -53,27 +53,23 @@
     // Función para manejar la carga de archivos contexto organizacional
     async function uploadContext(event: Event) {
         nameFileContex = await nameFileUpload(event);
-        const result = await fileUploadContext(event);
-        extractAttributes = JSON.parse(JSON.stringify(result[0])); // Extraer los atributos del archivo XMI
-        xmlContext = JSON.parse(JSON.stringify(result[1])); // Extraer el contenido del archivo XMI
-        //console.log(result);
+        xmlContext = JSON.parse(JSON.stringify(await fileUpload(event))); // Extraer el contenido del archivo XMI
+        extractAttributes = JSON.parse(JSON.stringify(await fileUploadContext(xmlContext))); // Extraer los atributos del archivo XMI
         //console.log(nameFileContex);
-        //console.log(JSON.stringify(extractAttributes, null, 2));
         //console.log(xmlContext);
-        verifyContext.set(extractAttributes.length > 0); // Verificar si el attributeContext tiene datos entonces es correcto
+        //console.log(JSON.stringify(extractAttributes, null, 2));
+        verifyContext.set(extractAttributes.length > 0); // Verificar si el attributeContext tiene datos, entonces es correcto
     }
 
     // Función para manejar la carga de archivos BPMN
     async function uploadBpmn(event: Event) {
         nameFileBpmn = await nameFileUpload(event);
-        const result = await fileUploadBpmn(event);
-        extractTask = JSON.parse(JSON.stringify(result[0])); // Extraer los atributos del archivo BPMN
-        xmlBpmn = JSON.parse(JSON.stringify(result[1])); // Extraer el contenido del archivo BPMN
-        //console.log(result);
+        xmlBpmn = JSON.parse(JSON.stringify(await fileUpload(event))); // Extraer el contenido del archivo BPMN
+        extractTask = JSON.parse(JSON.stringify(await fileUploadBpmn(xmlBpmn))); // Extraer los atributos del archivo BPMN
         //console.log(nameFileBpmn);
         //console.log(xmlBpmn);
         //console.log(JSON.stringify(extractTask, null, 2));
-        verifyBpmn.set(extractTask.length > 0); // Verificar si el attributeContext tiene datos entonces es correcto
+        verifyBpmn.set(extractTask.length > 0); // Verificar si el attributeContext tiene datos entonces, es correcto
     }
 
 </script>
@@ -472,11 +468,9 @@
                         ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                         : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                     on:click={() => {
-                        (async () => {
-                            await localStorage.setItem("xmlContext", xmlContext);
-                            await localStorage.setItem("xmlBpmn", xmlBpmn);
-                        })();
-                        goto("/definingrules");
+                        localStorage.setItem("xmlContext", xmlContext);
+                        localStorage.setItem("xmlBpmn", xmlBpmn);
+                        goto("/listofrules");
                     }}
                 >
                     <div class="flex my-auto">

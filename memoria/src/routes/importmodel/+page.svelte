@@ -1,7 +1,7 @@
 <!-- src/routes/index.svelte -->
 <script lang="ts">
     // Importaciones de módulos
-    import { XMLParser, XMLBuilder, XMLValidator } from "fast-xml-parser";
+    import { XMLParser } from "fast-xml-parser";
     import { goto } from "$app/navigation";
     import "../../app.css";
     import { writable } from "svelte/store";
@@ -468,7 +468,7 @@
                         : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                     on:click={() => {
                         (async () => {})();
-                        goto("/definingrules");
+                        goto("/listofrules");
                     }}
                 >
                     <div class="flex my-auto">
