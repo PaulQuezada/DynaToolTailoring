@@ -5,6 +5,10 @@
     import { writable, get, type Writable } from "svelte/store";
     import "../types";
     import { themeStore } from "../../stores";
+    import {
+        fileUploadBpmn,
+        fileUploadContext,
+    } from "../../functions/importdata";
     let selectedAction = "";
     let selectedAction1 = "Delete Action";
     let selectedAction2 = "";
@@ -18,6 +22,7 @@
     let showModalCrear = false;
     let showModalEliminar = false;
     let rule_selected: Rule, subrule_selected: Rule;
+    let activities: activity[] = [];
 
     function toggleModalNivel1() {
         showModal = !showModal;
@@ -189,7 +194,6 @@
 
     let xmlContext: string = "";
     let xmlBpmn: string = "";
-    let taskNames: Writable<activity[]> = writable([]);
     let attributesContext: any[] = [];
 
     let activity: activity = {
@@ -232,9 +236,7 @@
         xmlContext = localStorage.getItem("xmlContext")!;
         xmlBpmn = localStorage.getItem("xmlBpmn")!;
         handleFileUploadContext();
-        handleFileUploadBpmn();
-        // guardo solo los nombres del taskName
-        replaceaction = get(taskNames).map((task) => task.name);
+        loadDataBPMN();
         return () => {
             divElement.removeEventListener("scroll", handleScroll);
         };
@@ -251,57 +253,19 @@
     const parser = new XMLParser(parserOptions);
 
     // Función para manejar la carga de archivos contexto organizacional
-    function handleFileUploadContext() {
-        // Backend para procesar el archivo XML
-        const jsonObj = parser.parse(xmlContext);
-        const dimensions = Array.isArray(jsonObj["spcm:Context"].myDimensions)
-            ? jsonObj["spcm:Context"].myDimensions
-            : [jsonObj["spcm:Context"].myDimensions];
-
-        let newAttributesContext: any[] = []; // Usar una variable temporal para almacenar los nuevos datos
-
-        dimensions.forEach((dim: any) => {
-            const contextAttributes = Array.isArray(dim.myContextAttributes)
-                ? dim.myContextAttributes
-                : [dim.myContextAttributes];
-
-            contextAttributes.forEach((attr: any) => {
-                const values = Array.isArray(attr.posibleValues)
-                    ? attr.posibleValues
-                    : attr.posibleValues
-                      ? [attr.posibleValues]
-                      : [];
-                const attributeData = {
-                    Attribute: attr.name,
-                    values: values.map((val: any) =>
-                        val.name ? val.name : "Unknown",
-                    ),
-                };
-                newAttributesContext.push(attributeData); // Agregar a la variable temporal
-            });
-        });
-
-        attributesContext = newAttributesContext; // Reasignar a la variable original
+    async function handleFileUploadContext() {
+        xmlContext = localStorage.getItem("xmlContext")!;
+        attributesContext = await fileUploadContext(xmlContext);
     }
 
     // Función para manejar la carga de archivos BPMN
-    async function handleFileUploadBpmn() {
-        const jsonObj = parser.parse(xmlBpmn);
-        const rootElements = jsonObj["bpmn2:Definitions"].rootElements;
-        const flowElements = Array.isArray(rootElements.flowElements)
-            ? rootElements.flowElements
-            : [rootElements.flowElements];
-
-        // Filtrar las actividades
-        const newTaskNames = flowElements
-            .filter(
-                (fe: { [x: string]: string }) =>
-                    fe["xsi:type"] === "bpmn2:Task",
-            )
-            .map((task: any) => task.name);
-
-        // Convertir los nombres de las actividades en un objeto
-        var taskNameConverted: activity[] = newTaskNames.map((task: any) => {
+    async function loadDataBPMN() {
+        // Extraemos los datos el archivo BPMN
+        xmlBpmn = localStorage.getItem("xmlBpmn")!;
+        var task = await fileUploadBpmn(xmlBpmn);
+        // Los convertimos a un objeto JSON para manejarlos de mejor forma, dandole un id a cada actividad, subnombre y reglas (que por ahora estan vacias)
+        var id: number = 0;
+        var taskNameConverted: activity[] = task.map((task: any) => {
             var i = 0;
             return {
                 id: i++,
@@ -310,8 +274,10 @@
                 rules: [],
             };
         });
-        // Guardar las actividades en el store
-        taskNames.set(taskNameConverted);
+        // Guardar las actividades convertidas
+        activities = taskNameConverted;
+        // guardo solo los nombres del taskName
+        replaceaction = activities.map((task) => task.name);
     }
 
     function attributeRuleSelected(event: Event, rule_selected: SimpleRule) {
@@ -342,10 +308,6 @@
             const rule = findRuleById(rs, rule_selected.id);
             if (rule && rule.type == "Simple") {
                 rule.value = valueSelect;
-                console.log("Cambia el valor de la regla");
-                console.log(rule);
-                console.log(valueSelect);
-                console.log("--------------------");
             } else {
                 console.log("No se encontro la regla");
             }
@@ -369,7 +331,7 @@
         // Obtenemos las actividades que estan en el localStorage
         var task = localStorage.getItem("taskNames")!;
         // Si taskNames no es nulo, lo convertimos a JSON y lo guardamos
-        if (taskNames != null) {
+        if (activities != null) {
             var jsonTask = JSON.parse(task);
         }
         // Ahora buscamos en jsonTask el objeto de la actividad seleccionada y le agregamos las reglas
@@ -416,7 +378,7 @@
             }
         });
         localStorage.setItem("taskNames", JSON.stringify(tasks));
-        taskNames.set(tasks);
+        activities = tasks;
     }
 </script>
 
