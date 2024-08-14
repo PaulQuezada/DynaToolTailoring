@@ -1,10 +1,17 @@
 <script lang="ts">
+    // Importamos las librerias necesarias
     import { onMount } from "svelte";
     import { goto } from "$app/navigation";
-    import { XMLParser } from "fast-xml-parser";
-    import { writable, get, type Writable } from "svelte/store";
+    import { writable, get } from "svelte/store";
     import "../types";
     import { themeStore } from "../../stores";
+    import {
+        fileUploadBpmn,
+        fileUploadContext,
+    } from "../../functions/importdata";
+    import * as functionRulecreation from "../../functions/rulecreation";
+
+    // Variables
     let selectedAction = "";
     let selectedAction1 = "Delete Action";
     let selectedAction2 = "";
@@ -18,6 +25,22 @@
     let showModalCrear = false;
     let showModalEliminar = false;
     let rule_selected: Rule, subrule_selected: Rule;
+    let activities: activity[] = [];
+    let divElement: HTMLElement;
+    let yOffset = 0;
+
+    let xmlContext: string = "";
+    let xmlBpmn: string = "";
+    let attributesContext: any[] = [];
+
+    let activity: activity = {
+        id: 0,
+        name: "Default Activity - No activity selected",
+        subname: "",
+        rules: [],
+    };
+
+    let rules = writable<Rule[]>([]);
 
     function toggleModalNivel1() {
         showModal = !showModal;
@@ -40,134 +63,27 @@
         showModalEliminar = !showModalEliminar;
     }
 
-    let rules = writable<Rule[]>([]);
-
-    function getUniqueId(): string {
-        const characters =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        let result = "";
-        const charactersLength = characters.length;
-        for (let i = 0; i < 20; i++) {
-            result += characters.charAt(
-                Math.floor(Math.random() * charactersLength),
-            );
-        }
-        return result;
-    }
-
-    function addConnectorRule(parentComplexRuleId?: string) {
-        const newRule: ConnectorRule = {
-            id: getUniqueId(),
-            type: "Conector",
-            logical_operator: "Or",
-            logicals: ["And", "Or"],
-        };
-        updateRuleInComplex(newRule, parentComplexRuleId);
-    }
-
     function addSimpleRule(parentComplexRuleId?: string, id?: string) {
-        if (parentComplexRuleId != null) {
-            if (shouldAddConnector(parentComplexRuleId)) {
-                addConnectorRule(parentComplexRuleId);
-            }
-        } else {
-            if (shouldAddConnectorAtTopLevel()) {
-                addConnectorRule();
-            }
-        }
-        const newRule: SimpleRule = {
-            id: getUniqueId(),
-            type: "Simple",
-            numberRule: get(rules).length + 1,
-            attribute: "",
-            value: "",
-            attributes: attributesContext.map((attr) => attr.Attribute),
-            values: [],
-        };
-        updateRuleInComplex(newRule, parentComplexRuleId);
+        const result = functionRulecreation.addSimpleRule(
+            rules,
+            attributesContext,
+            parentComplexRuleId,
+            id,
+        );
+        rules = result;
     }
 
     function addComplexRule(parentComplexRuleId?: string) {
-        if (parentComplexRuleId != null) {
-            if (shouldAddConnector(parentComplexRuleId)) {
-                addConnectorRule(parentComplexRuleId);
-            }
-        } else {
-            if (shouldAddConnectorAtTopLevel()) {
-                addConnectorRule();
-            }
-        }
-        const newRule: ComplexRule = {
-            id: getUniqueId(),
-            type: "Complex",
-            numberRule: get(rules).length + 1,
-            rules: [],
-        };
-        updateRuleInComplex(newRule, parentComplexRuleId);
+        const result = functionRulecreation.addComplexRule(
+            rules,
+            parentComplexRuleId,
+        );
+        rules = result;
     }
 
     function deleteRuleById(ruleId: string) {
-        rules.update((currentRules) => {
-            return removeRule(currentRules, ruleId);
-        });
-    }
-
-    function removeRule(rulesList: Rule[], ruleId: string): Rule[] {
-        for (let i = 0; i < rulesList.length; i++) {
-            const rule = rulesList[i];
-            if (rule.id === ruleId) {
-                // Check if previous rule is a connector and remove it
-                if (i > 0 && rulesList[i - 1].type === "Conector") {
-                    rulesList.splice(i - 1, 2);
-                } else if (
-                    i < rulesList.length - 1 &&
-                    rulesList[i + 1].type === "Conector"
-                ) {
-                    rulesList.splice(i, 2);
-                } else {
-                    rulesList.splice(i, 1);
-                }
-                return rulesList;
-            } else if (rule.type === "Complex") {
-                rule.rules = removeRule(rule.rules, ruleId);
-            }
-        }
-        return rulesList;
-    }
-
-    function shouldAddConnector(parentComplexRuleId: string): boolean {
-        const parentRule = findRuleById(get(rules), parentComplexRuleId);
-        return (
-            parentRule !== null &&
-            parentRule.type === "Complex" &&
-            parentRule.rules.length > 0 &&
-            parentRule.rules.slice(-1)[0].type !== "Conector"
-        );
-    }
-
-    function shouldAddConnectorAtTopLevel(): boolean {
-        const topLevelRules = get(rules);
-        return (
-            topLevelRules.length > 0 &&
-            topLevelRules.slice(-1)[0].type !== "Conector"
-        );
-    }
-
-    function updateRuleInComplex(
-        newRule: Rule,
-        parentComplexRuleId: string | undefined,
-    ) {
-        if (parentComplexRuleId != null) {
-            rules.update((rs) => {
-                let parentRule = findRuleById(rs, parentComplexRuleId);
-                if (parentRule && parentRule.type === "Complex") {
-                    parentRule.rules.push(newRule);
-                }
-                return rs;
-            });
-        } else {
-            rules.update((currentRules) => [...currentRules, newRule]);
-        }
+        const result = functionRulecreation.deleteRuleById(rules, ruleId);
+        rules = result;
     }
 
     function findRuleById(rules: Rule[], id: string): Rule | null {
@@ -184,21 +100,8 @@
         }
         return null;
     }
-    let divElement: HTMLElement;
-    let yOffset = 0;
 
-    let xmlContext: string = "";
-    let xmlBpmn: string = "";
-    let taskNames: Writable<activity[]> = writable([]);
-    let attributesContext: any[] = [];
-
-    let activity: activity = {
-        id: 0,
-        name: "Default Activity - No activity selected",
-        subname: "",
-        rules: [],
-    };
-    // Efecto parallax, ademas, recolectaremos los datos contenidos en el localstorage
+    // Recolectaremos los datos contenidos en el localstorage
     onMount(() => {
         var activitySelect = localStorage.getItem("activitySelect")!;
         if (activitySelect != null) {
@@ -221,6 +124,7 @@
                 }
             }
         }
+        // Efecto parallax
         const handleScroll = () => {
             const scrollPosition = divElement.scrollTop; // Cambiamos a usar scrollTop del div
             yOffset = scrollPosition * 0.5; // Ajusta el valor para controlar la velocidad del efecto parallax
@@ -232,76 +136,26 @@
         xmlContext = localStorage.getItem("xmlContext")!;
         xmlBpmn = localStorage.getItem("xmlBpmn")!;
         handleFileUploadContext();
-        handleFileUploadBpmn();
-        // guardo solo los nombres del taskName
-        replaceaction = get(taskNames).map((task) => task.name);
+        loadDataBPMN();
         return () => {
             divElement.removeEventListener("scroll", handleScroll);
         };
     });
 
-    // Creando una instancia del parser y del builder
-    const parserOptions = {
-        ignoreAttributes: false,
-        attributeNamePrefix: "",
-        allowBooleanAttributes: true,
-        parseNodeValue: true,
-        parseAttributeValue: true,
-    };
-    const parser = new XMLParser(parserOptions);
-
     // Función para manejar la carga de archivos contexto organizacional
-    function handleFileUploadContext() {
-        // Backend para procesar el archivo XML
-        const jsonObj = parser.parse(xmlContext);
-        const dimensions = Array.isArray(jsonObj["spcm:Context"].myDimensions)
-            ? jsonObj["spcm:Context"].myDimensions
-            : [jsonObj["spcm:Context"].myDimensions];
-
-        let newAttributesContext: any[] = []; // Usar una variable temporal para almacenar los nuevos datos
-
-        dimensions.forEach((dim: any) => {
-            const contextAttributes = Array.isArray(dim.myContextAttributes)
-                ? dim.myContextAttributes
-                : [dim.myContextAttributes];
-
-            contextAttributes.forEach((attr: any) => {
-                const values = Array.isArray(attr.posibleValues)
-                    ? attr.posibleValues
-                    : attr.posibleValues
-                      ? [attr.posibleValues]
-                      : [];
-                const attributeData = {
-                    Attribute: attr.name,
-                    values: values.map((val: any) =>
-                        val.name ? val.name : "Unknown",
-                    ),
-                };
-                newAttributesContext.push(attributeData); // Agregar a la variable temporal
-            });
-        });
-
-        attributesContext = newAttributesContext; // Reasignar a la variable original
+    async function handleFileUploadContext() {
+        xmlContext = localStorage.getItem("xmlContext")!;
+        attributesContext = await fileUploadContext(xmlContext);
     }
 
     // Función para manejar la carga de archivos BPMN
-    async function handleFileUploadBpmn() {
-        const jsonObj = parser.parse(xmlBpmn);
-        const rootElements = jsonObj["bpmn2:Definitions"].rootElements;
-        const flowElements = Array.isArray(rootElements.flowElements)
-            ? rootElements.flowElements
-            : [rootElements.flowElements];
-
-        // Filtrar las actividades
-        const newTaskNames = flowElements
-            .filter(
-                (fe: { [x: string]: string }) =>
-                    fe["xsi:type"] === "bpmn2:Task",
-            )
-            .map((task: any) => task.name);
-
-        // Convertir los nombres de las actividades en un objeto
-        var taskNameConverted: activity[] = newTaskNames.map((task: any) => {
+    async function loadDataBPMN() {
+        // Extraemos los datos el archivo BPMN
+        xmlBpmn = localStorage.getItem("xmlBpmn")!;
+        var task = await fileUploadBpmn(xmlBpmn);
+        // Los convertimos a un objeto JSON para manejarlos de mejor forma, dandole un id a cada actividad, subnombre y reglas (que por ahora estan vacias)
+        var id: number = 0;
+        var taskNameConverted: activity[] = task.map((task: any) => {
             var i = 0;
             return {
                 id: i++,
@@ -310,10 +164,13 @@
                 rules: [],
             };
         });
-        // Guardar las actividades en el store
-        taskNames.set(taskNameConverted);
+        // Guardar las actividades convertidas
+        activities = taskNameConverted;
+        // guardo solo los nombres del taskName
+        replaceaction = activities.map((task) => task.name);
     }
 
+    // Función para guardar los cambios del atributo en las reglas
     function attributeRuleSelected(event: Event, rule_selected: SimpleRule) {
         let attributeSelect = (event.target as HTMLSelectElement).value;
         // Buscamos la regla seleccionada y modificamos el valor del atributo
@@ -335,6 +192,7 @@
         });
     }
 
+    // Función para guardar los cambios del valor en las reglas
     function valueRuleSelected(event: Event, rule_selected: SimpleRule) {
         let valueSelect = (event.target as HTMLSelectElement).value;
         // Buscamos la regla seleccionada y modificamos el valor del atributo
@@ -342,10 +200,6 @@
             const rule = findRuleById(rs, rule_selected.id);
             if (rule && rule.type == "Simple") {
                 rule.value = valueSelect;
-                console.log("Cambia el valor de la regla");
-                console.log(rule);
-                console.log(valueSelect);
-                console.log("--------------------");
             } else {
                 console.log("No se encontro la regla");
             }
@@ -353,6 +207,7 @@
         });
     }
 
+    // Función para guardar los cambios del conector en las reglas
     function conectorRuleSelected(event: Event, rule_selected: ConnectorRule) {
         let conectorSelect = (event.target as HTMLSelectElement).value;
         // Buscamos la regla seleccionada y modificamos el valor del atributo
@@ -365,11 +220,12 @@
         });
     }
 
+    // Función para guardar los cambios de todas las reglas en el localStorage
     function addRulesLocalStorage() {
         // Obtenemos las actividades que estan en el localStorage
         var task = localStorage.getItem("taskNames")!;
         // Si taskNames no es nulo, lo convertimos a JSON y lo guardamos
-        if (taskNames != null) {
+        if (activities != null) {
             var jsonTask = JSON.parse(task);
         }
         // Ahora buscamos en jsonTask el objeto de la actividad seleccionada y le agregamos las reglas
@@ -400,23 +256,11 @@
         // Guardamos el objeto con las reglas en el localStorage
         localStorage.setItem("taskNames", JSON.stringify(jsonTask));
     }
-    function clearAllRules(): void {
-        var tasks = JSON.parse(localStorage.getItem("taskNames")!);
-        var activitySelect = JSON.parse(
-            localStorage.getItem("activitySelect")!,
-        );
-        tasks.forEach((task: any) => {
-            if (task.id === activitySelect.id) {
-                {
-                    task.rules = [];
-                    task.replaceActivity = undefined;
-                    task.deleted = undefined;
-                    task.replaced = undefined;
-                }
-            }
-        });
-        localStorage.setItem("taskNames", JSON.stringify(tasks));
-        taskNames.set(tasks);
+
+    // Limpiar todas las reglas realizadas
+    function clearAllRules() {
+        const result = functionRulecreation.clearAllRules(activities);
+        activities = result;
     }
 </script>
 
