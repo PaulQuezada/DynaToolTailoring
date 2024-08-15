@@ -103,6 +103,28 @@
 
     // Recolectaremos los datos contenidos en el localstorage
     onMount(() => {
+        // Inicializamos los datos
+        initializeData();
+        // Efecto parallax
+        const handleScroll = () => {
+            const scrollPosition = divElement.scrollTop; // Cambiamos a usar scrollTop del div
+            yOffset = scrollPosition * 0.5; // Ajusta el valor para controlar la velocidad del efecto parallax
+            divElement.style.backgroundPosition = `center ${yOffset}px`;
+        };
+        divElement.addEventListener("scroll", handleScroll);
+        return () => {
+            divElement.removeEventListener("scroll", handleScroll);
+        };
+    });
+
+    // Función donde se incializan los datos, esto es cuando se carga la pagina y se obtienen los datos del localstorage
+    async function initializeData() {
+        // Aqui recolectamos los datos del localstorage
+        xmlContext = localStorage.getItem("xmlContext")!;
+        xmlBpmn = localStorage.getItem("xmlBpmn")!;
+        handleFileUploadContext();
+        await loadDataBPMN();
+        // Obtenemos la actividad seleccionada
         var activitySelect = localStorage.getItem("activitySelect")!;
         if (activitySelect != null) {
             activity = JSON.parse(activitySelect);
@@ -118,29 +140,13 @@
                 } else if (activity.replaced) {
                     console.log("replaced");
                     selectedAction1 = "Replace Action";
-                    selectedAction2 = activity.replaceActivity ?? "";
+                    selectedAction2 = activity.replaceActivity!;
                 } else {
                     console.log("ERROR: No action");
                 }
             }
         }
-        // Efecto parallax
-        const handleScroll = () => {
-            const scrollPosition = divElement.scrollTop; // Cambiamos a usar scrollTop del div
-            yOffset = scrollPosition * 0.5; // Ajusta el valor para controlar la velocidad del efecto parallax
-            divElement.style.backgroundPosition = `center ${yOffset}px`;
-        };
-
-        divElement.addEventListener("scroll", handleScroll);
-        // Aqui recolectamos los datos del localstorage
-        xmlContext = localStorage.getItem("xmlContext")!;
-        xmlBpmn = localStorage.getItem("xmlBpmn")!;
-        handleFileUploadContext();
-        loadDataBPMN();
-        return () => {
-            divElement.removeEventListener("scroll", handleScroll);
-        };
-    });
+    }
 
     // Función para manejar la carga de archivos contexto organizacional
     async function handleFileUploadContext() {
