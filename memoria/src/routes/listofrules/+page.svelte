@@ -1,13 +1,16 @@
 <script lang="ts">
+    // Importaciones de módulos
     import "../../app.css";
     import { goto } from "$app/navigation";
     import { themeStore } from "../../stores";
     import "../types";
     import { onMount } from "svelte";
-    import { XMLParser, XMLBuilder, XMLValidator } from "fast-xml-parser";
     import { writable, type Writable } from "svelte/store";
+    import { fileUploadBpmn} from "../../functions/importdata";
+    import * as functionExport from "../../functions/exportdata";
+
+    // Variables
     let searchQuery = "";
-    let xmlBpmn: string = "";
     let actividades: Writable<activity[]> = writable([]);
     let nombre_actividades = writable<String[]>([]);
     let showModal = false;
@@ -15,7 +18,6 @@
     let showModalEditar = false;
     let idactividad_eliminar: number;
     let idactividad_editar: number;
-
     let nombre_actividad_crear: String;
     let subnombre_actividad_crear: String;
     let subnombre_actividad_editar: String;
@@ -31,43 +33,21 @@
             // Ahora igualamos taskNames con jsonTask
             actividades.set(jsonTask);
             // Extraemos solo los nombres de las actividades(sin que se repitan)
-            guardarNombresActividades();
+            saveNamesActivities();
         } else {
             console.log("No hay actividades");
-            xmlBpmn = localStorage.getItem("xmlBpmn")!;
-            await handleFileUploadBpmn();
+            await loadDataBPMN();
         }
     });
 
-    // Creando una instancia del parser y del builder
-    const parserOptions = {
-        ignoreAttributes: false,
-        attributeNamePrefix: "",
-        allowBooleanAttributes: true,
-        parseNodeValue: true,
-        parseAttributeValue: true,
-    };
-    const parser = new XMLParser(parserOptions);
-
     // Función para manejar la carga de archivos BPMN
-    async function handleFileUploadBpmn() {
-        const jsonObj = parser.parse(xmlBpmn);
-        const rootElements = jsonObj["bpmn2:Definitions"].rootElements;
-        const flowElements = Array.isArray(rootElements.flowElements)
-            ? rootElements.flowElements
-            : [rootElements.flowElements];
-
-        // Filtrar las actividades
-        const newTaskNames = flowElements
-            .filter(
-                (fe: { [x: string]: string }) =>
-                    fe["xsi:type"] === "bpmn2:Task",
-            )
-            .map((task: any) => task.name);
-
-        // Convertir los nombres de las actividades en un objeto
-        let id = 0;
-        var taskNameConverted: activity[] = newTaskNames.map((task: any) => {
+    async function loadDataBPMN() {
+        // Extraemos los datos el archivo BPMN
+        const xmlBpmn:string = localStorage.getItem("xmlBpmn")!;
+        var task = await fileUploadBpmn(xmlBpmn);
+        // Los convertimos a un objeto JSON para manejarlos de mejor forma, dandole un id a cada actividad, subnombre y reglas (que por ahora estan vacias)
+        var id: number = 0;
+        var taskConverted: activity[] = task.map((task: any) => {
             return {
                 id: id++,
                 name: task,
@@ -75,21 +55,21 @@
                 rules: [],
             };
         });
-        // Guardar las actividades en el store
-        actividades.set(taskNameConverted);
+        // Guardar las actividades convertidas
+        actividades.set(taskConverted);
         // Almacenar en el localStorage
-        localStorage.setItem("taskNames", JSON.stringify(taskNameConverted));
-
-        // Extraemos solo los nombres de las actividades(sin que se repitan)
-        const uniqueTaskNames = newTaskNames.filter(
+        localStorage.setItem("taskNames", JSON.stringify(taskConverted));
+        // Extraemos solo los nombres de las actividades(sin que se repitan), esto es para agrupar las reglas de las actividades
+        const uniqueTaskNames = taskConverted.filter(
             (value: any, index: any, self: any) =>
                 self.indexOf(value) === index,
         );
-        nombre_actividades.set(uniqueTaskNames);
+        nombre_actividades.set(uniqueTaskNames.map(task => task.name));
         console.log(uniqueTaskNames);
     }
 
-    function guardarNombresActividades() {
+    // Función para guardar los nombres de las actividades
+    function saveNamesActivities() {
         const actividades_json = JSON.parse(localStorage.getItem("taskNames")!);
         // Extraemos solo los nombres de las actividades(sin que se repitan)
         const uniqueTaskNames = actividades_json
@@ -107,107 +87,12 @@
         activity.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
-    function eliminarDeclaracionXML(xmlString: string): string {
-        return xmlString.replace(/<\?xml.*\?>\s*/, ""); // Elimina la declaración XML y cualquier espacio adicional al inicio
-    }
-
-    function renderizarReglas(reglas: any[]): string {
-        return reglas
-            .map((regla) => {
-                // Cada regla es una ContentRule y se verifica si tiene subreglas para decidir su contenido
-                const detallesRegla =
-                    regla.rules && regla.rules.length > 0
-                        ? regla.rules
-                              .map(
-                                  (subRegla: {
-                                      rules: string | any[];
-                                      id: any;
-                                      name: any;
-                                      type: any;
-                                      attribute: any;
-                                      value: any;
-                                      logical_operator: any;
-                                  }) => {
-                                      if (
-                                          subRegla.rules &&
-                                          subRegla.rules.length > 0
-                                      ) {
-                                          // Si tiene subreglas, es una ComplexRule y se manejan sus subreglas recursivamente
-                                          return `<ComplexRule xsi:type="ComplexRule" id="${subRegla.id}">
-                    ${renderizarSubReglas(subRegla.rules)}
-                </ComplexRule>`;
-                                      } else {
-                                          // Si no tiene subreglas, es una Rule simple
-                                          return `<Rule xsi:type="Rule" id="${subRegla.id}" type="${subRegla.type}" attribute="${subRegla.attribute || subRegla.logical_operator}" value="${subRegla.value || "No value"}"></Rule>`;
-                                      }
-                                  },
-                              )
-                              .join("")
-                        : "";
-                const deletedAttribute =
-                    regla.deleted !== undefined
-                        ? ` deleted="${regla.deleted}"`
-                        : "";
-                const replaceActivityAttribute =
-                    regla.replaceActivity !== undefined
-                        ? ` replace="${regla.replaceActivity}"`
-                        : "";
-                return `<ContentRule xsi:type="ContentRule" id="${regla.id}" name="${regla.name}"${deletedAttribute}${replaceActivityAttribute} subname="${regla.subname}">
-            ${detallesRegla}
-        </ContentRule>`;
-            })
-            .join("");
-    }
-
-    function renderizarSubReglas(subReglas: any[] | string): string {
-        if (Array.isArray(subReglas)) {
-            return subReglas
-                .map((subRegla) => {
-                    if (subRegla.rules && subRegla.rules.length > 0) {
-                        // ComplexRule puede tener más reglas dentro
-                        return `<ComplexRule xsi:type="ComplexRule" id="${subRegla.id}" >
-                    ${renderizarSubReglas(subRegla.rules)}
-                </ComplexRule>`;
-                    } else {
-                        // Simple Rule sin subreglas
-                        return `<Rule xsi:type="Rule" id="${subRegla.id}"  type="${subRegla.type}" attribute="${subRegla.attribute || subRegla.logical_operator}" value="${subRegla.value || "No value"}"></Rule>`;
-                    }
-                })
-                .join("");
-        } else {
-            // Handle the case when subReglas is a string
-            return subReglas;
-        }
-    }
-
-    function crearModeloIntegrado() {
-        let contextoXML = localStorage.getItem("xmlContext")!;
-        let actividadesBPMN = localStorage.getItem("xmlBpmn")!;
-        const reglas = JSON.parse(localStorage.getItem("taskNames")!);
-
-        contextoXML = eliminarDeclaracionXML(contextoXML);
-        actividadesBPMN = eliminarDeclaracionXML(actividadesBPMN);
-
-        const documentoXML = `<?xml version="1.0" encoding="UTF-8"?>
-<IntegratedModel xmlns:xmi="http://www.omg.org/XMI" xmlns:spcm="http://contextmetamodel/1.0" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL-XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <ContextModel>
-        ${contextoXML}
-    </ContextModel>
-    <BPMNModel>
-        ${actividadesBPMN}
-    </BPMNModel>
-    <RulesModel>
-        ${renderizarReglas(reglas)}
-    </RulesModel>
-</IntegratedModel>`;
-
-        console.log(documentoXML);
-        localStorage.setItem("xmiModelRules", documentoXML);
-        return documentoXML;
+    function createModel() {
+        return functionExport.createCompleteModel();  
     }
 
     function descargarArchivoXMI() {
-        const contenidoXMI = crearModeloIntegrado();
+        const contenidoXMI = createModel();
         const blob = new Blob([contenidoXMI], { type: "application/xml" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -233,7 +118,7 @@
         actividades.set(tasks);
     }
 
-    function crearReglaActividad() {
+    function createRuleActivity() {
         var tasks = JSON.parse(localStorage.getItem("taskNames")!);
         // Objetenemos el ultimo id de las actividades
         var lastId = tasks[tasks.length - 1].id;
@@ -249,7 +134,7 @@
         actividades.set(tasks);
     }
 
-    function editarReglaActividad() {
+    function editRuleActivity() {
         var tasks = JSON.parse(localStorage.getItem("taskNames")!);
         tasks.forEach((task: any) => {
             if (task.id === idactividad_editar) {
@@ -515,7 +400,7 @@
                     ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                     : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                 on:click={() => {
-                    crearModeloIntegrado();
+                    createModel();
                     descargarArchivoXMI();
                 }}
             >
@@ -609,7 +494,7 @@
                         ? 'bg-[#4474f5] text-[#ffffff]'
                         : 'border border-[#8973ae] text-[#8973ae] bg-[#251835]'} transition duration-300"
                     on:click={() => {
-                        crearReglaActividad();
+                        createRuleActivity();
                         subnombre_actividad_crear = "";
                         showModalCrear = false;
                     }}>Crear regla</button
@@ -657,7 +542,7 @@
                         ? 'bg-[#4474f5] text-[#ffffff]'
                         : 'border border-[#8973ae] text-[#8973ae] bg-[#251835]'} transition duration-300"
                     on:click={() => {
-                        editarReglaActividad();
+                        editRuleActivity();
                         subnombre_actividad_crear = "";
                         showModalEditar = false;
                     }}>Editar nombre</button

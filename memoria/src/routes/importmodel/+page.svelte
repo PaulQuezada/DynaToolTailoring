@@ -1,24 +1,18 @@
 <!-- src/routes/index.svelte -->
 <script lang="ts">
     // Importaciones de módulos
-    import { XMLParser, XMLBuilder, XMLValidator } from "fast-xml-parser";
     import { goto } from "$app/navigation";
     import "../../app.css";
     import { writable } from "svelte/store";
     import { themeStore } from "../../stores";
-
+    import { fileUpload, nameFileUpload, fileUploadTailoringModel } from "../../functions/importdata";
     // Estado de la etapa actual
     let currentStage = writable(1);
 
     // Variables que contendran los contenidos del contexto organizacional y del BPMN
-    let files: FileList | undefined;
     let nameFileModel = writable("");
     let xmlModel: string = "";
-    let verifyModel = writable(false);
-    let taskNames = writable([] as activity[]);
-    let xmlContext: string = "";
-    let attributesContext: any[] = [];
-    let onlyAttributes: any[] = [];
+    let verifyModel: boolean= false;
 
     // Función para manejar el avance a la siguiente etapa
     function handleNext() {
@@ -44,185 +38,16 @@
         }
     }
 
-    // Creando una instancia del parser y del builder
-    const parserOptions = {
-        ignoreAttributes: false,
-        attributeNamePrefix: "",
-        allowBooleanAttributes: true,
-        parseNodeValue: true,
-        parseAttributeValue: true,
-    };
-    const parser = new XMLParser(parserOptions);
-
     // Función para manejar la carga de archivos contexto organizacional
-    async function handleFileUploadContext(event: Event) {
-        // Lectura de archivos
-        const input = event.target as HTMLInputElement;
-        // Actualiza el nombre del archivo
-        nameFileModel.set(input.files![0].name);
-        if (input.files && input.files.length > 0) {
-
-            const file = input.files[0];
-            xmlModel = await file.text();
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlModel, "text/xml");
-
-            // Extraer los modelos de contexto, bpmn y reglas
-            const contextModelNode = xmlDoc.querySelector("ContextModel");
-            const bpmnModelNode = xmlDoc.querySelector("BPMNModel");
-            const rulesModelNode = xmlDoc.querySelector("RulesModel");
-
-            let contextModel = contextModelNode
-                ? contextModelNode.innerHTML.trim()
-                : "";
-            let bpmnModel = bpmnModelNode ? bpmnModelNode.innerHTML.trim() : "";
-            let rulesModel = rulesModelNode
-                ? rulesModelNode.innerHTML.trim()
-                : "";
-
-            // Le agregamos el encabezado a los modelos
-            contextModel = contextModel
-                ? `<?xml version="1.0" encoding="UTF-8"?>\n${contextModel}`
-                : "";
-            bpmnModel = bpmnModel
-                ? `<?xml version="1.0" encoding="UTF-8"?>\n${bpmnModel}`
-                : "";
-            rulesModel = rulesModel
-                ? `<?xml version="1.0" encoding="UTF-8"?>\n<RulesModel>${rulesModel}</RulesModel>`
-                : "";
-
-            // Verificar si el archivo tiene datos y si los tiene lo agregamos al localStorage
-            if (contextModel && bpmnModel && rulesModel) {
-                localStorage.setItem("xmlContext", contextModel);
-                localStorage.setItem("xmlBpmn", bpmnModel);
-                loadAtributtes();
-                convertRulesModel(rulesModel);
-                verifyModel.set(true);
-            } else {
-                verifyModel.set(false);
-            }
+    async function fileUploadModel(event: Event) {
+        xmlModel = await fileUpload(event);
+        nameFileModel.set(await nameFileUpload(event));
+        const result = fileUploadTailoringModel(xmlModel);
+         
+        if(result != undefined){
+            localStorage.setItem("taskNames", JSON.stringify(result[1] as activity[]));
+            verifyModel = result[0] as boolean; 
         }
-    }
-    // Función para convertir el XML de RulesModel a la variable taskNames
-    export function convertRulesModel(xml: string): void {
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xml, "text/xml");
-        const contentRules = xmlDoc.querySelectorAll("ContentRule");
-        let activities: activity[] = [];
-        console.log(xml);
-        contentRules.forEach((contentRule, index) => {
-            console.log(contentRule);
-            const activity: activity = {
-                id: index,
-                name: contentRule.getAttribute("name") || "",
-                subname: contentRule.getAttribute("subname") || "",
-                rules: parseRules(contentRule),
-                deleted: contentRule.getAttribute("deleted") === "true" ? true : contentRule.getAttribute("deleted") === "false" ? false : undefined,
-                replaced: contentRule.getAttribute("replace") ? true : undefined,
-                replaceActivity: contentRule.getAttribute("replace") || undefined,
-            };
-            activities.push(activity);
-        });
-        taskNames.set(activities);
-        localStorage.setItem("taskNames", JSON.stringify(activities));
-    }
-
-    function parseRules(element: Element): Rule[] {
-        const rules: Rule[] = [];
-
-        // Iterar sobre todos los nodos Rule y ComplexRule directos de este elemento
-        element.childNodes.forEach((node) => {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-                const ruleElement = node as Element;
-                const ruleType = ruleElement.tagName;
-
-                const id = ruleElement.getAttribute("id") || "";
-                const typeAttribute = ruleElement.getAttribute("type") || "";
-
-                console.log(ruleType);
-
-                if (ruleType === "Rule" || ruleType === "ComplexRule") {
-                    if (typeAttribute === "Simple") {
-                        const simpleRule: SimpleRule = {
-                            id: id,
-                            type: "Simple",
-                            numberRule: 1,
-                            attribute:
-                                ruleElement.getAttribute("attribute") || "",
-                            value: ruleElement.getAttribute("value") || "",
-                            attributes: onlyAttributes,
-                            values: searchValues(
-                                ruleElement.getAttribute("attribute") || "",
-                            )
-                        };
-                        rules.push(simpleRule);
-                    } else if (typeAttribute === "Conector") {
-                        const connectorRule: ConnectorRule = {
-                            id: id,
-                            type: "Conector",
-                            logical_operator: ruleElement.getAttribute("attribute") || "Or", // Asumir un valor por defecto o ajustar según el XML
-                            logicals: ["And", "Or"],
-                        };
-                        rules.push(connectorRule);
-                    } else if (ruleType === "ComplexRule") {
-                        const complexRule: ComplexRule = {
-                            id: id,
-                            type: "Complex",
-                            numberRule: 2,
-                            rules: parseRules(ruleElement), // Recursividad para manejar reglas anidadas
-                        };
-                        rules.push(complexRule);
-                    }
-                }
-            }
-        });
-
-        return rules;
-    }
-
-    // Función para manejar la carga de archivos contexto organizacional
-    function loadAtributtes() {
-        xmlContext = localStorage.getItem("xmlContext")!;
-        // Backend para procesar el archivo XML
-        const jsonObj = parser.parse(xmlContext);
-        console.log(jsonObj);
-        const dimensions = Array.isArray(jsonObj["spcm:Context"].myDimensions)
-            ? jsonObj["spcm:Context"].myDimensions
-            : [jsonObj["spcm:Context"].myDimensions];
-
-        let newAttributesContext: any[] = []; // Usar una variable temporal para almacenar los nuevos datos
-
-        dimensions.forEach((dim: any) => {
-            const contextAttributes = Array.isArray(dim.myContextAttributes)
-                ? dim.myContextAttributes
-                : [dim.myContextAttributes];
-
-            contextAttributes.forEach((attr: any) => {
-                const values = Array.isArray(attr.posibleValues)
-                    ? attr.posibleValues
-                    : attr.posibleValues
-                      ? [attr.posibleValues]
-                      : [];
-                const attributeData = {
-                    Attribute: attr.name,
-                    values: values.map((val: any) =>
-                        val.name ? val.name : "Unknown",
-                    ),
-                };
-                newAttributesContext.push(attributeData); // Agregar a la variable temporal
-            });
-        });
-        let attributes: any[] = [];
-        newAttributesContext.forEach((data) => {
-            attributes.push(data.Attribute);
-        });
-        attributesContext = newAttributesContext; // Reasignar a la variable original
-        onlyAttributes = attributes;
-    }
-
-    function searchValues(value: String): any[] {
-        return attributesContext.filter((attr) => attr.Attribute === value)[0]
-            .values;
     }
 </script>
 
@@ -305,7 +130,7 @@
                     'Light'
                         ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                         : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
-                    on:change={handleFileUploadContext}
+                    on:change={fileUploadModel}
                 />
                 <div
                     class="absolute mt-10 p-10 flex flex-col text-center items-center mx-auto"
@@ -399,7 +224,7 @@
                         ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                         : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                 >
-                    {#if $verifyModel}
+                    {#if verifyModel}
                         <div class="flex flex-row">
                             <span
                                 class="mx-2 my-auto text-3xl material-symbols-outlined"
@@ -468,7 +293,7 @@
                         : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                     on:click={() => {
                         (async () => {})();
-                        goto("/definingrules");
+                        goto("/listofrules");
                     }}
                 >
                     <div class="flex my-auto">
