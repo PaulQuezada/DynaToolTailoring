@@ -1,25 +1,26 @@
 <!-- src/routes/index.svelte -->
 <script lang="ts">
     // Importaciones de módulos
-    import { XMLParser, XMLBuilder, XMLValidator } from "fast-xml-parser";
     import { goto } from "$app/navigation";
-    import "../../app.css";
     import { writable } from "svelte/store";
     import { themeStore } from "../../stores";
+    import "../../app.css";
+    import { fileUploadContext, fileUploadBpmn, nameFileUpload, fileUpload } from "../../functions/importdata";
 
     // Estado de la etapa actual
     let currentStage = writable(1);
 
     // Variables que contendran los contenidos del contexto organizacional y del BPMN
-    let files: FileList | undefined;
-    let nameFileContex = writable("");
-    let nameFileBpmn = writable("");
+    let nameFileContex: string = "";
+    let nameFileBpmn: string = "";
     let xmlContext: string = "";
     let xmlBpmn: string = "";
 
-    let attributesContext: any[] = [];
-    let taskNames = writable([]);
+    // Variables en donde se almacenaran los datos extraidos de los archivos
+    let extractAttributes: any[] = [];
+    let extractTask:any = [];
 
+    // Variables que indicaran si estan verificados los archivos XMI
     let verifyContext = writable(false);
     let verifyBpmn = writable(false);
 
@@ -49,93 +50,28 @@
         }
     }
 
-    // Creando una instancia del parser y del builder
-    const parserOptions = {
-        ignoreAttributes: false,
-        attributeNamePrefix: "",
-        allowBooleanAttributes: true,
-        parseNodeValue: true,
-        parseAttributeValue: true,
-    };
-    const parser = new XMLParser(parserOptions);
-
     // Función para manejar la carga de archivos contexto organizacional
-    async function handleFileUploadContext(event: Event) {
-        // Lectura de archivos
-        const input = event.target as HTMLInputElement;
-        // Actualiza el nombre del archivo
-        nameFileContex.set(input.files![0].name);
-        if (input.files && input.files.length > 0) {
-            const file = input.files[0];
-            xmlContext = await file.text();
-
-            // Backend para procesar el archivo XML
-            const jsonObj = parser.parse(xmlContext);
-            console.log(jsonObj);
-            const dimensions = Array.isArray(
-                jsonObj["spcm:Context"].myDimensions,
-            )
-                ? jsonObj["spcm:Context"].myDimensions
-                : [jsonObj["spcm:Context"].myDimensions];
-
-            let newAttributesContext: any[] = []; // Usar una variable temporal para almacenar los nuevos datos
-
-            dimensions.forEach((dim: any) => {
-                const contextAttributes = Array.isArray(dim.myContextAttributes)
-                    ? dim.myContextAttributes
-                    : [dim.myContextAttributes];
-
-                contextAttributes.forEach((attr: any) => {
-                    const values = Array.isArray(attr.posibleValues)
-                        ? attr.posibleValues
-                        : attr.posibleValues
-                          ? [attr.posibleValues]
-                          : [];
-                    const attributeData = {
-                        Attribute: attr.name,
-                        values: values.map((val: any) =>
-                            val.name ? val.name : "Unknown",
-                        ),
-                    };
-                    newAttributesContext.push(attributeData); // Agregar a la variable temporal
-                });
-            });
-
-            attributesContext = newAttributesContext; // Reasignar a la variable original
-            // RETURN del backend (EMULADO)
-            console.log(JSON.stringify(attributesContext, null, 2));
-        }
-        // Verificar si el attributeContext tiene datos entonces es correcto
-        verifyContext.set(input.files!.length > 0);
+    async function uploadContext(event: Event) {
+        nameFileContex = await nameFileUpload(event);
+        xmlContext = JSON.parse(JSON.stringify(await fileUpload(event))); // Extraer el contenido del archivo XMI
+        extractAttributes = JSON.parse(JSON.stringify(await fileUploadContext(xmlContext))); // Extraer los atributos del archivo XMI
+        //console.log(nameFileContex);
+        //console.log(xmlContext);
+        //console.log(JSON.stringify(extractAttributes, null, 2));
+        verifyContext.set(extractAttributes.length > 0); // Verificar si el attributeContext tiene datos, entonces es correcto
     }
 
     // Función para manejar la carga de archivos BPMN
-    async function handleFileUploadBpmn(event: Event) {
-        const input = event.target as HTMLInputElement;
-        // Actualiza el nombre del archivo
-        nameFileBpmn.set(input.files![0].name);
-        if (input.files && input.files.length > 0) {
-            const file = input.files[0];
-            xmlBpmn = await file.text();
-            const jsonObj = parser.parse(xmlBpmn);
-            const rootElements = jsonObj["bpmn2:Definitions"].rootElements;
-            const flowElements = Array.isArray(rootElements.flowElements)
-                ? rootElements.flowElements
-                : [rootElements.flowElements];
-
-            const newTaskNames = flowElements
-                .filter(
-                    (fe: { [x: string]: string }) =>
-                        fe["xsi:type"] === "bpmn2:Task",
-                )
-                .map((task: any) => task.name);
-
-            // Actualiza el store con los nuevos nombres de las tareas
-            taskNames.set(newTaskNames);
-        }
-        // Verificar si el archivo tiene datos entonces es correcto
-        verifyBpmn.set(input.files!.length > 0);
+    async function uploadBpmn(event: Event) {
+        nameFileBpmn = await nameFileUpload(event);
+        xmlBpmn = JSON.parse(JSON.stringify(await fileUpload(event))); // Extraer el contenido del archivo BPMN
+        extractTask = JSON.parse(JSON.stringify(await fileUploadBpmn(xmlBpmn))); // Extraer los atributos del archivo BPMN
+        //console.log(nameFileBpmn);
+        //console.log(xmlBpmn);
+        //console.log(JSON.stringify(extractTask, null, 2));
+        verifyBpmn.set(extractTask.length > 0); // Verificar si el attributeContext tiene datos entonces, es correcto
     }
+
 </script>
 
 <div class="flex flex-col h-full w-full">
@@ -217,7 +153,7 @@
                     'Light'
                         ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                         : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
-                    on:change={handleFileUploadContext}
+                    on:change={uploadContext}
                 />
                 <div
                     class="absolute mt-10 p-10 flex flex-col text-center items-center mx-auto"
@@ -259,7 +195,7 @@
                         <h1 class="my-auto text-sm mx-2">Back</h1>
                     </div>
                 </button>
-                {#if $nameFileContex != ""}
+                {#if nameFileContex != ""}
                     <button
                         class="font-bold border rounded-md p-2 hover:shadow-2xl transition duration-300 {$themeStore ===
                         'Light'
@@ -312,7 +248,7 @@
                     'Light'
                         ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                         : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
-                    on:change={handleFileUploadBpmn}
+                    on:change={uploadBpmn}
                 />
                 <div
                     class="absolute mt-10 p-10 flex flex-col text-center items-center mx-auto"
@@ -353,7 +289,7 @@
                         <h1 class="my-auto text-sm mx-2">Back</h1>
                     </div>
                 </button>
-                {#if $nameFileBpmn != ""}
+                {#if nameFileBpmn != ""}
                     <button
                         class="font-bold border rounded-md p-2 hover:shadow-2xl transition duration-300 {$themeStore ===
                         'Light'
@@ -446,7 +382,7 @@
                                 ? 'text-[#7f5fc0]'
                                 : 'text-[#6746b4]'}"
                         >
-                            Filename: {$nameFileContex}
+                            Filename: {nameFileContex}
                         </h1>
                     </div>
                 </div>
@@ -505,7 +441,7 @@
                                 ? 'text-[#7f5fc0]'
                                 : 'text-[#6746b4]'}"
                         >
-                            Filename: {$nameFileBpmn}
+                            Filename: {nameFileBpmn}
                         </h1>
                     </div>
                 </div>
@@ -532,11 +468,9 @@
                         ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                         : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                     on:click={() => {
-                        (async () => {
-                            await localStorage.setItem("xmlContext", xmlContext);
-                            await localStorage.setItem("xmlBpmn", xmlBpmn);
-                        })();
-                        goto("/definingrules");
+                        localStorage.setItem("xmlContext", xmlContext);
+                        localStorage.setItem("xmlBpmn", xmlBpmn);
+                        goto("/listofrules");
                     }}
                 >
                     <div class="flex my-auto">
