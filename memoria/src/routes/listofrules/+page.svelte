@@ -7,7 +7,6 @@
     import { onMount } from "svelte";
     import { writable, type Writable } from "svelte/store";
     import { fileUploadBpmn} from "../../functions/importdata";
-    import * as functionExport from "../../functions/exportdata";
 
     // Variables
     let searchQuery = "";
@@ -86,23 +85,6 @@
     $: filteredActivities = $nombre_actividades.filter((activity) =>
         activity.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-
-    function createModel() {
-        return functionExport.createCompleteModel();  
-    }
-
-    function descargarArchivoXMI() {
-        const contenidoXMI = createModel();
-        const blob = new Blob([contenidoXMI], { type: "application/xml" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "modelo-integrado.xmi";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
 
     function clearRulesById(taskId: number): void {
         var tasks = JSON.parse(localStorage.getItem("taskNames")!);
@@ -400,8 +382,7 @@
                     ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                     : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                 on:click={() => {
-                    createModel();
-                    descargarArchivoXMI();
+                    goto("/savefiles");
                 }}
             >
                 <div class="flex my-auto">

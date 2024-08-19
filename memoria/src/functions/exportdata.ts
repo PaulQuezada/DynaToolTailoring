@@ -1,10 +1,8 @@
-
-
-export function removeXMIHeader(xmlString: string): string {
+function removeXMIHeader(xmlString: string): string {
     return xmlString.replace(/<\?xml.*\?>\s*/, ""); // Elimina la declaración XML y cualquier espacio adicional al inicio
 }
 
-export function createModelRule(reglas: any[]): string {
+function createModelRule(reglas: any[]): string {
     return reglas
         .map((regla) => {
             // Cada regla es una ContentRule y se verifica si tiene subreglas para decidir su contenido
@@ -52,7 +50,7 @@ export function createModelRule(reglas: any[]): string {
         .join("");
 }
 
-export function createModelSubrule(subReglas: any[] | string): string {
+function createModelSubrule(subReglas: any[] | string): string {
     if (Array.isArray(subReglas)) {
         return subReglas
             .map((subRegla) => {
@@ -73,7 +71,7 @@ export function createModelSubrule(subReglas: any[] | string): string {
     }
 }
 
-export function createCompleteModel() {
+function createCompleteModel() {
     let contextoXML = localStorage.getItem("xmlContext")!;
     let actividadesBPMN = localStorage.getItem("xmlBpmn")!;
     const reglas = JSON.parse(localStorage.getItem("taskNames")!);
@@ -97,4 +95,17 @@ export function createCompleteModel() {
     console.log(documentoXML);
     localStorage.setItem("xmiModelRules", documentoXML);
     return documentoXML;
+}
+
+export function downloadXMIFile() {
+    const contenidoXMI = createCompleteModel();
+    const blob = new Blob([contenidoXMI], { type: "application/xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "modelo-integrado.xmi";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
