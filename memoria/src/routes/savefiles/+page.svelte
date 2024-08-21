@@ -3,6 +3,7 @@
     import "../../app.css";
     import { themeStore } from "../../stores";
     import {downloadXMIFile} from "../../functions/exportdata";
+    import { downloadATL } from "../../functions/atlcreation";
 </script>
 
 <div class="flex flex-col h-full w-full">
@@ -123,6 +124,9 @@
                 'Light'
                     ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                     : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
+                    on:click={() => {
+                        downloadATL();
+                    }}
             >
                 <span class="my-auto material-symbols-outlined">download</span>
             </button>
