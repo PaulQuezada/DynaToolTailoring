@@ -1,4 +1,10 @@
+import "../routes/types";
 function baseATL() {
+    const optionalRules = obtainOptionalRules();
+    console.log("Optional rules: ", optionalRules);
+    const replaceRules = obtainReplaceRules();
+    console.log("Replace rules: ", replaceRules);
+
     const atlContent: string = `
 module BPMNTailoringRules;
 -- @path MM=/TestPaulTesis/BPMN20.ecore
@@ -40,7 +46,9 @@ else
 	true
 endif;
 
-${generateOptionalRule(['Prepucio', 'Puntuar_Historia_en_el_Sprint', 'pablo weco', 'paul el ma vio', 'weco1','weco2','alvaro'])}
+${generateOptionalRule(optionalRules)}
+
+${generateReplaceRule(replaceRules)}
 
 rule Definitions {
 from	d:MM!Definitions
@@ -116,10 +124,55 @@ to		dd:MM1!Task(
     return atlContent;
 }
 
-function generateOptionalRule(elements: string[]): string {
-    let rule = `helper def: optionalRule(name:String): Boolean =\nif(Sequence{${elements.map(e => `'${e}'`).join(',')}}.includes(name)) then\n(`;
+function obtainOptionalRules(): activity[] {
+    const taskActivities = JSON.parse(localStorage.getItem("taskNames")!);
+    let optionalRules: activity[] = [];
+    taskActivities.forEach( (activity: activity) => {
+        if(activity.deleted != undefined){
+            optionalRules.push(activity);
+        }
+    });
+    return optionalRules;
+}
 
-    elements.forEach((element, index) => {
+function obtainReplaceRules(): activity[] {
+    const taskActivities = JSON.parse(localStorage.getItem("taskNames")!);
+    let replaceRules: activity[] = [];
+    taskActivities.forEach( (activity: activity) => {
+        if(activity.replaced){
+            replaceRules.push(activity);
+        }
+    });
+    return replaceRules;
+}
+
+function filterOnlyNames(elements: activity[]): string[] {
+    // Filtrar solo los nombres de las actividades sin repetir
+    const names: string[] = [];
+    elements.forEach((element: activity) => {
+        if (!names.includes(element.name)) {
+            names.push(element.name);
+        }
+    });
+    return names;
+}
+
+function findActivityByName(elements: activity[], name: string): activity[] {
+    return elements.filter((element: activity) => element.name === name);
+}
+
+function generateOptionalRule(elements: activity[]): string {
+    const nameActivity: string[] = filterOnlyNames(elements);
+    if (nameActivity.length === 1) {
+        // Caso especial para un solo elemento
+        const element = nameActivity[0];
+        return `helper def: optionalRule(name:String): Boolean =\nif(Sequence{'${element}'}.includes(name)) then\n\t(if ('${element}' = name) then\n\t\tthisModule.ruleOpt1()\n\telse\n\t\ttrue\n\tendif)\nelse\n\ttrue\nendif;`;
+    }
+
+    // Manejo para más de un elemento
+    let rule = `helper def: optionalRule(name:String): Boolean =\nif(Sequence{${nameActivity.map(e => `'${e}'`).join(',')}}.includes(name)) then\n(`;
+
+    nameActivity.forEach((element: string, index) => {
         if (index === 0) {
             rule += `if ('${element}' = name) then\n\t\tthisModule.ruleOpt${index + 1}()`;
         } else {
@@ -130,8 +183,41 @@ function generateOptionalRule(elements: string[]): string {
     // Cerrar el último if con else true, y añadir el paréntesis de cierre
     rule += `\n\t\t\telse\n\t\t\t\ttrue\n\t\t\tendif)`;
 
-    // Cerrar los bloques intermedios
-    for (let i = 0; i < elements.length - 2; i++) {
+    // Cerrar los bloques intermedios si hay más de dos elementos
+    for (let i = 0; i < nameActivity.length - 2; i++) {
+        rule += `\n\t\tendif)`;
+    }
+
+    rule += `\nendif)\nelse\n\ttrue\nendif;`;
+
+    return rule;
+}
+
+
+function generateReplaceRule(elements: activity[]): string {
+    const nameActivity: string[] = filterOnlyNames(elements);
+    if (nameActivity.length === 1) {
+        // Caso especial para un solo elemento
+        const element = nameActivity[0];
+        return `helper def: replaceRules(name:String): Boolean =\nif(Sequence{'${element}'}.includes(name)) then\n\t(if ('${element}' = name) then\n\t\tthisModule.ruleRep1()\n\telse\n\t\ttrue\n\tendif)\nelse\n\ttrue\nendif;`;
+    }
+
+    // Manejo para más de un elemento
+    let rule = `helper def: replaceRules(name:String): Boolean =\nif(Sequence{${nameActivity.map(e => `'${e}'`).join(',')}}.includes(name)) then\n(`;
+
+    nameActivity.forEach((element: string, index) => {
+        if (index === 0) {
+            rule += `if ('${element}' = name) then\n\t\tthisModule.ruleRep${index + 1}()`;
+        } else {
+            rule += `\n\telse\n\t\t(if ('${element}' = name) then\n\t\t\tthisModule.ruleRep${index + 1}()`;
+        }
+    });
+
+    // Cerrar el último if con else true, y añadir el paréntesis de cierre
+    rule += `\n\t\t\telse\n\t\t\t\ttrue\n\t\t\tendif)`;
+
+    // Cerrar los bloques intermedios si hay más de dos elementos
+    for (let i = 0; i < nameActivity.length - 2; i++) {
         rule += `\n\t\tendif)`;
     }
 
