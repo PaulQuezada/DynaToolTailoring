@@ -1,10 +1,9 @@
 import "../routes/types";
 function baseATL() {
+    // Buscamos las reglas opcionales(las que se eliminan o no) y las reglas de reemplazo
     const optionalRules = obtainOptionalRules();
-    console.log("Optional rules: ", optionalRules);
     const replaceRules = obtainReplaceRules();
-    console.log("Replace rules: ", replaceRules);
-
+    // Generamos el contenido del archivo
     const atlContent: string = `
 module BPMNTailoringRules;
 -- @path MM=/TestPaulTesis/BPMN20.ecore
@@ -51,6 +50,8 @@ ${generateOptionalRule(optionalRules)}
 ${generateReplaceRule(replaceRules)}
 
 ${generateOptFunction(optionalRules)}
+
+${generateRepFunction(replaceRules)}
 
 rule Definitions {
 from	d:MM!Definitions
@@ -126,6 +127,7 @@ to		dd:MM1!Task(
     return atlContent;
 }
 
+// Función para obtener las reglas opcionales
 function obtainOptionalRules(): activity[] {
     const taskActivities = JSON.parse(localStorage.getItem("taskNames")!);
     let optionalRules: activity[] = [];
@@ -137,6 +139,7 @@ function obtainOptionalRules(): activity[] {
     return optionalRules;
 }
 
+// Función para obtener las reglas reemplazo
 function obtainReplaceRules(): activity[] {
     const taskActivities = JSON.parse(localStorage.getItem("taskNames")!);
     let replaceRules: activity[] = [];
@@ -148,6 +151,7 @@ function obtainReplaceRules(): activity[] {
     return replaceRules;
 }
 
+// Función para filtrar solo los nombres de las actividades sin repetir
 function filterOnlyNames(elements: activity[]): string[] {
     // Filtrar solo los nombres de las actividades sin repetir
     const names: string[] = [];
@@ -159,17 +163,19 @@ function filterOnlyNames(elements: activity[]): string[] {
     return names;
 }
 
+// Función para encontrar una actividad por nombre
 function findElementsByName(elements: activity[], name: string): activity[] {
     return elements.filter((element: activity) => element.name === name);
 }
 
+// Función para generar la función "GENERAL" de reglas opcionales
 function generateOptionalRule(elements: activity[]): string {
     if (elements.length === 0) {
         return "";
     }
     const nameActivity: string[] = filterOnlyNames(elements);
+    // Caso especial para un solo elemento
     if (nameActivity.length === 1) {
-        // Caso especial para un solo elemento
         const element = nameActivity[0];
         let singlerule = `helper def: optionalRule(name:String): Boolean =\nif(Sequence{'${element}'}.includes(name)) then\n\t(if ('${element}' = name) then`;
         const activities = findElementsByName(elements, element);
@@ -201,7 +207,6 @@ function generateOptionalRule(elements: activity[]): string {
                 }
                 index++;
             });
-            //rule += `if ('${element}' = name) then\n\t\tthisModule.ruleOpt${index + 1}()`;
         }else {
             rule += `\n\telse\n\t\t(if ('${element}' = name) then`;
             activities = findElementsByName(elements, element);
@@ -228,26 +233,55 @@ function generateOptionalRule(elements: activity[]): string {
     return rule;
 }
 
-
+// Función para generar la función "GENERAL" de reglas de reemplazo
 function generateReplaceRule(elements: activity[]): string {
     if (elements.length === 0) {
         return "";
     }
     const nameActivity: string[] = filterOnlyNames(elements);
+    // Caso especial para un solo elemento
     if (nameActivity.length === 1) {
-        // Caso especial para un solo elemento
         const element = nameActivity[0];
-        return `helper def: replaceRules(name:String): Boolean =\nif(Sequence{'${element}'}.includes(name)) then\n\t(if ('${element}' = name) then\n\t\tthisModule.ruleRep1()\n\telse\n\t\ttrue\n\tendif)\nelse\n\ttrue\nendif;`;
+        let singlerule = `helper def: replaceRules(name:String): Boolean =\nif(Sequence{'${element}'}.includes(name)) then\n\t(if ('${element}' = name) then`;
+        const activities = findElementsByName(elements, element);
+        let index = 0;
+        activities.forEach(() => {
+            singlerule += `\n\t\tthisModule.ruleRep${index + 1}()`;
+            if(index < activities.length - 1) {
+                singlerule += `\tor`;
+            }
+            index++;
+        });
+        singlerule += `\n\telse\n\t\ttrue\n\tendif)\nelse\n\ttrue\nendif;`;
+        return singlerule;
     }
 
     // Manejo para más de un elemento
     let rule = `helper def: replaceRules(name:String): Boolean =\nif(Sequence{${nameActivity.map(e => `'${e}'`).join(',')}}.includes(name)) then\n(`;
-
-    nameActivity.forEach((element: string, index) => {
+    let activities: activity[] = [];
+    let index: number = 0;
+    nameActivity.forEach((element: string) => {
         if (index === 0) {
-            rule += `if ('${element}' = name) then\n\t\tthisModule.ruleRep${index + 1}()`;
-        } else {
-            rule += `\n\telse\n\t\t(if ('${element}' = name) then\n\t\t\tthisModule.ruleRep${index + 1}()`;
+            rule += `if ('${element}' = name) then`;
+            activities = findElementsByName(elements, element);
+            console.log("Activities: ", activities);
+            activities.forEach(() => {
+                rule += `\n\t\tthisModule.ruleRep${index + 1}()`;
+                if(index < activities.length - 1) {
+                    rule += `\tor`;
+                }
+                index++;
+            });
+        }else {
+            rule += `\n\telse\n\t\t(if ('${element}' = name) then`;
+            activities = findElementsByName(elements, element);
+            activities.forEach(() => {
+                rule += `\n\t\t\tthisModule.ruleRep${index + 1}()`;
+                if(index < activities.length - 1) {
+                    rule += `\tor`;
+                }
+                index++;
+            });
         }
     });
 
@@ -264,32 +298,67 @@ function generateReplaceRule(elements: activity[]): string {
     return rule;
 }
 
+// Función para generar la reglas que dictaminan si una actividad es eliminada o no (En base a las reglas de transformación)
 function generateOptFunction(elements: activity[]): string {
     if (elements.length === 0) {
         return "";
     }
     let ruleOptFunction = "";
     var ruleConditions = "";
-    elements.forEach((element, index) => {
-        ruleConditions = element.rules.map(parseRule).join(" ");
-        if (index === 0) {
-            ruleOptFunction = `helper def:ruleOpt${index + 1}():Boolean=if (${ruleConditions})`;
-            if(!element.deleted){
-                ruleOptFunction += ` then true else false endif;`;
-            }else{
-                ruleOptFunction += ` then false else true endif;`;
+    const nameActivity: string[] = filterOnlyNames(elements);
+    var index = 0;
+    nameActivity.forEach((element) => {
+        const activities = findElementsByName(elements, element);
+        activities.forEach((activity) => {
+            ruleConditions = activity.rules.map(parseRule).join(" ");
+            if (index === 0) {
+                ruleOptFunction = `helper def:ruleOpt${index + 1}():Boolean=if (${ruleConditions})`;
+                if(!activity.deleted){
+                    ruleOptFunction += ` then true else false endif;`;
+                }else{
+                    ruleOptFunction += ` then false else true endif;`;
+                }
+            } else {
+                ruleOptFunction += `\nhelper def:ruleOpt${index + 1}():Boolean=if (${ruleConditions})`;
+                if(!activity.deleted){
+                    ruleOptFunction += ` then true else false endif;`;
+                }else{
+                    ruleOptFunction += ` then false else true endif;`;
+                }
             }
-        } else {
-            ruleOptFunction += `\nhelper def:ruleOpt${index + 1}():Boolean=if (${ruleConditions})`;
-            if(!element.deleted){
-                ruleOptFunction += ` then true else false endif;`;
-            }else{
-                ruleOptFunction += ` then false else true endif;`;
-            }
-        }
-
+            index++;
+        });
     });
     return ruleOptFunction;
+}
+
+function generateRepFunction(elements: activity[]): string {
+    if (elements.length === 0) {
+        return "";
+    }
+    let ruleRepFunction = "";
+    var ruleConditions = "";
+    const nameActivity: string[] = filterOnlyNames(elements);
+    var index = 0;
+    nameActivity.forEach((element) => {
+        const activities = findElementsByName(elements, element);
+        activities.forEach((activity) => {
+            ruleConditions = activity.rules.map(parseRule).join(" ");
+            if (index === 0) {
+                ruleRepFunction = `helper def:ruleRep${index + 1}():Boolean=if (${ruleConditions})`;
+                if(activity.replaced){
+                    ruleRepFunction += ` then REEMPLAZO else NOREEMPLAZO endif;`;
+                }
+            } else {
+                ruleRepFunction += `\nhelper def:ruleRep${index + 1}():Boolean=if (${ruleConditions})`;
+                if(activity.replaced){
+                    ruleRepFunction += ` then REEMPLAZO else NOREEMPLAZO endif;`;
+                }
+            }
+            index++;
+        });
+    });
+    return ruleRepFunction;
 }
 
 // Función para parsear las reglas a ATL
