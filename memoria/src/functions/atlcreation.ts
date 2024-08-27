@@ -2,7 +2,7 @@ import "../routes/types";
 import {createCompleteModel} from "./exportdata";
 import {loadAtributtes, parseRules} from "./importdata";
 
-function baseATL() {
+export function baseATL() {
     // Función para obtener las reglas de transformación a través del modelo completo
     const taskActivities = obtainTransformationRules();
     // Buscamos las reglas opcionales(las que se eliminan o no) y las reglas de reemplazo
