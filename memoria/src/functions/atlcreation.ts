@@ -1,8 +1,13 @@
 import "../routes/types";
+import {createCompleteModel} from "./exportdata";
+import {loadAtributtes, parseRules} from "./importdata";
+
 function baseATL() {
+    // Función para obtener las reglas de transformación a través del modelo completo
+    const taskActivities = obtainTransformationRules();
     // Buscamos las reglas opcionales(las que se eliminan o no) y las reglas de reemplazo
-    const optionalRules = obtainOptionalRules();
-    const replaceRules = obtainReplaceRules();
+    const optionalRules = obtainOptionalRules(taskActivities); // Filtramos solo las reglas opcionales(se eliminan o no)
+    const replaceRules = obtainReplaceRules(taskActivities);  // Filtramos solo las reglas de reemplazo
     // Generamos el contenido del archivo
     const atlContent: string = `
 module BPMNTailoringRules;
@@ -127,9 +132,47 @@ to		dd:MM1!Task(
     return atlContent;
 }
 
+// Función para rescatar la información del modelo de reglas de transformación
+function obtainTransformationRules(): activity[] {
+    // Variable en donde se almacenarán las reglas de transformación encontradas en el modelo
+    let activities: activity[] = [];
+
+    // Crear el modelo completo y parsearlo a un formato procesable
+    const xmlTailoringModel = createCompleteModel();
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlTailoringModel, "text/xml");
+
+   // Extraer los datos del modelos reglas que están en el modelo completo generado
+    const rulesModel = xmlDoc.querySelector("RulesModel");
+    const contentRules = rulesModel ? rulesModel.querySelectorAll("ContentRule")! : [];
+    console.log("RulesModelNode: ", rulesModel);
+    console.log("RulesModelNode: ", contentRules);
+
+    // Obtenemos los atributos y valores que se encuentran en el modelo importado incialmente
+    const attributesAndValues = loadAtributtes()[0];
+    const onlyAttributes = loadAtributtes()[1];
+
+    // Recorremos el modelo de reglas para obtener la información de cada regla y almacenarla en la variable activities
+    contentRules.forEach((contentRule, index) => {
+        console.log(contentRule);
+        const activity: activity = {
+            id: index,
+            name: contentRule.getAttribute("name") || "",
+            subname: contentRule.getAttribute("subname") || "",
+            rules: parseRules(contentRule, onlyAttributes, attributesAndValues),
+            deleted: contentRule.getAttribute("deleted") === "true" ? true : contentRule.getAttribute("deleted") === "false" ? false : undefined,
+            replaced: contentRule.getAttribute("replace") ? true : undefined,
+            replaceActivity: contentRule.getAttribute("replace") || undefined,
+        };
+        activities.push(activity);
+    });
+
+    return activities;
+}
+
+
 // Función para obtener las reglas opcionales
-function obtainOptionalRules(): activity[] {
-    const taskActivities = JSON.parse(localStorage.getItem("taskNames")!);
+function obtainOptionalRules(taskActivities: activity[]): activity[] {
     let optionalRules: activity[] = [];
     taskActivities.forEach((activity: activity) => {
         if (activity.deleted != undefined) {
@@ -140,8 +183,7 @@ function obtainOptionalRules(): activity[] {
 }
 
 // Función para obtener las reglas reemplazo
-function obtainReplaceRules(): activity[] {
-    const taskActivities = JSON.parse(localStorage.getItem("taskNames")!);
+function obtainReplaceRules(taskActivities: activity[]): activity[] {
     let replaceRules: activity[] = [];
     taskActivities.forEach((activity: activity) => {
         if (activity.replaced) {
@@ -332,6 +374,7 @@ function generateOptFunction(elements: activity[]): string {
     return ruleOptFunction;
 }
 
+// Función para generar la reglas que dictaminan si una actividad es reemplazada (En base a las reglas de transformación)
 function generateRepFunction(elements: activity[]): string {
     if (elements.length === 0) {
         return "";

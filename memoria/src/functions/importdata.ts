@@ -221,7 +221,7 @@ export function convertRulesModel(xml: string, onlyAttributes: any[], attributes
 }
 
 // Función para transformar las reglas descritas en el XML a un objeto de reglas que puede ser procesada por la herramienta
-function parseRules(element: Element, onlyAttributes: any[], attributesAndValues: any[]): Rule[] {
+export function parseRules(element: Element, onlyAttributes: any[], attributesAndValues: any[]): Rule[] {
     const rules: Rule[] = [];
 
     // Iterar sobre todos los nodos Rule y ComplexRule directos de este elemento
