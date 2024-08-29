@@ -166,8 +166,9 @@
             var i = 0;
             return {
                 id: i++,
-                name: task,
+                name: task.name,
                 subname: "Default Subname",
+                type: task.type,
                 rules: [],
             };
         });

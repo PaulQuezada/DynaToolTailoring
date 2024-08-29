@@ -243,9 +243,9 @@ function generateOptionalRule(elements: activity[]): string {
             rule += `if ('${element}' = name) then`;
             activities = findElementsByName(elements, element);
             console.log("Activities: ", activities);
-            activities.forEach(() => {
+            activities.forEach((element, index_activities) => {
                 rule += `\n\t\tthisModule.ruleOpt${index + 1}()`;
-                if(index < activities.length - 1) {
+                if(index_activities < activities.length - 1) {
                     rule += `\tor`;
                 }
                 index++;
@@ -253,9 +253,9 @@ function generateOptionalRule(elements: activity[]): string {
         }else {
             rule += `\n\telse\n\t\t(if ('${element}' = name) then`;
             activities = findElementsByName(elements, element);
-            activities.forEach(() => {
+            activities.forEach((element, index_activities) => {
                 rule += `\n\t\t\tthisModule.ruleOpt${index + 1}()`;
-                if(index < activities.length - 1) {
+                if(index_activities < activities.length - 1) {
                     rule += `\tor`;
                 }
                 index++;
@@ -308,9 +308,9 @@ function generateReplaceRule(elements: activity[]): string {
             rule += `if ('${element}' = name) then`;
             activities = findElementsByName(elements, element);
             console.log("Activities: ", activities);
-            activities.forEach(() => {
+            activities.forEach((element, index_activities) => {
                 rule += `\n\t\tthisModule.ruleRep${index + 1}()`;
-                if(index < activities.length - 1) {
+                if(index_activities < activities.length - 1) {
                     rule += `\tor`;
                 }
                 index++;
@@ -318,9 +318,9 @@ function generateReplaceRule(elements: activity[]): string {
         }else {
             rule += `\n\telse\n\t\t(if ('${element}' = name) then`;
             activities = findElementsByName(elements, element);
-            activities.forEach(() => {
+            activities.forEach((element, index_activities) => {
                 rule += `\n\t\t\tthisModule.ruleRep${index + 1}()`;
-                if(index < activities.length - 1) {
+                if(index_activities < activities.length - 1) {
                     rule += `\tor`;
                 }
                 index++;

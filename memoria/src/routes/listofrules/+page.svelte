@@ -20,6 +20,7 @@
     let idactividad_editar: number;
     let nombre_actividad_crear: String;
     let subnombre_actividad_crear: String;
+    let tipo_actividad_crear: String;
     let subnombre_actividad_editar: String;
 
     // Variables filtros
@@ -42,6 +43,7 @@
         } else {
             console.log("No hay actividades");
             await loadDataBPMN();
+            localStorage.setItem("taskNames", JSON.stringify([])); // Inicializamos las reglas para cada actividad en vacio
         }
     });
 
@@ -61,35 +63,29 @@
                 rules: [],
             };
         });
-        // Guardar las actividades convertidas
-        actividades.set(taskConverted);
-        // Almacenar en el localStorage
-        localStorage.setItem("taskNames", JSON.stringify(taskConverted));
         // Extraemos solo los nombres y tipos de las actividades(sin que se repitan), esto es para agrupar las reglas de las actividades
-        const uniqueTaskNames = taskConverted.filter(
-            (value: any, index: any, self: any) =>
-                self.indexOf(value) === index,
-        ).map((task: any) => ({
+        const uniqueTaskNames = taskConverted
+            .filter(
+                (value: any, index: any, self: any) =>
+                    self.indexOf(value) === index,
+            )
+            .map((task: any) => ({
                 name: task.name,
-                type: task["xsi:type"],
+                type: task.type,
             }));
-        nombre_actividades.set( uniqueTaskNames);
+        nombre_actividades.set(uniqueTaskNames);
         console.log(uniqueTaskNames);
     }
 
     // Función para guardar los nombres de las actividades
     function saveNamesActivities() {
         const actividades_json = JSON.parse(localStorage.getItem("taskNames")!);
-        // Extraemos solo los nombres y tipos de las actividades(sin que se repitan), esto es para agrupar las reglas de las actividades
-        const uniqueTaskNames = actividades_json.filter(
-            (value: any, index: any, self: any) =>
-                self.indexOf(value) === index,
-        ).map((task: any) => ({
-                name: task.name,
-                type: task.type,
-            }));
-        nombre_actividades.set(uniqueTaskNames);
-        console.log(uniqueTaskNames);
+        if (actividades_json.length == 0) {
+            loadDataBPMN();
+        } else {
+            loadDataBPMN();
+            actividades.set(actividades_json);
+        }
     }
 
     // Filtrar actividades por nombre y por tipo
@@ -113,13 +109,20 @@
 
     function createRuleActivity() {
         var tasks = JSON.parse(localStorage.getItem("taskNames")!);
-        // Objetenemos el ultimo id de las actividades
-        var lastId = tasks[tasks.length - 1].id;
+        // Objetenemos el ultimo id de las actividades si es que no esta vacio
+        var lastId: number = 0;
+        if (tasks.length == 0) {
+            lastId = 0;
+        } else {
+            lastId = tasks[tasks.length - 1].id;
+        }
+        console.log(lastId);
         // Creamos la regla
         var newRule = {
             id: lastId + 1,
             name: nombre_actividad_crear,
             subname: subnombre_actividad_crear,
+            type: tipo_actividad_crear,
             rules: [],
         };
         tasks.push(newRule);
@@ -220,7 +223,10 @@
                                     ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                     : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                 on:click={() => {
-                                    nombre_actividad_crear = nombre_actividad;
+                                    nombre_actividad_crear =
+                                        nombre_actividad.name;
+                                    tipo_actividad_crear =
+                                        nombre_actividad.type;
                                     showModalCrear = true;
                                 }}
                             >
@@ -326,13 +332,11 @@
                                                             );
                                                         }}
                                                     >
-                                                        <div
-                                                            class="flex mx-10 text-sm"
+                                                        <h1
+                                                            class="mx-auto my-auto text-sm"
                                                         >
-                                                            <h1 class="mx-auto">
-                                                                Edit
-                                                            </h1>
-                                                        </div>
+                                                            Edit
+                                                        </h1>
                                                     </button>
                                                     <!-- Tambien el boton de eliminar -->
                                                     <button
@@ -346,17 +350,16 @@
                                                             showModal = true;
                                                         }}
                                                     >
-                                                        <div
-                                                            class="flex mx-10 text-sm"
+                                                        <h1
+                                                            class="mx-auto my-auto text-sm"
                                                         >
-                                                            <h1 class="mx-auto">
-                                                                Delete
-                                                            </h1>
-                                                        </div>
+                                                            Delete
+                                                        </h1>
                                                     </button>
                                                 {:else}
+                                                    <!-- Si la actividad tiene reglas, se muestra el boton de editar reglas -->
                                                     <button
-                                                        class="border w-4/5 h-[40px] mx-auto rounded-md text-sm {$themeStore ===
+                                                        class="my-auto mx-auto mr-2 w-1/3 h-[40px] border rounded-md {$themeStore ===
                                                         'Light'
                                                             ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                             : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
@@ -372,13 +375,29 @@
                                                             );
                                                         }}
                                                     >
-                                                        <div class="flex mx-10">
-                                                            <h1
-                                                                class="my-auto mx-auto"
-                                                            >
-                                                                Create rule
-                                                            </h1>
-                                                        </div>
+                                                        <h1
+                                                            class="mx-auto my-auto text-sm"
+                                                        >
+                                                            Create rule
+                                                        </h1>
+                                                    </button>
+                                                    <!-- Tambien el boton de eliminar -->
+                                                    <button
+                                                        class="my-auto mx-auto w-1/3 h-[40px] border rounded-md {$themeStore ===
+                                                        'Light'
+                                                            ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
+                                                            : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
+                                                        on:click={() => {
+                                                            idactividad_eliminar =
+                                                                activity.id;
+                                                            showModal = true;
+                                                        }}
+                                                    >
+                                                        <h1
+                                                            class="mx-auto my-auto text-sm"
+                                                        >
+                                                            Delete
+                                                        </h1>
                                                     </button>
                                                 {/if}
                                             </div>
