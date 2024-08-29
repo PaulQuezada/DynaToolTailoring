@@ -157,6 +157,7 @@ function obtainTransformationRules(): activity[] {
         console.log(contentRule);
         const activity: activity = {
             id: index,
+            type: contentRule.getAttribute("typeofactivity") || "",
             name: contentRule.getAttribute("name") || "",
             subname: contentRule.getAttribute("subname") || "",
             rules: parseRules(contentRule, onlyAttributes, attributesAndValues),

@@ -43,7 +43,7 @@ function createModelRule(reglas: any[]): string {
                 regla.replaceActivity !== undefined
                     ? ` replace="${regla.replaceActivity}"`
                     : "";
-            return `<ContentRule xsi:type="ContentRule" id="${regla.id}" name="${regla.name}"${deletedAttribute}${replaceActivityAttribute} subname="${regla.subname}">
+            return `<ContentRule xsi:type="ContentRule" id="${regla.id}" name="${regla.name}"${deletedAttribute}${replaceActivityAttribute} subname="${regla.subname}" typeofactivity="${regla.type}">
         ${detallesRegla}
     </ContentRule>`;
         })

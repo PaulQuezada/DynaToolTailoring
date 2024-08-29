@@ -6,20 +6,26 @@
     import "../types";
     import { onMount } from "svelte";
     import { writable, type Writable } from "svelte/store";
-    import { fileUploadBpmn} from "../../functions/importdata";
+    import { fileUploadBpmn } from "../../functions/importdata";
 
     // Variables
     let searchQuery = "";
     let actividades: Writable<activity[]> = writable([]);
-    let nombre_actividades = writable<String[]>([]);
+    let nombre_actividades = writable<any[]>([]);
     let showModal = false;
     let showModalCrear = false;
     let showModalEditar = false;
+    let showModalFiltro = false;
     let idactividad_eliminar: number;
     let idactividad_editar: number;
     let nombre_actividad_crear: String;
     let subnombre_actividad_crear: String;
     let subnombre_actividad_editar: String;
+
+    // Variables filtros
+    let filterNormalTask = true;
+    let filterUserTask = false;
+    let filterAnotherTask = false;
 
     // cuando montamos la pagina recolectamos los datos y los guardamos en el store
     onMount(async () => {
@@ -42,15 +48,16 @@
     // Función para manejar la carga de archivos BPMN
     async function loadDataBPMN() {
         // Extraemos los datos el archivo BPMN
-        const xmlBpmn:string = localStorage.getItem("xmlBpmn")!;
+        const xmlBpmn: string = localStorage.getItem("xmlBpmn")!;
         var task = await fileUploadBpmn(xmlBpmn);
         // Los convertimos a un objeto JSON para manejarlos de mejor forma, dandole un id a cada actividad, subnombre y reglas (que por ahora estan vacias)
         var id: number = 0;
         var taskConverted: activity[] = task.map((task: any) => {
             return {
                 id: id++,
-                name: task,
-                subname: "Task: " + task,
+                type: task.type,
+                name: task.name,
+                subname: "Task: " + task.name,
                 rules: [],
             };
         });
@@ -58,32 +65,36 @@
         actividades.set(taskConverted);
         // Almacenar en el localStorage
         localStorage.setItem("taskNames", JSON.stringify(taskConverted));
-        // Extraemos solo los nombres de las actividades(sin que se repitan), esto es para agrupar las reglas de las actividades
+        // Extraemos solo los nombres y tipos de las actividades(sin que se repitan), esto es para agrupar las reglas de las actividades
         const uniqueTaskNames = taskConverted.filter(
             (value: any, index: any, self: any) =>
                 self.indexOf(value) === index,
-        );
-        nombre_actividades.set(uniqueTaskNames.map(task => task.name));
+        ).map((task: any) => ({
+                name: task.name,
+                type: task["xsi:type"],
+            }));
+        nombre_actividades.set( uniqueTaskNames);
         console.log(uniqueTaskNames);
     }
 
     // Función para guardar los nombres de las actividades
     function saveNamesActivities() {
         const actividades_json = JSON.parse(localStorage.getItem("taskNames")!);
-        // Extraemos solo los nombres de las actividades(sin que se repitan)
-        const uniqueTaskNames = actividades_json
-            .map((task: { name: any }) => task.name)
-            .filter(
-                (value: any, index: any, self: any) =>
-                    self.indexOf(value) === index,
-            );
+        // Extraemos solo los nombres y tipos de las actividades(sin que se repitan), esto es para agrupar las reglas de las actividades
+        const uniqueTaskNames = actividades_json.filter(
+            (value: any, index: any, self: any) =>
+                self.indexOf(value) === index,
+        ).map((task: any) => ({
+                name: task.name,
+                type: task.type,
+            }));
         nombre_actividades.set(uniqueTaskNames);
         console.log(uniqueTaskNames);
     }
 
-    // Filtrar actividades
+    // Filtrar actividades por nombre y por tipo
     $: filteredActivities = $nombre_actividades.filter((activity) =>
-        activity.toLowerCase().includes(searchQuery.toLowerCase()),
+        activity.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
     function clearRulesById(taskId: number): void {
@@ -144,15 +155,26 @@
             : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c]'} transition duration-300"
     >
         <!-- Buscador -->
-        <input
-            type="text"
-            bind:value={searchQuery}
-            placeholder="     Search by activity..."
-            class="text-[#6f40b8] mx-auto mt-5 h-[50px] w-3/4 rounded-tl-lg rounded-tr-lg border {$themeStore ===
-            'Light'
-                ? 'border-[#875fc7] bg-[#ffffff]'
-                : 'border-[#462a72] bg-[#14111b]'}"
-        />
+        <div class="relative mx-auto mt-5 w-3/4">
+            <input
+                type="text"
+                bind:value={searchQuery}
+                placeholder="Search by activity..."
+                class="text-[#6f40b8] h-[50px] w-full rounded-tl-lg rounded-tr-lg border pl-10 pr-14
+                {$themeStore === 'Light'
+                    ? 'border-[#875fc7] bg-[#ffffff]'
+                    : 'border-[#462a72] bg-[#14111b]'}
+                focus:bg-[#6e48ba] focus:text-white focus:border-[#6e48ba] focus:outline-none transition-colors duration-300 ease-in-out"
+            />
+            <button
+                type="button"
+                class="absolute top-0 right-0 h-[50px] w-[50px] rounded-tr-lg text-[#6e48ba]"
+                on:click={() => (showModalFiltro = true)}
+            >
+                <span class="material-symbols-outlined"> tune </span>
+            </button>
+        </div>
+
         <!-- Tabla donde estaran las actividades -->
         <div
             class="w-3/4 h-[400px] mb-5 overflow-y-auto mx-auto rounded-bl-lg rounded-br-lg border-r border-l border-b {$themeStore ===
@@ -181,183 +203,191 @@
             </div>
             <div class="text-center">
                 {#each filteredActivities as nombre_actividad}
-                    <!-- Tabla donde estaran las actividades listadas por nombre -->
-                    <div class="flex justify-between mt-3">
-                        <h1
-                            class="mx-10 font-bold text-lg {$themeStore ===
-                            'Light'
-                                ? 'text-[#855dc7]'
-                                : 'text-[#6d44ba]'}"
-                        >
-                            {nombre_actividad}
-                        </h1>
-                        <button
-                            class="border rounded-md p-2 mx-10 text-sm {$themeStore ===
-                            'Light'
-                                ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
-                                : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
-                            on:click={() => {
-                                nombre_actividad_crear = nombre_actividad;
-                                showModalCrear = true;
-                            }}
-                        >
-                            Add Rule
-                        </button>
-                    </div>
-                    {#each $actividades as activity (activity.id)}
-                        {#if activity.name == nombre_actividad}
-                            <div class="flex">
-                                <!-- Timeline -->
-                                <div class="flex-col">
+                    {#if (nombre_actividad.type == "bpmn2:Task" && filterNormalTask) || (nombre_actividad.type == "bpmn2:UserTask" && filterUserTask) || (nombre_actividad.type != "bpmn2:Task" && nombre_actividad.type != "bpmn2:UserTask" && filterAnotherTask)}
+                        <!-- Tabla donde estaran las actividades listadas por nombre -->
+                        <div class="flex justify-between mt-3">
+                            <h1
+                                class="mx-10 font-bold text-lg {$themeStore ===
+                                'Light'
+                                    ? 'text-[#855dc7]'
+                                    : 'text-[#6d44ba]'}"
+                            >
+                                {nombre_actividad.name}
+                            </h1>
+                            <button
+                                class="border rounded-md p-2 mx-10 text-sm {$themeStore ===
+                                'Light'
+                                    ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
+                                    : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
+                                on:click={() => {
+                                    nombre_actividad_crear = nombre_actividad;
+                                    showModalCrear = true;
+                                }}
+                            >
+                                Add Rule
+                            </button>
+                        </div>
+                        {#each $actividades as activity (activity.id)}
+                            {#if activity.name == nombre_actividad.name}
+                                <div class="flex">
+                                    <!-- Timeline -->
+                                    <div class="flex-col">
+                                        <div
+                                            class="w-[2px] ml-12 h-[25px] bg-[#7546c1]"
+                                        ></div>
+                                        <div
+                                            class="w-[12px] ml-[2.7rem] h-[12px] rounded-xl bg-[#7546c1]"
+                                        ></div>
+                                        <div
+                                            class="w-[2px] ml-12 h-[25px] bg-[#7546c1]"
+                                        ></div>
+                                    </div>
+                                    <!-- Las reglas que estan para esa actividad -->
                                     <div
-                                        class="w-[2px] ml-12 h-[25px] bg-[#7546c1]"
-                                    ></div>
-                                    <div
-                                        class="w-[12px] ml-[2.7rem] h-[12px] rounded-xl bg-[#7546c1]"
-                                    ></div>
-                                    <div
-                                        class="w-[2px] ml-12 h-[25px] bg-[#7546c1]"
-                                    ></div>
-                                </div>
-                                <!-- Las reglas que estan para esa actividad -->
-                                <div
-                                    class="mt-[18px] ml-2 flex-col h-full w-full"
-                                >
-                                    <div class="flex flex-row justify-between">
-                                        <div class="text-[#7546c1]">
-                                            <div class="flex">
+                                        class="mt-[18px] ml-2 flex-col h-full w-full"
+                                    >
+                                        <div
+                                            class="flex flex-row justify-between"
+                                        >
+                                            <div class="text-[#7546c1]">
+                                                <div class="flex">
+                                                    {#if activity.rules.length > 0}
+                                                        <span
+                                                            class="mr-2 my-auto material-symbols-outlined"
+                                                        >
+                                                            check_circle
+                                                        </span>
+                                                        <h1 class="my-auto">
+                                                            {activity.subname}
+                                                        </h1>
+                                                        <button
+                                                            class="border rounded-md mx-2 text-xs {$themeStore ===
+                                                            'Light'
+                                                                ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
+                                                                : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
+                                                            on:click={() => {
+                                                                idactividad_editar =
+                                                                    activity.id;
+                                                                showModalEditar = true;
+                                                            }}
+                                                        >
+                                                            <span
+                                                                class="mx-auto my-auto material-symbols-outlined"
+                                                            >
+                                                                edit
+                                                            </span>
+                                                        </button>
+                                                    {:else}
+                                                        <span
+                                                            class="mr-2 my-auto material-symbols-outlined"
+                                                        >
+                                                            pending
+                                                        </span>
+                                                        <h1 class="my-auto">
+                                                            {activity.subname}
+                                                        </h1>
+                                                        <button
+                                                            class="border rounded-md mx-2 text-xs {$themeStore ===
+                                                            'Light'
+                                                                ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
+                                                                : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
+                                                            on:click={() => {
+                                                                idactividad_editar =
+                                                                    activity.id;
+                                                                showModalEditar = true;
+                                                            }}
+                                                        >
+                                                            <span
+                                                                class="mx-auto my-auto material-symbols-outlined"
+                                                            >
+                                                                edit
+                                                            </span>
+                                                        </button>
+                                                    {/if}
+                                                </div>
+                                            </div>
+                                            <div class="flex w-[300px]">
                                                 {#if activity.rules.length > 0}
-                                                    <span
-                                                        class="mr-2 my-auto material-symbols-outlined"
-                                                    >
-                                                        check_circle
-                                                    </span>
-                                                    <h1 class="my-auto">
-                                                        {activity.subname}
-                                                    </h1>
+                                                    <!-- Si la actividad tiene reglas, se muestra el boton de editar reglas -->
                                                     <button
-                                                        class="border rounded-md mx-2 text-xs {$themeStore ===
+                                                        class="my-auto mx-auto mr-2 w-1/3 h-[40px] border rounded-md {$themeStore ===
                                                         'Light'
                                                             ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                             : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                                         on:click={() => {
-                                                            idactividad_editar =
-                                                                activity.id;
-                                                            showModalEditar = true;
+                                                            localStorage.setItem(
+                                                                "activitySelect",
+                                                                JSON.stringify(
+                                                                    activity,
+                                                                ),
+                                                            );
+                                                            goto(
+                                                                "/createrules",
+                                                            );
                                                         }}
                                                     >
-                                                        <span
-                                                            class="mx-auto my-auto material-symbols-outlined"
+                                                        <div
+                                                            class="flex mx-10 text-sm"
                                                         >
-                                                            edit
-                                                        </span>
+                                                            <h1 class="mx-auto">
+                                                                Edit
+                                                            </h1>
+                                                        </div>
+                                                    </button>
+                                                    <!-- Tambien el boton de eliminar -->
+                                                    <button
+                                                        class="my-auto mx-auto w-1/3 h-[40px] border rounded-md {$themeStore ===
+                                                        'Light'
+                                                            ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
+                                                            : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
+                                                        on:click={() => {
+                                                            idactividad_eliminar =
+                                                                activity.id;
+                                                            showModal = true;
+                                                        }}
+                                                    >
+                                                        <div
+                                                            class="flex mx-10 text-sm"
+                                                        >
+                                                            <h1 class="mx-auto">
+                                                                Delete
+                                                            </h1>
+                                                        </div>
                                                     </button>
                                                 {:else}
-                                                    <span
-                                                        class="mr-2 my-auto material-symbols-outlined"
-                                                    >
-                                                        pending
-                                                    </span>
-                                                    <h1 class="my-auto">
-                                                        {activity.subname}
-                                                    </h1>
                                                     <button
-                                                        class="border rounded-md mx-2 text-xs {$themeStore ===
+                                                        class="border w-4/5 h-[40px] mx-auto rounded-md text-sm {$themeStore ===
                                                         'Light'
                                                             ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                             : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                                         on:click={() => {
-                                                            idactividad_editar =
-                                                                activity.id;
-                                                            showModalEditar = true;
+                                                            localStorage.setItem(
+                                                                "activitySelect",
+                                                                JSON.stringify(
+                                                                    activity,
+                                                                ),
+                                                            );
+                                                            goto(
+                                                                "/createrules",
+                                                            );
                                                         }}
                                                     >
-                                                        <span
-                                                            class="mx-auto my-auto material-symbols-outlined"
-                                                        >
-                                                            edit
-                                                        </span>
+                                                        <div class="flex mx-10">
+                                                            <h1
+                                                                class="my-auto mx-auto"
+                                                            >
+                                                                Create rule
+                                                            </h1>
+                                                        </div>
                                                     </button>
                                                 {/if}
                                             </div>
                                         </div>
-                                        <div class="flex w-[300px]">
-                                            {#if activity.rules.length > 0}
-                                                <!-- Si la actividad tiene reglas, se muestra el boton de editar reglas -->
-                                                <button
-                                                    class="my-auto mx-auto mr-2 w-1/3 h-[40px] border rounded-md {$themeStore ===
-                                                    'Light'
-                                                        ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
-                                                        : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
-                                                    on:click={() => {
-                                                        localStorage.setItem(
-                                                            "activitySelect",
-                                                            JSON.stringify(
-                                                                activity,
-                                                            ),
-                                                        );
-                                                        goto("/createrules");
-                                                    }}
-                                                >
-                                                    <div
-                                                        class="flex mx-10 text-sm"
-                                                    >
-                                                        <h1 class="mx-auto">
-                                                            Edit
-                                                        </h1>
-                                                    </div>
-                                                </button>
-                                                <!-- Tambien el boton de eliminar -->
-                                                <button
-                                                    class="my-auto mx-auto w-1/3 h-[40px] border rounded-md {$themeStore ===
-                                                    'Light'
-                                                        ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
-                                                        : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
-                                                    on:click={() => {
-                                                        idactividad_eliminar =
-                                                            activity.id;
-                                                        showModal = true;
-                                                    }}
-                                                >
-                                                    <div
-                                                        class="flex mx-10 text-sm"
-                                                    >
-                                                        <h1 class="mx-auto">
-                                                            Delete
-                                                        </h1>
-                                                    </div>
-                                                </button>
-                                            {:else}
-                                                <button
-                                                    class="border w-4/5 h-[40px] mx-auto rounded-md text-sm {$themeStore ===
-                                                    'Light'
-                                                        ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
-                                                        : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
-                                                    on:click={() => {
-                                                        localStorage.setItem(
-                                                            "activitySelect",
-                                                            JSON.stringify(
-                                                                activity,
-                                                            ),
-                                                        );
-                                                        goto("/createrules");
-                                                    }}
-                                                >
-                                                    <div class="flex mx-10">
-                                                        <h1
-                                                            class="my-auto mx-auto"
-                                                        >
-                                                            Create rule
-                                                        </h1>
-                                                    </div>
-                                                </button>
-                                            {/if}
-                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        {/if}
-                    {/each}
+                            {/if}
+                        {/each}
+                    {/if}
                 {/each}
             </div>
         </div>
@@ -528,6 +558,174 @@
                         showModalEditar = false;
                     }}>Editar nombre</button
                 >
+            </div>
+        </div>
+    </div>
+{/if}
+
+<!-- Modal para el filtro-->
+{#if showModalFiltro}
+    <div
+        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+    >
+        <div
+            class="relative border rounded-lg shadow-lg p-8 h-[500px] w-1/2 {$themeStore ===
+            'Light'
+                ? 'bg-[#ffffff] border-[#f0eaf9] shadow-[0_0_30px_#f0eaf9]'
+                : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c]'}"
+        >
+            <button
+                on:click={() => {
+                    showModalFiltro = false;
+                }}
+                class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            >
+                <svg
+                    class="fill-current h-6 w-6"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                >
+                    <path
+                        d="M10 8.586l4.293-4.293 1.414 1.414L11.414 10l4.293 4.293-1.414 1.414L10 11.414l-4.293 4.293-1.414-1.414L8.586 10 4.293 5.707l1.414-1.414L10 8.586z"
+                    />
+                </svg>
+            </button>
+            <div class="flex flex-col h-full">
+                <h1
+                    class="mx-auto text-2xl font-bold mb-4 {$themeStore ===
+                    'Light'
+                        ? 'text-[#14111b]'
+                        : 'text-[#b498df]'}"
+                >
+                    Activity filter
+                </h1>
+                <div class="mx-10">
+                    <!-- Filtro por tipos-->
+                    <h1
+                        class="text-lg {$themeStore === 'Light'
+                            ? 'text-[#14111b]'
+                            : 'text-[#b498df]'}"
+                    >
+                        Filter by type
+                    </h1>
+                    <div
+                        class="mt-3 w-full h-[1px] {$themeStore === 'Light'
+                            ? 'bg-[#14111b]'
+                            : 'bg-[#b498df]'}"
+                    ></div>
+                    <!-- CheckBox-->
+                    <div class="flex flex-col space-y-2 mt-5">
+                        <label class="inline-flex items-center">
+                            <input
+                                type="checkbox"
+                                class="form-checkbox h-5 w-5 text-[#6e48ba]"
+                                bind:checked={filterNormalTask}
+                            />
+                            <span
+                                class="ml-2 {$themeStore === 'Light'
+                                    ? 'text-[#855dc7]'
+                                    : 'text-[#6d44ba]'}">View normal task</span
+                            >
+                        </label>
+
+                        <label class="inline-flex items-center">
+                            <input
+                                type="checkbox"
+                                class="form-checkbox h-5 w-5 text-[#6e48ba]"
+                                bind:checked={filterUserTask}
+                            />
+                            <span
+                                class="ml-2 {$themeStore === 'Light'
+                                    ? 'text-[#855dc7]'
+                                    : 'text-[#6d44ba]'}">View user task</span
+                            >
+                        </label>
+
+                        <label class="inline-flex items-center">
+                            <input
+                                type="checkbox"
+                                class="form-checkbox h-5 w-5 text-[#6e48ba]"
+                                bind:checked={filterAnotherTask}
+                            />
+                            <span
+                                class="ml-2 {$themeStore === 'Light'
+                                    ? 'text-[#855dc7]'
+                                    : 'text-[#6d44ba]'}"
+                                >View another type of task</span
+                            >
+                        </label>
+                    </div>
+
+                    <!-- Filtro por orden-->
+                    <h1
+                        class="mt-5 text-lg {$themeStore === 'Light'
+                            ? 'text-[#14111b]'
+                            : 'text-[#b498df]'}"
+                    >
+                        Filter by order
+                    </h1>
+                    <div
+                        class="mt-3 w-full h-[1px] {$themeStore === 'Light'
+                            ? 'bg-[#14111b]'
+                            : 'bg-[#b498df]'}"
+                    ></div>
+                    <!-- CheckBox-->
+                    <div class="flex flex-col space-y-2 mt-5">
+                        <label class="inline-flex items-center">
+                            <input
+                                type="checkbox"
+                                class="form-checkbox h-5 w-5 text-[#6e48ba]"
+                            />
+                            <span
+                                class="ml-2 {$themeStore === 'Light'
+                                    ? 'text-[#855dc7]'
+                                    : 'text-[#6d44ba]'}"
+                                >Alphabetical order (NO FUNCIONAL)</span
+                            >
+                        </label>
+
+                        <label class="inline-flex items-center">
+                            <input
+                                type="checkbox"
+                                class="form-checkbox h-5 w-5 text-[#6e48ba]"
+                            />
+                            <span
+                                class="ml-2 {$themeStore === 'Light'
+                                    ? 'text-[#855dc7]'
+                                    : 'text-[#6d44ba]'}"
+                                >Less rules created (NO FUNCIONAL)</span
+                            >
+                        </label>
+
+                        <label class="inline-flex items-center">
+                            <input
+                                type="checkbox"
+                                class="form-checkbox h-5 w-5 text-[#6e48ba]"
+                            />
+                            <span
+                                class="ml-2 {$themeStore === 'Light'
+                                    ? 'text-[#855dc7]'
+                                    : 'text-[#6d44ba]'}"
+                                >More rules created (NO FUNCIONAL)</span
+                            >
+                        </label>
+                    </div>
+                </div>
+                <div class="mt-auto mx-10">
+                    <button
+                        class="w-full h-[40px] rounded-md text-sm {$themeStore ===
+                        'Light'
+                            ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
+                            : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'} border"
+                        on:click={() => {
+                            showModalFiltro = false;
+                        }}
+                    >
+                        <div class="flex mx-10">
+                            <h1 class="my-auto mx-auto">Apply filter</h1>
+                        </div>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

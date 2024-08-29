@@ -35,6 +35,7 @@
 
     let activity: activity = {
         id: 0,
+        type: "Activity",
         name: "Default Activity - No activity selected",
         subname: "",
         rules: [],
