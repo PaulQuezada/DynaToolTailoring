@@ -786,7 +786,7 @@
                 <select
                     bind:value={selectedAction1}
                     id="actions"
-                    class="mt-5 w-1/2 mx-auto h-[30px]"
+                    class="mt-5 w-1/2 mx-auto h-[30px] rounded-md border p-1 border-[#5b5966]"
                 >
                     {#each actions as action}
                         <option value={action}>{action}</option>
@@ -799,7 +799,7 @@
                     <select
                         bind:value={selectedAction2}
                         id="actions"
-                        class="mt-5 w-1/2 mx-auto h-[30px]"
+                        class="mt-5 w-1/2 mx-auto h-[30px] rounded-md p-1 border border-[#5b5966]"
                     >
                         {#each deleteaction as action}
                             <option value={action}>{action}</option>
@@ -810,7 +810,7 @@
                     <select
                         bind:value={selectedAction2}
                         id="actions"
-                        class="mt-5 w-1/2 mx-auto h-[30px]"
+                        class="mt-5 w-1/2 mx-auto h-[30px] rounded-md p-1 border border-[#5b5966]"
                     >
                         {#each replaceaction as action}
                             <option value={action}>{action}</option>

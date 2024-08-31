@@ -93,18 +93,11 @@
         activity.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
-    function clearRulesById(taskId: number): void {
+    function deleteActivityById(taskId: number): void {
         var tasks = JSON.parse(localStorage.getItem("taskNames")!);
-        tasks.forEach((task: any) => {
-            if (task.id === taskId) {
-                task.rules = [];
-                task.replaceActivity = undefined;
-                task.deleted = undefined;
-                task.replaced = undefined;
-            }
-        });
-        localStorage.setItem("taskNames", JSON.stringify(tasks));
-        actividades.set(tasks);
+        var newTasks = tasks.filter((task: any) => task.id !== taskId);
+        localStorage.setItem("taskNames", JSON.stringify(newTasks));
+        actividades.set(newTasks);
     }
 
     function createRuleActivity() {
@@ -478,7 +471,7 @@
                         ? 'bg-[#efe9f8] border-[#5e3fa1] text-[#5e3fa1] hover:shadow-[0_0_2px_#7443bf]'
                         : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300"
                     on:click={() => {
-                        clearRulesById(idactividad_eliminar);
+                        deleteActivityById(idactividad_eliminar);
                         showModal = false;
                     }}>Delete</button
                 >
