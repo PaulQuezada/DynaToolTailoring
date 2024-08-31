@@ -145,9 +145,9 @@
         <strong class="text-[#7442c0]">Stage 2: &nbsp;</strong> Defining rules
     </h1>
     <div
-        class="mx-auto w-2/3 mt-10 flex flex-col rounded-lg shadow-lg {$themeStore ===
+        class="mx-auto w-2/3 mt-10 flex flex-col rounded-lg shadow-lg border {$themeStore ===
         'Light'
-            ? 'bg-[#ffffff] border-[#f0eaf9] shadow-[0_0_30px_#f0eaf9]'
+            ? 'bg-[#ffffff] border-[#dad4e1] shadow-[0_0_30px_#f0e9f8]'
             : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c]'} transition duration-300"
     >
         <!-- Buscador -->
