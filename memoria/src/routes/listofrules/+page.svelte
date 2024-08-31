@@ -167,7 +167,8 @@
                 {$themeStore === 'Light'
                     ? 'border-[#875fc7] bg-[#ffffff]'
                     : 'border-[#462a72] bg-[#14111b]'}
-                focus:bg-[#6e48ba] focus:text-white focus:border-[#6e48ba] focus:outline-none transition-colors duration-300 ease-in-out"
+                focus:bg-[#6e48ba] focus:text-white focus:border-[#6e48ba] focus:outline-none transition-colors duration-300 ease-in-out
+                placeholder:text-[#6f40b8] focus:placeholder:text-white"
             />
             <button
                 type="button"
@@ -507,12 +508,14 @@
             </h1>
             <input
                 bind:value={subnombre_actividad_crear}
-                class="text-[#6f40b8] mx-auto mb-5 h-[50px] w-full rounded-lg border {$themeStore ===
+                class="text-[#6f40b8] pl-5 pr-14 mx-auto mb-5 h-[50px] w-full rounded-lg border {$themeStore ===
                 'Light'
                     ? 'border-[#875fc7] bg-[#ffffff]'
-                    : 'border-[#462a72] bg-[#14111b]'}"
+                    : 'border-[#462a72] bg-[#14111b]'}
+                focus:bg-[#6e48ba] focus:text-white focus:border-[#6e48ba] focus:outline-none transition-colors duration-300 ease-in-out
+                placeholder:text-[#6f40b8] focus:placeholder:text-white"
                 type="text"
-                placeholder="  Enter rule name"
+                placeholder="Enter rule name"
             />
             <div class="flex justify-end">
                 <button
@@ -521,7 +524,7 @@
                 >
                 <button
                     class="border rounded-md px-4 py-2{$themeStore === 'Light'
-                        ? 'bg-[#4474f5] text-[#ffffff]'
+                        ? 'border border-[#7a5bb9] bg-[#f0e9f8] text-[#7a5bb9]'
                         : 'border border-[#8973ae] text-[#8973ae] bg-[#251835]'} transition duration-300"
                     on:click={() => {
                         createRuleActivity();
@@ -555,12 +558,14 @@
             </h1>
             <input
                 bind:value={subnombre_actividad_editar}
-                class="text-[#6f40b8] mx-auto mb-5 h-[50px] w-full rounded-lg border {$themeStore ===
+                class="text-[#6f40b8] pl-5 pr-14 mx-auto mb-5 h-[50px] w-full rounded-lg border {$themeStore ===
                 'Light'
                     ? 'border-[#875fc7] bg-[#ffffff]'
-                    : 'border-[#462a72] bg-[#14111b]'}"
+                    : 'border-[#462a72] bg-[#14111b]'}
+                focus:bg-[#6e48ba] focus:text-white focus:border-[#6e48ba] focus:outline-none transition-colors duration-300 ease-in-out
+                placeholder:text-[#6f40b8] focus:placeholder:text-white"
                 type="text"
-                placeholder="  Enter rule name"
+                placeholder="Enter rule name"
             />
             <div class="flex justify-end">
                 <button
@@ -569,7 +574,7 @@
                 >
                 <button
                     class="border rounded-md px-4 py-2{$themeStore === 'Light'
-                        ? 'bg-[#4474f5] text-[#ffffff]'
+                        ? 'border border-[#7a5bb9] bg-[#f0e9f8] text-[#7a5bb9]'
                         : 'border border-[#8973ae] text-[#8973ae] bg-[#251835]'} transition duration-300"
                     on:click={() => {
                         editRuleActivity();
