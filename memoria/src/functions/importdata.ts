@@ -45,7 +45,7 @@ export async function fileUploadContext(xmlContext: string) {
 
 
         // Recorrer las dimensiones del contexto organizacional y obtener los atributos
-        dimensions.forEach((dim: any) => {
+        await dimensions.forEach((dim: any) => {
             const contextAttributes = Array.isArray(dim.myContextAttributes)
                 ? dim.myContextAttributes
                 : [dim.myContextAttributes];

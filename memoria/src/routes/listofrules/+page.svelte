@@ -233,13 +233,18 @@
                                     <!-- Timeline -->
                                     <div class="flex-col">
                                         <div
-                                            class="w-[2px] ml-12 h-[25px] bg-[#7546c1]"
+                                            class="w-[2px] ml-12 h-[32px] bg-[#7546c1]"
                                         ></div>
+                                        <div class="flex flex-row ml-12">
+                                            <div
+                                                class="w-[20px] h-[2px] bg-[#7546c1]"
+                                            ></div>
+                                            <div
+                                                class="w-[12px] mt-[-5px] h-[12px] rounded-xl bg-[#7546c1]"
+                                            ></div>
+                                        </div>
                                         <div
-                                            class="w-[12px] ml-[2.7rem] h-[12px] rounded-xl bg-[#7546c1]"
-                                        ></div>
-                                        <div
-                                            class="w-[2px] ml-12 h-[25px] bg-[#7546c1]"
+                                            class="w-[2px] ml-12 h-[25px] bg-[#7546c1] mt-[-5px]"
                                         ></div>
                                     </div>
                                     <!-- Las reglas que estan para esa actividad -->
@@ -257,9 +262,11 @@
                                                         >
                                                             check_circle
                                                         </span>
+
                                                         <h1 class="my-auto">
-                                                            {activity.subname}
+                                                            <span class="text-lg text-bold">Rule name</span>: {activity.subname}
                                                         </h1>
+
                                                         <button
                                                             class="border rounded-md mx-2 text-xs {$themeStore ===
                                                             'Light'
@@ -279,12 +286,12 @@
                                                         </button>
                                                     {:else}
                                                         <span
-                                                            class="mr-2 my-auto material-symbols-outlined"
+                                                            class="mr-2 text-md my-auto material-symbols-outlined"
                                                         >
-                                                            pending
+                                                        square_foot
                                                         </span>
-                                                        <h1 class="my-auto">
-                                                            {activity.subname}
+                                                        <h1 class="my-auto text-sm">
+                                                            <span class="text-lg font-medium ">Rule name: </span>{activity.subname}
                                                         </h1>
                                                         <button
                                                             class="border rounded-md mx-2 text-xs {$themeStore ===
