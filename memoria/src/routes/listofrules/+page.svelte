@@ -7,6 +7,7 @@
     import { onMount } from "svelte";
     import { writable, type Writable } from "svelte/store";
     import { fileUploadBpmn } from "../../functions/importdata";
+    import Layout from "../+layout.svelte";
 
     // Variables
     let searchQuery = "";
@@ -27,6 +28,53 @@
     let filterNormalTask = true;
     let filterUserTask = false;
     let filterAnotherTask = false;
+
+    // Variables para la barra de datos
+    let numeroReglasEliminarMantener: number = 0;
+    let numeroReglasReemplazar: number = 0;
+    let numeroReglasSinTipo: number = 0;
+    let porcentajeEliminarMantener: number = 0;
+    let porcentajeReemplazar: number = 0;
+    let porcentajeSinTipo: number = 0;
+    let mostrarBarra: boolean = true;
+
+    // Filtrar actividades por nombre y por tipo
+    $: {
+        numeroReglasEliminarMantener = 0;
+        numeroReglasReemplazar = 0;
+        porcentajeEliminarMantener = 0;
+        porcentajeReemplazar = 0;
+        if ($actividades.length !== 0) {
+            $actividades.forEach((regla_activity: activity) => {
+                if (regla_activity.deleted !== undefined) {
+                    numeroReglasEliminarMantener++;
+                } else if (regla_activity.replaced !== undefined) {
+                    numeroReglasReemplazar++;
+                } else {
+                    numeroReglasSinTipo++;
+                }
+            });
+            if (
+                numeroReglasEliminarMantener !== 0 ||
+                numeroReglasReemplazar !== 0 ||
+                numeroReglasSinTipo !== 0
+            ) {
+                // Calculamos el porcentaje de las reglas
+                porcentajeEliminarMantener =
+                    (numeroReglasEliminarMantener / $actividades.length) * 100;
+                porcentajeReemplazar =
+                    (numeroReglasReemplazar / $actividades.length) * 100;
+                porcentajeSinTipo =
+                    (numeroReglasSinTipo / $actividades.length) * 100;
+                // Truncamos el porcentaje
+                porcentajeEliminarMantener = Math.trunc(
+                    porcentajeEliminarMantener,
+                );
+                porcentajeReemplazar = Math.trunc(porcentajeReemplazar);
+                porcentajeSinTipo = Math.trunc(porcentajeSinTipo);
+            }
+        }
+    }
 
     // cuando montamos la pagina recolectamos los datos y los guardamos en el store
     onMount(async () => {
@@ -172,9 +220,114 @@
             </button>
         </div>
 
+        <!-- Barra con porcentajes -->
+        {#if mostrarBarra}
+            <div
+                class="mx-auto w-3/4 border-b border-x {$themeStore === 'Light'
+                    ? 'border-[#875fc7] bg-[#ffffff]'
+                    : 'border-[#462a72] bg-[#14111b]'}"
+            >
+                <div class="flex flex-row w-full mx-auto my-auto py-2 px-8">
+                    <!-- Barra para mostrar las reglas para eliminar o no eliminar -->
+                     {#if porcentajeEliminarMantener > 0}
+                    <div
+                        class="border rounded-l rounded-r flex h-[20px] bg-[#4476c0]"
+                        style="width: {porcentajeEliminarMantener}%"
+                    >
+                        <span class="text-white mx-auto my-auto text-xs"
+                            >{porcentajeEliminarMantener}%</span
+                        >
+                    </div>
+                    {/if}
+                    <!-- Barra para mostrar las reglas para reemplazar -->
+                     {#if porcentajeReemplazar > 0}
+                    <div
+                        class="border rounded-r flex w-[{porcentajeReemplazar}%] h-[20px] bg-[#cb6329]"
+                        style="width: {porcentajeReemplazar}%"
+                    >
+                        <span class="text-white mx-auto my-auto text-xs"
+                            >{porcentajeReemplazar}%</span
+                        >
+                    </div>
+                    {/if}
+                    <!-- Barra para mostrar las reglas sin tipo -->
+                     {#if porcentajeSinTipo > 0}
+                    <div
+                        class="border rounded-r flex w-[{porcentajeSinTipo}%] h-[20px] bg-[#523e78]"
+                        style="width: {porcentajeSinTipo}%"
+                    >
+                        <span class="text-white mx-auto my-auto text-xs"
+                            >{porcentajeSinTipo}%</span
+                        >
+                    </div>
+                    {/if}
+                </div>
+                <div class="flex px-10 my-2">
+                    <div class="flex flex-row">
+                        <div
+                            class="w-[10px] h-[10px] rounded-xl bg-[#4476c0] my-auto mx-2"
+                        ></div>
+                        <h1 class="text-[#4476c0] my-auto">
+                            Reglas creadas de eliminación/mantención: {numeroReglasEliminarMantener}
+                        </h1>
+                    </div>
+                    <div class="flex flex-row">
+                        <div
+                            class="w-[10px] h-[10px] rounded-xl bg-[#cb6329] my-auto mx-2"
+                        ></div>
+                        <h1 class="text-[#cb6329] my-auto">
+                            Reglas creadas de reemplazo: {numeroReglasReemplazar}
+                        </h1>
+                    </div>
+                    <div class="flex flex-row">
+                        <div
+                            class="w-[10px] h-[10px] rounded-xl bg-[#523e78] my-auto mx-2"
+                        ></div>
+                        <h1 class="text-[#523e78] my-auto">
+                            Reglas creadas sin tipo: {numeroReglasSinTipo}
+                        </h1>
+                    </div>
+                </div>
+                <div class="flex">
+                    <button
+                        class="w-[40px] mx-auto border-t border-r border-l border-[#8161c1] rounded-tl rounded-tr"
+                        on:click={() => {
+                            mostrarBarra = false;
+                        }}
+                    >
+                        <span
+                            class="text-[#8161c1] text-sm my-auto mx-auto material-symbols-outlined"
+                        >
+                            keyboard_double_arrow_up
+                        </span>
+                    </button>
+                </div>
+            </div>
+        {:else}
+            <div
+                class="flex w-3/4 mx-auto border-r border-l {$themeStore ===
+                'Light'
+                    ? 'border-[#875fc7] bg-[#ffffff]'
+                    : 'border-[#462a72] bg-[#14111b]'}"
+            >
+                <button
+                    class="w-[40px] mx-auto border-b border-l border-r border-[#8161c1] rounded-bl rounded-br"
+                    on:click={() => {
+                        mostrarBarra = true;
+                    }}
+                >
+                    <span
+                        class="text-[#8161c1] text-sm my-auto mx-auto material-symbols-outlined"
+                    >
+                        keyboard_double_arrow_down
+                    </span>
+                </button>
+            </div>
+        {/if}
+
         <!-- Tabla donde estaran las actividades -->
         <div
-            class="w-3/4 h-[400px] mb-5 overflow-y-auto mx-auto rounded-bl-lg rounded-br-lg border-r border-l border-b {$themeStore ===
+            class="w-3/4 h-[380px] mb-5 overflow-y-auto mx-auto rounded-bl-lg rounded-br-lg border-r border-l border-b {$themeStore ===
             'Light'
                 ? 'border-[#875fc7] bg-[#ffffff]'
                 : 'border-[#462a72] bg-[#14111b]'}"
@@ -264,7 +417,10 @@
                                                         </span>
 
                                                         <h1 class="my-auto">
-                                                            <span class="text-lg text-bold">Rule name</span>: {activity.subname}
+                                                            <span
+                                                                class="text-lg text-bold"
+                                                                >Rule name</span
+                                                            >: {activity.subname}
                                                         </h1>
 
                                                         <button
@@ -288,10 +444,15 @@
                                                         <span
                                                             class="mr-2 text-md my-auto material-symbols-outlined"
                                                         >
-                                                        square_foot
+                                                            square_foot
                                                         </span>
-                                                        <h1 class="my-auto text-sm">
-                                                            <span class="text-lg font-medium ">Rule name: </span>{activity.subname}
+                                                        <h1
+                                                            class="my-auto text-sm"
+                                                        >
+                                                            <span
+                                                                class="text-lg font-medium"
+                                                                >Rule name:
+                                                            </span>{activity.subname}
                                                         </h1>
                                                         <button
                                                             class="border rounded-md mx-2 text-xs {$themeStore ===
@@ -516,6 +677,13 @@
                 placeholder:text-[#6f40b8] focus:placeholder:text-white"
                 type="text"
                 placeholder="Enter rule name"
+                on:keydown={(event) => {
+                    if (event.key === "Enter") {
+                        createRuleActivity();
+                        subnombre_actividad_crear = "";
+                        showModalCrear = false;
+                    }
+                }}
             />
             <div class="flex justify-end">
                 <button
@@ -530,6 +698,14 @@
                         createRuleActivity();
                         subnombre_actividad_crear = "";
                         showModalCrear = false;
+                    }}
+                    on:keydown={(event) => {
+                        console.log(event);
+                        if (event.key === "Enter") {
+                            createRuleActivity();
+                            subnombre_actividad_crear = "";
+                            showModalCrear = false;
+                        }
                     }}>Crear regla</button
                 >
             </div>
@@ -566,6 +742,13 @@
                 placeholder:text-[#6f40b8] focus:placeholder:text-white"
                 type="text"
                 placeholder="Enter rule name"
+                on:keydown={(event) => {
+                    if (event.key === "Enter") {
+                        editRuleActivity();
+                        subnombre_actividad_crear = "";
+                        showModalEditar = false;
+                    }
+                }}
             />
             <div class="flex justify-end">
                 <button
