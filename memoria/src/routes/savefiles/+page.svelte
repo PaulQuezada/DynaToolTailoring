@@ -12,6 +12,17 @@
     let showModalData = false;
     let titledatashow = "";
     let datashow: string = "";
+    let code_copy: boolean = false;
+
+    function copyToClipboard() {
+        code_copy = true;
+        navigator.clipboard.writeText(datashow);
+
+        // Después de 2 segundos, volver a mostrar el icono original
+        setTimeout(() => {
+            code_copy = false;
+        }, 2000); // 2 segundos
+    }
 </script>
 
 <div
@@ -232,6 +243,7 @@
             <button
                 on:click={() => {
                     showModalData = false;
+                    code_copy = false;
                 }}
                 class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
             >
@@ -245,7 +257,7 @@
                     />
                 </svg>
             </button>
-            <div class="flex flex-col">
+            <div class="flex flex-col relative">
                 <h2
                     class="mx-auto text-2xl font-bold mb-4 {$themeStore ===
                     'Light'
@@ -254,8 +266,27 @@
                 >
                     {titledatashow}
                 </h2>
+                <div class="absolute top-0 right-0 mt-[49px] mr-2 z-20">
+                    <button
+                        class="flex bg-[#b4b4b4] ml-2 rounded-tl rounded-bl transition-transform duration-300 p-1"
+                        on:click={copyToClipboard}
+                    >
+                        {#if code_copy}
+                            <!-- Icono de check que crece -->
+                            <span class="my-auto material-symbols-outlined">
+                                check
+                            </span>
+                            <h1 class="my-auto">Copied!</h1>
+                        {:else}
+                            <!-- Icono de content_copy que se encoge -->
+                            <span class="my-auto material-symbols-outlined">
+                                content_copy
+                            </span>
+                        {/if}
+                    </button>
+                </div>
                 <code
-                    class="mx-auto w-full h-[500px] overflow-y-auto p-4 bg-gray-900 text-[#cc76d1] rounded-md font-mono text-sm relative"
+                    class="mx-auto w-full h-[500px] overflow-y-auto p-4 bg-[#2a2d3d] text-[#bbbed6] rounded-md font-mono text-sm relative"
                 >
                     {#each datashow.split("\n") as line, index}
                         <div class="flex flex-col">
@@ -267,13 +298,13 @@
                                     <span class="whitespace-pre">
                                         {@html line.replace(
                                             /helper\sdef:/g,
-                                            '<span class="text-yellow-300">helper def:</span>',
+                                            '<span class="text-[#9cdbfb]">helper def:</span>',
                                         )}
                                     </span>
                                 {:else}
-                                <span class="whitespace-pre text-[#ec9f3a]">
-                                    {line}
-                                </span>
+                                    <span class="whitespace-pre text-[#bbbed6]">
+                                        {line}
+                                    </span>
                                 {/if}
                             </div>
                         </div>
@@ -283,3 +314,24 @@
         </div>
     </div>
 {/if}
+
+<button
+    class="flex bg-[#b4b4b4] ml-2 rounded-tl rounded-bl transition-transform duration-300"
+    on:click={copyToClipboard}
+>
+    {#if code_copy}
+        <!-- Icono de check que crece -->
+        <span
+            class="my-auto material-symbols-outlined text-green-500 transition-transform transform scale-0 animate-grow"
+        >
+            check
+        </span>
+    {:else}
+        <!-- Icono de content_copy que se encoge -->
+        <span
+            class="my-auto material-symbols-outlined transition-transform transform animate-shrink"
+        >
+            content_copy
+        </span>
+    {/if}
+</button>

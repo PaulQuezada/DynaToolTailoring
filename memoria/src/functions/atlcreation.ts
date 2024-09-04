@@ -1,6 +1,6 @@
 import "../routes/types";
-import {createCompleteModel} from "./exportdata";
-import {loadAtributtes, parseRules} from "./importdata";
+import { createCompleteModel } from "./exportdata";
+import { loadAtributtes, parseRules } from "./importdata";
 
 export function baseATL() {
     // Función para obtener las reglas de transformación a través del modelo completo
@@ -36,26 +36,16 @@ helper def: selectTaskRule(tu:MM!TaskUse): MM!TaskDefinition = tu.linkTask;
 
 -- To make changes in the tasks
 
-
-
-helper def: optionalRuleParticipant(name:String): Boolean =
-if(Sequence{'Scrum master'}.includes(name)) then
-(    	if ('Scrum master' = name) then
-			thisModule.ruleOptParticipant1()
-		else
-			true
-		endif
-)
-else
-	true
-endif;
-
+-- Rules for delete the activity or not
 ${generateOptionalRule(optionalRules)}
 
+-- Rules for replace the activity to another activity
 ${generateReplaceRule(replaceRules)}
 
+-- User-created rules to delete or keep
 ${generateOptFunction(optionalRules)}
 
+-- User-created rules to replace
 ${generateRepFunction(replaceRules)}
 
 rule Definitions {
@@ -113,6 +103,21 @@ to		dd:MM1!Process(
         )
 }
 
+rule DataObject {
+from	d:MM!DataObject
+to		dd:MM1!DataObject(
+		name <- d.name
+        )
+}
+
+
+rule DataObjectReference {
+    from	d:MM!DataObjectReference
+    to		dd:MM1!DataObjectReference(
+            name <- d.name
+            )
+    }
+            
 rule Documentation {
 from	d:MM!Documentation
 to		dd:MM1!Documentation(
@@ -120,6 +125,13 @@ to		dd:MM1!Documentation(
         )
 }
 	
+rule ExclusiveGateway {
+from	d:MM!ExclusiveGateway
+to		dd:MM1!ExclusiveGateway(
+		name <- d.name
+        )
+}
+        
 rule Task {
 from	d:MM!Task(
 		 thisModule.optionalRule(d.name)	
@@ -142,7 +154,7 @@ function obtainTransformationRules(): activity[] {
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlTailoringModel, "text/xml");
 
-   // Extraer los datos del modelos reglas que están en el modelo completo generado
+    // Extraer los datos del modelos reglas que están en el modelo completo generado
     const rulesModel = xmlDoc.querySelector("RulesModel");
     const contentRules = rulesModel ? rulesModel.querySelectorAll("ContentRule")! : [];
     console.log("RulesModelNode: ", rulesModel);
@@ -225,7 +237,7 @@ function generateOptionalRule(elements: activity[]): string {
         let index = 0;
         activities.forEach(() => {
             singlerule += `\n\t\tthisModule.ruleOpt${index + 1}()`;
-            if(index < activities.length - 1) {
+            if (index < activities.length - 1) {
                 singlerule += `\tor`;
             }
             index++;
@@ -245,17 +257,17 @@ function generateOptionalRule(elements: activity[]): string {
             console.log("Activities: ", activities);
             activities.forEach((element, index_activities) => {
                 rule += `\n\t\tthisModule.ruleOpt${index + 1}()`;
-                if(index_activities < activities.length - 1) {
+                if (index_activities < activities.length - 1) {
                     rule += `\tor`;
                 }
                 index++;
             });
-        }else {
+        } else {
             rule += `\n\telse\n\t\t(if ('${element}' = name) then`;
             activities = findElementsByName(elements, element);
             activities.forEach((element, index_activities) => {
                 rule += `\n\t\t\tthisModule.ruleOpt${index + 1}()`;
-                if(index_activities < activities.length - 1) {
+                if (index_activities < activities.length - 1) {
                     rule += `\tor`;
                 }
                 index++;
@@ -290,7 +302,7 @@ function generateReplaceRule(elements: activity[]): string {
         let index = 0;
         activities.forEach(() => {
             singlerule += `\n\t\tthisModule.ruleRep${index + 1}()`;
-            if(index < activities.length - 1) {
+            if (index < activities.length - 1) {
                 singlerule += `\tor`;
             }
             index++;
@@ -310,17 +322,17 @@ function generateReplaceRule(elements: activity[]): string {
             console.log("Activities: ", activities);
             activities.forEach((element, index_activities) => {
                 rule += `\n\t\tthisModule.ruleRep${index + 1}()`;
-                if(index_activities < activities.length - 1) {
+                if (index_activities < activities.length - 1) {
                     rule += `\tor`;
                 }
                 index++;
             });
-        }else {
+        } else {
             rule += `\n\telse\n\t\t(if ('${element}' = name) then`;
             activities = findElementsByName(elements, element);
             activities.forEach((element, index_activities) => {
                 rule += `\n\t\t\tthisModule.ruleRep${index + 1}()`;
-                if(index_activities < activities.length - 1) {
+                if (index_activities < activities.length - 1) {
                     rule += `\tor`;
                 }
                 index++;
@@ -356,16 +368,16 @@ function generateOptFunction(elements: activity[]): string {
             ruleConditions = activity.rules.map(parseRule).join(" ");
             if (index === 0) {
                 ruleOptFunction = `helper def:ruleOpt${index + 1}():Boolean=if (${ruleConditions})`;
-                if(!activity.deleted){
+                if (!activity.deleted) {
                     ruleOptFunction += ` then true else false endif;`;
-                }else{
+                } else {
                     ruleOptFunction += ` then false else true endif;`;
                 }
             } else {
                 ruleOptFunction += `\nhelper def:ruleOpt${index + 1}():Boolean=if (${ruleConditions})`;
-                if(!activity.deleted){
+                if (!activity.deleted) {
                     ruleOptFunction += ` then true else false endif;`;
-                }else{
+                } else {
                     ruleOptFunction += ` then false else true endif;`;
                 }
             }
@@ -390,12 +402,12 @@ function generateRepFunction(elements: activity[]): string {
             ruleConditions = activity.rules.map(parseRule).join(" ");
             if (index === 0) {
                 ruleRepFunction = `helper def:ruleRep${index + 1}():Boolean=if (${ruleConditions})`;
-                if(activity.replaced){
+                if (activity.replaced) {
                     ruleRepFunction += ` then REEMPLAZO else NOREEMPLAZO endif;`;
                 }
             } else {
                 ruleRepFunction += `\nhelper def:ruleRep${index + 1}():Boolean=if (${ruleConditions})`;
-                if(activity.replaced){
+                if (activity.replaced) {
                     ruleRepFunction += ` then REEMPLAZO else NOREEMPLAZO endif;`;
                 }
             }

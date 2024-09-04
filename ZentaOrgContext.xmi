@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<spcm:Context xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:spcm="http://contextmetamodel/1.0" xmi:id="abf7042d-61e2-4f02-9b90-1c013558cd70" name="ZentaOrgContext" description="ZentaOrgContext">
+  <myDimensions xmi:id="e0e7b16f-9502-45fb-90d0-bae48b6d2559" name="Project" description="">
+    <myContextAttributes xmi:id="6aee1238-45c4-4cfd-b483-e7d7befd191a" name="Product owner" description="">
+      <posibleValues xmi:id="e6d093f5-9a4b-4ccd-b384-5b62f2a01367" name="Internal" description="Internal" value="Internal"/>
+      <posibleValues xmi:id="56cdce01-4a3f-4337-b01e-6540c12c2c9c" name="External" description="External" value="External"/>
+    </myContextAttributes>
+    <myContextAttributes xmi:id="f7f4899c-2744-4191-a6c3-58a6872c9ad9" name="Willingness to negotiate" description="">
+      <posibleValues xmi:id="fedc4bb2-bd10-4a96-ace1-3b5809be4e3e" name="High" description="High" value="High"/>
+      <posibleValues xmi:id="0ee68238-6a9d-4c97-aa0b-689b4ed65692" name="Medium" description="Medium" value="Medium"/>
+      <posibleValues xmi:id="4b995c01-37f7-49d4-9c64-7c278c3f9ea6" name="Low" description="Low" value="Low"/>
+    </myContextAttributes>
+  </myDimensions>
+  <myContextConfigurations xmi:id="8e8b3164-5d23-49e4-8624-4e1204110345" name="Context model">
+    <contextAttributeConfiguration xmi:id="bfab321f-455b-4272-b9bc-570e51eb46a0" name="Product owner" description="" myContextElement="bfab321f-455b-4272-b9bc-570e51eb46a0" myContextAttributeValue="56cdce01-4a3f-4337-b01e-6540c12c2c9c"/>
+    <contextAttributeConfiguration xmi:id="6c8d89a4-b253-4266-bbd5-153458d28227" name="Willingness to negotiate" description="" myContextElement="f7f4899c-2744-4191-a6c3-58a6872c9ad9" myContextAttributeValue="4b995c01-37f7-49d4-9c64-7c278c3f9ea6"/>
+  </myContextConfigurations>
+</spcm:Context>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:Definitions xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL-XMI" name="">
+	<rootElements xsi:type="bpmn2:Process" name="Process">
+		<documentation text=""/>
+		<flowElements xsi:type="bpmn2:Task" name="Create stories">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:Task" name="Prioritize user stories">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:DataObjectReference" name="Gantt dataObjectRef=">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:DataObject" name="Gantt dataObjectRef=">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:Task" name="Adjust gantt">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:DataObjectReference" name="Backlog dataObjectRef=">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:DataObject" name="Backlog dataObjectRef=">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:DataObjectReference" name="Sprint backlog">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:DataObject" name="Sprint backlog">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:Task" name="Select user stories">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:Task" name="Consolidate planning">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:Task" name="Divide stories into tasks">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:Task" name="Justify estimation differences">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:Task" name="Weigh the tasks">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:ExclusiveGateway" name="Gateway_15olyra">
+		</flowElements>
+	</rootElements>
+</bpmn2:Definitions>

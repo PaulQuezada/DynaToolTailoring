@@ -36,7 +36,7 @@
     let porcentajeEliminarMantener: number = 0;
     let porcentajeReemplazar: number = 0;
     let porcentajeSinTipo: number = 0;
-    let mostrarBarra: boolean = true;
+    let mostrarBarra: boolean = false;
 
     // Filtrar actividades por nombre y por tipo
     $: {
