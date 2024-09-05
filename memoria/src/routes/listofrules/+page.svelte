@@ -268,7 +268,7 @@
                             class="w-[10px] h-[10px] rounded-xl bg-[#4476c0] my-auto mx-2"
                         ></div>
                         <h1 class="text-[#4476c0] my-auto">
-                            Reglas creadas de eliminación/mantención: {numeroReglasEliminarMantener}
+                            Created delete/keep rules: {numeroReglasEliminarMantener}
                         </h1>
                     </div>
                     <div class="flex flex-row">
@@ -276,7 +276,7 @@
                             class="w-[10px] h-[10px] rounded-xl bg-[#cb6329] my-auto mx-2"
                         ></div>
                         <h1 class="text-[#cb6329] my-auto">
-                            Reglas creadas de reemplazo: {numeroReglasReemplazar}
+                            Created replacement rules: {numeroReglasReemplazar}
                         </h1>
                     </div>
                     <div class="flex flex-row">
@@ -284,7 +284,7 @@
                             class="w-[10px] h-[10px] rounded-xl bg-[#523e78] my-auto mx-2"
                         ></div>
                         <h1 class="text-[#523e78] my-auto">
-                            Reglas creadas sin tipo: {numeroReglasSinTipo}
+                            Rules created without type: {numeroReglasSinTipo}
                         </h1>
                     </div>
                 </div>

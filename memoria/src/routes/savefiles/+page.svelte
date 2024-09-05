@@ -268,7 +268,7 @@
                 </h2>
                 <div class="absolute top-0 right-0 mt-[49px] mr-2 z-20">
                     <button
-                        class="flex bg-[#b4b4b4] ml-2 rounded-tl rounded-bl transition-transform duration-300 p-1"
+                        class="flex bg-[#b4b4b4] ml-2 rounded transition-transform duration-300 p-1"
                         on:click={copyToClipboard}
                     >
                         {#if code_copy}
