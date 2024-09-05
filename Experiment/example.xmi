@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:Definitions xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL-XMI" name="BPMN Process Model">
+  <rootElements xsi:type="bpmn2:Process" name="Process_1honodd">
+    <!-- Evento de inicio -->
+    <flowElements xsi:type="bpmn2:StartEvent" id="StartEvent_03a0xqk" name="Begin">
+      <outgoing>Flow_1u4a10w</outgoing>
+    </flowElements>
+
+    <!-- Tarea "Create code" -->
+    <flowElements xsi:type="bpmn2:Task" id="Activity_1xmxa41" name="Create code">
+      <incoming>Flow_1u4a10w</incoming>
+      <outgoing>Flow_0znwb87</outgoing>
+    </flowElements>
+
+    <!-- Gateway de decisión -->
+    <flowElements xsi:type="bpmn2:ExclusiveGateway" id="Gateway_0nx1ynk" name="Backlog stories needed?">
+      <incoming>Flow_0znwb87</incoming>
+      <outgoing>Flow_1yc8bvs</outgoing>
+      <outgoing>Flow_0atw7x2</outgoing>
+    </flowElements>
+
+    <!-- Tarea "Estimate tasks" -->
+    <flowElements xsi:type="bpmn2:Task" id="Activity_1cpn3jo" name="Estimate tasks">
+      <incoming>Flow_1yc8bvs</incoming>
+    </flowElements>
+
+    <!-- Evento de término intermedio -->
+    <flowElements xsi:type="bpmn2:IntermediateThrowEvent" id="Event_0z7njfz" name="End">
+      <incoming>Flow_0atw7x2</incoming>
+    </flowElements>
+
+    <!-- Flujos de secuencia -->
+    <flowElements xsi:type="bpmn2:SequenceFlow" id="Flow_1u4a10w" sourceRef="StartEvent_03a0xqk" targetRef="Activity_1xmxa41"/>
+    <flowElements xsi:type="bpmn2:SequenceFlow" id="Flow_0znwb87" sourceRef="Activity_1xmxa41" targetRef="Gateway_0nx1ynk"/>
+    <flowElements xsi:type="bpmn2:SequenceFlow" id="Flow_1uoa82d" name="No" sourceRef="Gateway_0nx1ynk" targetRef="Event_0z7njfz"/>
+    <flowElements xsi:type="bpmn2:SequenceFlow" id="Flow_0yz67ha" name="Yes" sourceRef="Gateway_0nx1ynk" targetRef="Activity_1cpn3jo"/>
+  </rootElements>
+</bpmn2:Definitions>

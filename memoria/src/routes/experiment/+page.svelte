@@ -8,115 +8,344 @@
     // Función para manejar la carga de archivos
     async function uploadFile(event: Event) {
         const xmi: string = await fileUpload(event);
-        bpmnData = transformXMItoBPMN(xmi);
+        bpmnData = transformXMIToBPMN(xmi);
     }
 
-    // Función para transformar XMI a BPMN con validación
-    function transformXMItoBPMN(xmi: string): string {
-        // Definir las etiquetas a transformar
-        const replacements = [
-            { from: /bpmn2:Definitions/g, to: "bpmn:definitions" },
-            { from: /xsi:type="bpmn2:Process"/g, to: "bpmn:process" },
-            { from: /xsi:type="bpmn2:StartEvent"/g, to: "bpmn:startEvent" },
-            { from: /xsi:type="bpmn2:Task"/g, to: "bpmn:task" },
-            {
-                from: /xsi:type="bpmn2:ExclusiveGateway"/g,
-                to: "bpmn:exclusiveGateway",
-            },
-            {
-                from: /xsi:type="bpmn2:IntermediateThrowEvent"/g,
-                to: "bpmn:intermediateThrowEvent",
-            },
-            { from: /xsi:type="bpmn2:SequenceFlow"/g, to: "bpmn:sequenceFlow" },
-            { from: /xsi:type="bpmn2:EndEvent"/g, to: "bpmn:endEvent" },
-        ];
+    function transformXMIToBPMN(xmi: string): string {
+        // Crear un parser para el archivo XMI
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmi, "application/xml");
 
-        // Hacer las sustituciones de las etiquetas
-        let bpmn = xmi;
-        
-        replacements.forEach((replacement) => {
-            bpmn = bpmn.replace(replacement.from, replacement.to);
-        });
-        
-        
-        console.log(bpmn);
+        // Crear un documento nuevo BPMN
+        const bpmnDoc = document.implementation.createDocument("", "", null);
 
-        // Validar si hay errores con las etiquetas o atributos faltantes
-        if (bpmn.includes("flowElements") || bpmn.includes("xmi:version")) {
-            console.error(
-                "El archivo XMI contiene etiquetas o atributos no reconocidos",
-            );
-            return "";
-        }
-
-        // Agregar atributos XML a la definición del BPMN
-        bpmn = bpmn.replace(
-            /<bpmn:definitions/,
-            `<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_0lfo92g" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="17.7.1">`,
+        // Crear el elemento raíz para BPMN
+        const bpmnDefinitions = bpmnDoc.createElement("bpmn:definitions");
+        bpmnDefinitions.setAttribute(
+            "xmlns:xsi",
+            "http://www.w3.org/2001/XMLSchema-instance",
+        );
+        bpmnDefinitions.setAttribute(
+            "xmlns:bpmn",
+            "http://www.omg.org/spec/BPMN/20100524/MODEL",
+        );
+        bpmnDefinitions.setAttribute(
+            "xmlns:bpmndi",
+            "http://www.omg.org/spec/BPMN/20100524/DI",
+        );
+        bpmnDefinitions.setAttribute(
+            "xmlns:dc",
+            "http://www.omg.org/spec/DD/20100524/DC",
+        );
+        bpmnDefinitions.setAttribute(
+            "xmlns:di",
+            "http://www.omg.org/spec/DD/20100524/DI",
+        );
+        bpmnDefinitions.setAttribute("id", "Definitions_0lfo92g");
+        bpmnDefinitions.setAttribute(
+            "targetNamespace",
+            "http://bpmn.io/schema/bpmn",
         );
 
-        // Agregar atributos adicionales a la definición del proceso
-        bpmn = bpmn.replace(
-            /<bpmn:process/g,
-            `<bpmn:process id="Process_1honodd" isExecutable="false"`,
+        // Crear el proceso BPMN
+        const processElement = xmlDoc.querySelector("rootElements");
+        const bpmnProcess = bpmnDoc.createElement("bpmn:process");
+        bpmnProcess.setAttribute(
+            "id",
+            processElement.getAttribute("name") || "Process_1honodd",
+        );
+        bpmnProcess.setAttribute("isExecutable", "false");
+
+        // Variables para la distribución de posiciones en el diagrama
+        let x = 150,
+            y = 100,
+            offsetX = 100,
+            offsetY = 100;
+
+        // Crear la parte gráfica (BPMNDiagram)
+        const bpmnDiagram = bpmnDoc.createElement("bpmndi:BPMNDiagram");
+        bpmnDiagram.setAttribute("id", "BPMNDiagram_1");
+
+        const bpmnPlane = bpmnDoc.createElement("bpmndi:BPMNPlane");
+        bpmnPlane.setAttribute("id", "BPMNPlane_1");
+        bpmnPlane.setAttribute(
+            "bpmnElement",
+            processElement.getAttribute("name") || "Process_1honodd",
         );
 
-        // Devolver el resultado final del BPMN
-        return bpmn;
-    }
+        // Mapear elementos a shapes y edges
+        const elementMap = {}; // Para almacenar las posiciones de los elementos
+        const flowElements = processElement.querySelectorAll("flowElements");
 
-    // Función para extraer elementos de flujo como tareas, eventos, etc.
-    function extractFlowElements(bpmn: string): string[] {
-        const elementTypes = [
-            "startEvent",
-            "task",
-            "exclusiveGateway",
-            "endEvent",
-            "sequenceFlow",
-        ];
-        const elements: string[] = [];
+        flowElements.forEach((flowElement) => {
+            const type = flowElement.getAttribute("xsi:type");
+            let bpmnFlowElement, bpmnShape;
 
-        // Buscar todos los elementos relevantes dentro del archivo BPMN
-        elementTypes.forEach((type) => {
-            const regex = new RegExp(
-                `<bpmn:${type}[^>]*id="([^"]+)"[^>]*>`,
-                "g",
-            );
-            let match;
-            while ((match = regex.exec(bpmn)) !== null) {
-                elements.push(match[1]);
+            switch (type) {
+                case "bpmn2:StartEvent":
+                    // Crear el proceso BPMN
+                    bpmnFlowElement = bpmnDoc.createElement("bpmn:startEvent");
+                    bpmnFlowElement.setAttribute(
+                        "id",
+                        flowElement.getAttribute("id") || "",
+                    );
+                    bpmnFlowElement.setAttribute(
+                        "name",
+                        flowElement.getAttribute("name") || "",
+                    );
+
+                    const outgoing = flowElement.querySelector("outgoing");
+                    if (outgoing) {
+                        const bpmnOutgoing =
+                            bpmnDoc.createElement("bpmn:outgoing");
+                        bpmnOutgoing.textContent = outgoing.textContent;
+                        bpmnFlowElement.appendChild(bpmnOutgoing);
+                    }
+
+                    bpmnProcess.appendChild(bpmnFlowElement);
+
+                    // Generar el BPMNShape
+                    bpmnShape = bpmnDoc.createElement("bpmndi:BPMNShape");
+                    bpmnShape.setAttribute(
+                        "id",
+                        `_${flowElement.getAttribute("id")}_di`,
+                    );
+                    bpmnShape.setAttribute(
+                        "bpmnElement",
+                        flowElement.getAttribute("id") || "",
+                    );
+                    elementMap[flowElement.getAttribute("id")] = { x, y }; // Guardar posición
+
+                    const boundsStart = bpmnDoc.createElement("dc:Bounds");
+                    boundsStart.setAttribute("x", x.toString());
+                    boundsStart.setAttribute("y", y.toString());
+                    boundsStart.setAttribute("width", "36");
+                    boundsStart.setAttribute("height", "36");
+                    bpmnShape.appendChild(boundsStart);
+
+                    bpmnPlane.appendChild(bpmnShape);
+                    x += offsetX; // Mover posición horizontal
+                    break;
+
+                case "bpmn2:Task":
+                    // Crear el proceso BPMN
+                    bpmnFlowElement = bpmnDoc.createElement("bpmn:task");
+                    bpmnFlowElement.setAttribute(
+                        "id",
+                        flowElement.getAttribute("id") || "",
+                    );
+                    bpmnFlowElement.setAttribute(
+                        "name",
+                        flowElement.getAttribute("name") || "",
+                    );
+
+                    const incomingTask = flowElement.querySelector("incoming");
+                    if (incomingTask) {
+                        const bpmnIncoming =
+                            bpmnDoc.createElement("bpmn:incoming");
+                        bpmnIncoming.textContent = incomingTask.textContent;
+                        bpmnFlowElement.appendChild(bpmnIncoming);
+                    }
+
+                    const outgoingTask = flowElement.querySelector("outgoing");
+                    if (outgoingTask) {
+                        const bpmnOutgoing =
+                            bpmnDoc.createElement("bpmn:outgoing");
+                        bpmnOutgoing.textContent = outgoingTask.textContent;
+                        bpmnFlowElement.appendChild(bpmnOutgoing);
+                    }
+
+                    bpmnProcess.appendChild(bpmnFlowElement);
+
+                    // Generar el BPMNShape
+                    bpmnShape = bpmnDoc.createElement("bpmndi:BPMNShape");
+                    bpmnShape.setAttribute(
+                        "id",
+                        `_${flowElement.getAttribute("id")}_di`,
+                    );
+                    bpmnShape.setAttribute(
+                        "bpmnElement",
+                        flowElement.getAttribute("id") || "",
+                    );
+                    elementMap[flowElement.getAttribute("id")] = { x, y }; // Guardar posición
+
+                    const boundsTask = bpmnDoc.createElement("dc:Bounds");
+                    boundsTask.setAttribute("x", x.toString());
+                    boundsTask.setAttribute("y", y.toString());
+                    boundsTask.setAttribute("width", "100");
+                    boundsTask.setAttribute("height", "80");
+                    bpmnShape.appendChild(boundsTask);
+
+                    bpmnPlane.appendChild(bpmnShape);
+                    x += offsetX; // Mover posición horizontal
+                    break;
+
+                case "bpmn2:ExclusiveGateway":
+                    // Crear el proceso BPMN
+                    bpmnFlowElement = bpmnDoc.createElement(
+                        "bpmn:exclusiveGateway",
+                    );
+                    bpmnFlowElement.setAttribute(
+                        "id",
+                        flowElement.getAttribute("id") || "",
+                    );
+                    bpmnFlowElement.setAttribute(
+                        "name",
+                        flowElement.getAttribute("name") || "",
+                    );
+
+                    const incomingGateway =
+                        flowElement.querySelector("incoming");
+                    if (incomingGateway) {
+                        const bpmnIncoming =
+                            bpmnDoc.createElement("bpmn:incoming");
+                        bpmnIncoming.textContent = incomingGateway.textContent;
+                        bpmnFlowElement.appendChild(bpmnIncoming);
+                    }
+
+                    const outgoingGateway =
+                        flowElement.querySelectorAll("outgoing");
+                    outgoingGateway.forEach((outgoing) => {
+                        const bpmnOutgoing =
+                            bpmnDoc.createElement("bpmn:outgoing");
+                        bpmnOutgoing.textContent = outgoing.textContent;
+                        bpmnFlowElement.appendChild(bpmnOutgoing);
+                    });
+
+                    bpmnProcess.appendChild(bpmnFlowElement);
+
+                    // Generar el BPMNShape
+                    bpmnShape = bpmnDoc.createElement("bpmndi:BPMNShape");
+                    bpmnShape.setAttribute(
+                        "id",
+                        `_${flowElement.getAttribute("id")}_di`,
+                    );
+                    bpmnShape.setAttribute(
+                        "bpmnElement",
+                        flowElement.getAttribute("id") || "",
+                    );
+                    elementMap[flowElement.getAttribute("id")] = { x, y }; // Guardar posición
+
+                    const boundsGateway = bpmnDoc.createElement("dc:Bounds");
+                    boundsGateway.setAttribute("x", x.toString());
+                    boundsGateway.setAttribute("y", y.toString());
+                    boundsGateway.setAttribute("width", "50");
+                    boundsGateway.setAttribute("height", "50");
+                    bpmnShape.appendChild(boundsGateway);
+
+                    bpmnPlane.appendChild(bpmnShape);
+                    x += offsetX; // Mover posición horizontal
+                    break;
+
+                case "bpmn2:IntermediateThrowEvent":
+                    // Crear el proceso BPMN
+                    bpmnFlowElement = bpmnDoc.createElement(
+                        "bpmn:intermediateThrowEvent",
+                    );
+                    bpmnFlowElement.setAttribute(
+                        "id",
+                        flowElement.getAttribute("id") || "",
+                    );
+                    bpmnFlowElement.setAttribute(
+                        "name",
+                        flowElement.getAttribute("name") || "",
+                    );
+
+                    const incomingEvent = flowElement.querySelector("incoming");
+                    if (incomingEvent) {
+                        const bpmnIncoming =
+                            bpmnDoc.createElement("bpmn:incoming");
+                        bpmnIncoming.textContent = incomingEvent.textContent;
+                        bpmnFlowElement.appendChild(bpmnIncoming);
+                    }
+
+                    bpmnProcess.appendChild(bpmnFlowElement);
+
+                    // Generar el BPMNShape
+                    bpmnShape = bpmnDoc.createElement("bpmndi:BPMNShape");
+                    bpmnShape.setAttribute(
+                        "id",
+                        `_${flowElement.getAttribute("id")}_di`,
+                    );
+                    bpmnShape.setAttribute(
+                        "bpmnElement",
+                        flowElement.getAttribute("id") || "",
+                    );
+                    elementMap[flowElement.getAttribute("id")] = { x, y }; // Guardar posición
+
+                    const boundsEvent = bpmnDoc.createElement("dc:Bounds");
+                    boundsEvent.setAttribute("x", x.toString());
+                    boundsEvent.setAttribute("y", y.toString());
+                    boundsEvent.setAttribute("width", "36");
+                    boundsEvent.setAttribute("height", "36");
+                    bpmnShape.appendChild(boundsEvent);
+
+                    bpmnPlane.appendChild(bpmnShape);
+                    x += offsetX; // Mover posición horizontal
+                    break;
+
+                case "bpmn2:SequenceFlow":
+                    // Crear el proceso BPMN
+                    bpmnFlowElement =
+                        bpmnDoc.createElement("bpmn:sequenceFlow");
+                    bpmnFlowElement.setAttribute(
+                        "id",
+                        flowElement.getAttribute("id") || "",
+                    );
+                    bpmnFlowElement.setAttribute(
+                        "sourceRef",
+                        flowElement.getAttribute("sourceRef") || "",
+                    );
+                    bpmnFlowElement.setAttribute(
+                        "targetRef",
+                        flowElement.getAttribute("targetRef") || "",
+                    );
+
+                    bpmnProcess.appendChild(bpmnFlowElement);
+
+                    // Generar el BPMNEdge
+                    const edge = bpmnDoc.createElement("bpmndi:BPMNEdge");
+                    edge.setAttribute(
+                        "id",
+                        `_${flowElement.getAttribute("id")}_di`,
+                    );
+                    edge.setAttribute(
+                        "bpmnElement",
+                        flowElement.getAttribute("id") || "",
+                    );
+
+                    const sourcePos =
+                        elementMap[flowElement.getAttribute("sourceRef")];
+                    const targetPos =
+                        elementMap[flowElement.getAttribute("targetRef")];
+
+                    if (sourcePos && targetPos) {
+                        const waypoint1 = bpmnDoc.createElement("di:waypoint");
+                        waypoint1.setAttribute("x", sourcePos.x.toString());
+                        waypoint1.setAttribute("y", sourcePos.y.toString());
+
+                        const waypoint2 = bpmnDoc.createElement("di:waypoint");
+                        waypoint2.setAttribute("x", targetPos.x.toString());
+                        waypoint2.setAttribute("y", targetPos.y.toString());
+
+                        edge.appendChild(waypoint1);
+                        edge.appendChild(waypoint2);
+                    }
+
+                    bpmnPlane.appendChild(edge);
+                    break;
             }
         });
 
-        return elements;
-    }
+        bpmnDiagram.appendChild(bpmnPlane);
+        bpmnDefinitions.appendChild(bpmnProcess);
+        bpmnDefinitions.appendChild(bpmnDiagram);
+        bpmnDoc.appendChild(bpmnDefinitions);
 
-    // Función para crear la sección gráfica (BPMNDiagram)
-    function createBPMNDiagram(elements: string[]): string {
-        let diagram = `
-<bpmndi:BPMNDiagram id="BPMNDiagram_1">
-  <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1honodd">`;
-
-        // Crear shapes para cada elemento
-        elements.forEach((element, index) => {
-            const x = 150 + index * 100; // Ajuste simple para la posición x
-            const y = 80; // Fija en y para simplicidad, podrías hacerla dinámica si lo prefieres
-
-            diagram += `
-    <bpmndi:BPMNShape id="_BPMNShape_${element}" bpmnElement="${element}">
-      <dc:Bounds x="${x}" y="${y}" width="100" height="80" />
-      <bpmndi:BPMNLabel>
-        <dc:Bounds x="${x + 20}" y="${y + 50}" width="50" height="14" />
-      </bpmndi:BPMNLabel>
-    </bpmndi:BPMNShape>`;
-        });
-
-        // Cerrar el diagrama
-        diagram += `
-  </bpmndi:BPMNPlane>
-</bpmndi:BPMNDiagram>`;
-
-        return diagram;
+        // Convertir el documento a string con la cabecera XML
+        const serializer = new XMLSerializer();
+        const bpmnString = serializer.serializeToString(bpmnDoc);
+        return `<?xml version="1.0" encoding="UTF-8"?>\n${bpmnString}`;
     }
 </script>
 
