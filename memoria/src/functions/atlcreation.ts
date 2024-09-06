@@ -131,7 +131,28 @@ to		dd:MM1!ExclusiveGateway(
 		name <- d.name
         )
 }
-        
+
+rule SequenceFlow {
+from	d:MM!SequenceFlow
+to		dd:MM1!SequenceFlow(
+		name <- d.name
+        )
+}
+
+rule StartEvent {
+from	d:MM!StartEvent
+to		dd:MM1!StartEvent(
+		name <- d.name
+        )
+}
+
+rule IntermediateThrowEvent {
+from	d:MM!IntermediateThrowEvent
+to		dd:MM1!IntermediateThrowEvent(
+		name <- d.name
+        )
+}
+ 
 rule Task {
 from	d:MM!Task(
 		 thisModule.optionalRule(d.name)	
