@@ -8,6 +8,7 @@
     import { writable, type Writable } from "svelte/store";
     import { fileUploadBpmn } from "../../functions/importdata";
     import Layout from "../+layout.svelte";
+    import { stringify } from "postcss";
 
     // Variables
     let searchQuery = "";
@@ -41,6 +42,7 @@
     // Variable para crear para varias actividades la misma regla
     let commandModal: boolean = false;
     let selectedActivities: string[] = [];
+    let createRuleforActivities: Writable<boolean> = writable(false);
 
     function handleKeyDown(event: KeyboardEvent) {
         if (event.metaKey && event.key === "b") {
@@ -101,6 +103,8 @@
     onMount(async () => {
         // Eliminamos el activitySelect del localstorage
         localStorage.removeItem("activitySelect");
+        localStorage.removeItem("selectedActivities");
+        localStorage.removeItem("nameRuleForActivities");
         // Verificamos si taskNames existe en el localStorage
         var taskLocalStorage = localStorage.getItem("taskNames")!;
         console.log(taskLocalStorage);
@@ -517,7 +521,10 @@
                                                             goto(
                                                                 "/createrules",
                                                             );
-                                                            window.removeEventListener("keydown", handleKeyDown);
+                                                            window.removeEventListener(
+                                                                "keydown",
+                                                                handleKeyDown,
+                                                            );
                                                         }}
                                                     >
                                                         <h1
@@ -561,7 +568,10 @@
                                                             goto(
                                                                 "/createrules",
                                                             );
-                                                            window.removeEventListener("keydown", handleKeyDown);
+                                                            window.removeEventListener(
+                                                                "keydown",
+                                                                handleKeyDown,
+                                                            );
                                                         }}
                                                     >
                                                         <h1
@@ -970,106 +980,195 @@
     <div
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
     >
-        <div
-            class="relative border rounded-lg shadow-lg p-8 h-[500px] w-1/2 {$themeStore ===
-            'Light'
-                ? 'bg-[#ffffff] border-[#f0eaf9] shadow-[0_0_30px_#f0eaf9]'
-                : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c]'}"
-        >
-            <button
-                on:click={() => {
-                    commandModal = false;
-                    searchQuery = "";
-                }}
-                class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+        {#if !$createRuleforActivities}
+            <div
+                class="relative border rounded-lg shadow-lg p-8 h-[500px] w-1/2 {$themeStore ===
+                'Light'
+                    ? 'bg-[#ffffff] border-[#f0eaf9] shadow-[0_0_30px_#f0eaf9]'
+                    : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c]'}"
             >
-                <svg
-                    class="fill-current h-6 w-6"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
+                <button
+                    on:click={() => {
+                        commandModal = false;
+                        $createRuleforActivities = false;
+                        searchQuery = "";
+                        selectedActivities = [];
+                    }}
+                    class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
                 >
-                    <path
-                        d="M10 8.586l4.293-4.293 1.414 1.414L11.414 10l4.293 4.293-1.414 1.414L10 11.414l-4.293 4.293-1.414-1.414L8.586 10 4.293 5.707l1.414-1.414L10 8.586z"
-                    />
-                </svg>
-            </button>
-            <div class="flex flex-col h-full">
-                <h1
-                    class="mx-auto text-2xl font-bold mb-4 {$themeStore ===
-                    'Light'
-                        ? 'text-[#6d44b9]'
-                        : 'text-[#b498df]'}"
-                >
-                    Create rule for selected activities
-                </h1>
-                <div
-                    class="w-4/5 h-[370px] flex flex-col mx-auto my-auto border border-[#6e48ba] rounded-xl"
-                >
-                    <button class="flex text-[#6e48ba] mx-2 my-2">
-                        <span class="my-auto material-symbols-outlined">
-                            check_box_outline_blank
-                        </span>
-                        <h1 class="my-auto ml-2">Select all</h1>
-                    </button>
-                    <div class="w-full h-[1px] bg-[#6e48ba]"></div>
-                    <div class="relative flex w-[90%] my-2 mx-auto">
-                        <span
-                            class="absolute top-0 left-0 ml-2 text-[#6e48ba] material-symbols-outlined"
-                        >
-                            search
-                        </span>
-                        <input
-                            class="pl-10 w-full rounded border {$themeStore ===
-                            'Light'
-                                ? 'border-[#875fc7] bg-[#ffffff]'
-                                : 'border-[#462a72] bg-[#14111b]'}
+                    <svg
+                        class="fill-current h-6 w-6"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                    >
+                        <path
+                            d="M10 8.586l4.293-4.293 1.414 1.414L11.414 10l4.293 4.293-1.414 1.414L10 11.414l-4.293 4.293-1.414-1.414L8.586 10 4.293 5.707l1.414-1.414L10 8.586z"
+                        />
+                    </svg>
+                </button>
+                <div class="flex flex-col h-full w-full">
+                    <h1
+                        class="mx-auto text-2xl font-bold mb-4 {$themeStore ===
+                        'Light'
+                            ? 'text-[#6d44b9]'
+                            : 'text-[#b498df]'}"
+                    >
+                        Create rule for selected activities
+                    </h1>
+                    <div
+                        class="w-4/5 h-[370px] flex flex-col mx-auto my-auto border border-[#6e48ba] rounded-xl"
+                    >
+                        <button class="flex text-[#6e48ba] mx-2 my-2">
+                            <span class="my-auto material-symbols-outlined">
+                                check_box_outline_blank
+                            </span>
+                            <h1 class="my-auto ml-2">Select all</h1>
+                        </button>
+                        <div class="w-full h-[1px] bg-[#6e48ba]"></div>
+                        <div class="relative flex w-[90%] my-2 mx-auto">
+                            <span
+                                class="absolute top-0 left-0 ml-2 text-[#6e48ba] material-symbols-outlined"
+                            >
+                                search
+                            </span>
+                            <input
+                                class="pl-10 w-full rounded border {$themeStore ===
+                                'Light'
+                                    ? 'border-[#875fc7] bg-[#ffffff]'
+                                    : 'border-[#462a72] bg-[#14111b]'}
                 focus:bg-[#6e48ba] focus:text-white focus:border-[#6e48ba] focus:outline-none transition-colors duration-300 ease-in-out
                 placeholder:text-[#6f40b8] focus:placeholder:text-white"
-                            type="text"
-                            placeholder="Find activity..."
-                            bind:value={searchQuery}
-                        />
+                                type="text"
+                                placeholder="Find activity..."
+                                bind:value={searchQuery}
+                            />
+                        </div>
+                        <div class="w-full h-[1px] bg-[#6e48ba]"></div>
+                        <div class="flex-col overflow-y-auto">
+                            {#each filteredActivities as nombre_actividad}
+                                <button
+                                    on:click={() =>
+                                        handleSelection(nombre_actividad)}
+                                    class="mx-2 my-1 flex text-[#6e48ba]"
+                                >
+                                    {#if selectedActivities.includes(nombre_actividad)}
+                                        <span
+                                            class="my-auto material-symbols-outlined"
+                                        >
+                                            check_box
+                                        </span>
+                                    {:else}
+                                        <span
+                                            class="my-auto material-symbols-outlined"
+                                        >
+                                            check_box_outline_blank
+                                        </span>
+                                    {/if}
+                                    <h1 class="ml-2">
+                                        {nombre_actividad.name}
+                                    </h1>
+                                </button>
+                            {/each}
+                        </div>
                     </div>
-                    <div class="w-full h-[1px] bg-[#6e48ba]"></div>
-                    <div class="flex-col overflow-y-auto">
-                        {#each filteredActivities as nombre_actividad}
-                            <button
-                                on:click={() =>
-                                    handleSelection(nombre_actividad)}
-                                class="mx-2 my-1 flex text-[#6e48ba]"
-                            >
-                                {#if selectedActivities.includes(nombre_actividad)}
-                                    <span
-                                        class="my-auto material-symbols-outlined"
-                                    >
-                                        check_box
-                                    </span>
-                                {:else}
-                                    <span
-                                        class="my-auto material-symbols-outlined"
-                                    >
-                                        check_box_outline_blank
-                                    </span>
-                                {/if}
-                                <h1 class="ml-2">{nombre_actividad.name}</h1>
-                            </button>
-                        {/each}
-                    </div>
+                    <button
+                        class="w-4/5 border border-[#7f5fc1] bg-[#f0e9f8] text-[#7f5fc1] my-2 mx-auto"
+                        on:click={() => {
+                            //localStorage.setItem("selectedActivities", JSON.stringify(selectedActivities));
+                            //goto("/createrules");
+                            //window.removeEventListener("keydown", handleKeyDown);
+                            $createRuleforActivities = true;
+                        }}
+                    >
+                        <h1 class="mx-auto">Create rule</h1>
+                    </button>
+                    <p>
+                        Actividades seleccionadas: {JSON.stringify(
+                            selectedActivities,
+                        )}
+                    </p>
                 </div>
-                <button class="w-4/5 border border-[#7f5fc1] bg-[#f0e9f8] text-[#7f5fc1] my-2 mx-auto"
-                on:click={()=>{
-                    localStorage.setItem("selectedActivities", JSON.stringify(selectedActivities));
-                    goto("/createrules");
-                    window.removeEventListener("keydown", handleKeyDown);
-                }}>
-                    <h1 class="mx-auto">Create rule</h1>
-                </button>
-                <p>
-                    Actividades seleccionadas: {JSON.stringify(
-                        selectedActivities,
-                    )}
-                </p>
             </div>
-        </div>
+        {:else}
+            <div
+                class="relative border rounded-lg shadow-lg p-8 h-[250px] w-1/2 {$themeStore ===
+                'Light'
+                    ? 'bg-[#ffffff] border-[#f0eaf9] shadow-[0_0_30px_#f0eaf9]'
+                    : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c]'}"
+            >
+                <button
+                    on:click={() => {
+                        commandModal = false;
+                        $createRuleforActivities = false;
+                        searchQuery = "";
+                        selectedActivities = [];
+                    }}
+                    class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                >
+                    <svg
+                        class="fill-current h-6 w-6"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                    >
+                        <path
+                            d="M10 8.586l4.293-4.293 1.414 1.414L11.414 10l4.293 4.293-1.414 1.414L10 11.414l-4.293 4.293-1.414-1.414L8.586 10 4.293 5.707l1.414-1.414L10 8.586z"
+                        />
+                    </svg>
+                </button>
+                <div class="flex flex-col h-full w-full">
+                    <h1
+                        class="mx-auto text-2xl font-bold mb-4 {$themeStore ===
+                        'Light'
+                            ? 'text-[#6d44b9]'
+                            : 'text-[#b498df]'}"
+                    >
+                        Name the rule that will be created for the selected
+                        rules
+                    </h1>
+                    <input
+                        bind:value={subnombre_actividad_crear}
+                        class="text-[#6f40b8] pl-5 pr-14 mx-auto mb-5 h-[50px] w-full rounded-lg border {$themeStore ===
+                        'Light'
+                            ? 'border-[#875fc7] bg-[#ffffff]'
+                            : 'border-[#462a72] bg-[#14111b]'}
+                focus:bg-[#6e48ba] focus:text-white focus:border-[#6e48ba] focus:outline-none transition-colors duration-300 ease-in-out
+                placeholder:text-[#6f40b8] focus:placeholder:text-white"
+                        type="text"
+                        placeholder="Enter rule name"
+                        on:keydown={(event) => {
+                            if (event.key === "Enter") {
+                                localStorage.setItem("nameRuleForActivities", JSON.stringify(subnombre_actividad_crear))
+                                localStorage.setItem(
+                                    "selectedActivities",
+                                    JSON.stringify(selectedActivities),
+                                );
+                                goto("/createrules");
+                                window.removeEventListener(
+                                    "keydown",
+                                    handleKeyDown,
+                                );
+                            }
+                        }}
+                    />
+                    <button
+                        class="w-full h-[50px] rounded-lg border border-[#7f5fc1] bg-[#f0e9f8] text-[#7f5fc1] mx-auto"
+                        on:click={() => {
+                            localStorage.setItem("nameRuleForActivities", JSON.stringify(subnombre_actividad_crear))
+                            localStorage.setItem(
+                                "selectedActivities",
+                                JSON.stringify(selectedActivities),
+                            );
+                            goto("/createrules");
+                            window.removeEventListener(
+                                "keydown",
+                                handleKeyDown,
+                            );
+                        }}
+                    >
+                        <h1 class="mx-auto">Create rule</h1>
+                    </button>
+                </div>
+            </div>
+        {/if}
     </div>
 {/if}
