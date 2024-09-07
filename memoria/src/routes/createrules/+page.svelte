@@ -35,13 +35,9 @@
     let xmlBpmn: string = "";
     let attributesContext: any[] = [];
 
-    let activity: activity = {
-        id: 0,
-        type: "Activity",
-        name: "Default Activity - No activity selected",
-        subname: "",
-        rules: [],
-    };
+    let activity_select: activity;
+
+    let activities_selected: { name: string; type: string }[] = [];
 
     let rules = writable<Rule[]>([]);
 
@@ -120,25 +116,28 @@
         console.log("111");
         // Obtenemos la actividad seleccionada
         var activitySelect = localStorage.getItem("activitySelect")!;
+        var selectedActivities = localStorage.getItem("selectedActivities")!;
         if (activitySelect != null) {
-            activity = JSON.parse(activitySelect);
-            if (activity.rules != null) {
-                rules.set(activity.rules);
-                console.log(activity);
-                if (activity.deleted != null) {
+            activity_select = JSON.parse(activitySelect);
+            if (activity_select.rules != null) {
+                rules.set(activity_select.rules);
+                console.log(activity_select);
+                if (activity_select.deleted != null) {
                     console.log("deleted");
                     selectedAction1 = "Delete Action";
-                    selectedAction2 = activity.deleted
+                    selectedAction2 = activity_select.deleted
                         ? "Delete this activity"
                         : "Not delete this activity";
-                } else if (activity.replaced) {
+                } else if (activity_select.replaced) {
                     console.log("replaced");
                     selectedAction1 = "Replace Action";
-                    selectedAction2 = activity.replaceActivity!;
+                    selectedAction2 = activity_select.replaceActivity!;
                 } else {
                     console.log("ERROR: No action");
                 }
             }
+        } else if (selectedActivities != null) {
+            activities_selected = JSON.parse(selectedActivities);
         }
         showLoader = false; // Cuando carge todo, ocultamos el loader
 
@@ -235,39 +234,95 @@
 
     // Función para guardar los cambios de todas las reglas en el localStorage
     function addRulesLocalStorage() {
-        // Obtenemos las actividades que estan en el localStorage
-        var task = localStorage.getItem("taskNames")!;
-        // Si taskNames no es nulo, lo convertimos a JSON y lo guardamos
-        if (activities != null) {
-            var jsonTask = JSON.parse(task);
-        }
-        // Ahora buscamos en jsonTask el objeto de la actividad seleccionada y le agregamos las reglas
-        jsonTask.forEach((task: activity) => {
-            if (task.id === activity.id) {
-                task.rules = get(rules);
+        // Si la regla es para una pura actividad
+        if (activity_select) {
+            // Obtenemos las actividades que estan en el localStorage
+            var task = localStorage.getItem("taskNames")!;
+            // Si taskNames no es nulo, lo convertimos a JSON y lo guardamos
+            if (activities != null) {
+                var jsonTask = JSON.parse(task);
+            }
+            // Ahora buscamos en jsonTask el objeto de la actividad seleccionada y le agregamos las reglas
+            jsonTask.forEach((task: activity) => {
+                if (task.id === activity_select.id) {
+                    task.rules = get(rules);
+                    if (
+                        selectedAction1 === "Delete Action" &&
+                        selectedAction2 === "Not delete this activity"
+                    ) {
+                        task.deleted = false;
+                        task.replaceActivity = undefined;
+                        task.replaced = undefined;
+                    } else if (
+                        selectedAction1 === "Delete Action" &&
+                        selectedAction2 === "Delete this activity"
+                    ) {
+                        task.deleted = true;
+                        task.replaceActivity = undefined;
+                        task.replaced = undefined;
+                    } else if (selectedAction1 === "Replace Action") {
+                        task.replaced = true;
+                        task.replaceActivity = selectedAction2;
+                        task.deleted = undefined;
+                    }
+                }
+            });
+            // Guardamos el objeto con las reglas en el localStorage
+            localStorage.setItem("taskNames", JSON.stringify(jsonTask));
+        } else if (activities_selected) {
+            // Si la regla es para más de una actividad
+            // Obtenemos las actividades que estan en el localStorage
+            var task = localStorage.getItem("taskNames")!;
+            // Obtenemos el ultimo id de las reglas creadas para las actividades
+            var lastId = 0;
+            if (task != null && task != "[]" ) {
+                console.log(task)
+                console.log(task.length)
+                var jsonTask = JSON.parse(task);
+                lastId = jsonTask[jsonTask.length - 1].id;
+            }
+            var addRulesActivities: activity[] = [];
+            var index = lastId+1;
+            // Ahora buscamos en jsonTask los objetos de las actividades seleccionadas y le agregamos las reglas
+            activities_selected.forEach((activity) => {
+                
+                // creamos las reglas para cada una de las actividades seleccionadas
+                var ruleForActivity: activity = {
+                    id: index,
+                    name: activity.name,
+                    rules: get(rules),
+                    type: "",
+                    subname: "",
+                };
+                
                 if (
                     selectedAction1 === "Delete Action" &&
                     selectedAction2 === "Not delete this activity"
                 ) {
-                    task.deleted = false;
-                    task.replaceActivity = undefined;
-                    task.replaced = undefined;
+                    ruleForActivity.deleted = false;
+                    ruleForActivity.replaceActivity = undefined;
+                    ruleForActivity.replaced = undefined;
                 } else if (
                     selectedAction1 === "Delete Action" &&
                     selectedAction2 === "Delete this activity"
                 ) {
-                    task.deleted = true;
-                    task.replaceActivity = undefined;
-                    task.replaced = undefined;
+                    ruleForActivity.deleted = true;
+                    ruleForActivity.replaceActivity = undefined;
+                    ruleForActivity.replaced = undefined;
                 } else if (selectedAction1 === "Replace Action") {
-                    task.replaced = true;
-                    task.replaceActivity = selectedAction2;
-                    task.deleted = undefined;
+                    ruleForActivity.replaced = true;
+                    ruleForActivity.replaceActivity = selectedAction2;
+                    ruleForActivity.deleted = undefined;
                 }
-            }
-        });
-        // Guardamos el objeto con las reglas en el localStorage
-        localStorage.setItem("taskNames", JSON.stringify(jsonTask));
+                addRulesActivities.push(ruleForActivity);
+                index++;
+            });
+            // Guardamos las nuevas reglas para las actividades en el localStorage
+            localStorage.setItem(
+                "taskNames",
+                JSON.stringify([...JSON.parse(task), ...addRulesActivities]),
+            );
+        }
     }
 
     // Limpiar todas las reglas realizadas
@@ -289,7 +344,13 @@
                 ? 'text-[#14111b]'
                 : 'text-[#eaeef5]'}"
         >
-            Rule for activity: {activity.name}
+            {#if activity_select}
+                Rule for activity:
+                {activity_select.name}
+            {:else if activities_selected}
+                Rule for activities:
+                {activities_selected.map((a) => a.name).join(", ")}.
+            {/if}
         </h1>
         <div class="flex flex-row">
             <!-- Pizarra donde estará la creación de reglas -->
