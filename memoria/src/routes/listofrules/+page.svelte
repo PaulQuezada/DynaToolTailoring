@@ -39,6 +39,7 @@
 
     // Variable para crear para varias actividades la misma regla
     let commandModal: boolean = false;
+    let selectedAllActivities: boolean = false;
     let selectedActivities: string[] = [];
     let createRuleforActivities: Writable<boolean> = writable(false);
 
@@ -50,12 +51,22 @@
     }
 
     function handleSelection(activity: string) {
+        // Si la actividad ya esta seleccionada, la eliminamos
         if (selectedActivities.includes(activity)) {
             selectedActivities = selectedActivities.filter(
                 (a) => a !== activity,
             );
         } else {
             selectedActivities = [...selectedActivities, activity];
+        }
+    }
+
+    function selectionAllActivities(){
+        selectedActivities = [];
+        if(selectedAllActivities){
+            $nombre_actividades.forEach((activity: any) => {
+                selectedActivities = [...selectedActivities, activity];
+            });
         }
     }
 
@@ -227,17 +238,27 @@
     >
         <!-- Command + B -->
         <div
-            class="flex mt-2 w-3/4 h-[50px] rounded bg-[#fef8ca] border border-[#e3d290] mx-auto"
+            class="flex mt-3 w-3/4 h-[50px] rounded border mx-auto {$themeStore ===
+            'Light'
+                ? 'bg-[#fef8ca] border-[#e3d290] text-[#202328]'
+                : 'bg-[#5e4821] border-[#27211a] text-white'}"
         >
-            <span class="my-auto mx-2 text-[#936921] material-symbols-outlined">
+            <span
+                class="my-auto mx-2
+            {$themeStore === 'Light' ? 'text-[#936921]' : 'text-[#c99b3e]'}
+                      material-symbols-outlined"
+            >
                 lightbulb
             </span>
-            <p class="my-auto w-3/4 text-[#202328] text-sm">
-                <strong>Using</strong> the key Command+B you can create the
-                same rule for more than one activity
+            <p class="my-auto w-3/4 text-sm">
+                <strong>Using</strong> the key Command+B you can create the same
+                rule for more than one activity
             </p>
             <button
-                class="my-auto rounded py-1 px-2 text-sm bg-[#428646] border border-[#3d7741] text-white"
+                class="my-auto rounded py-1 px-2 text-sm border text-white
+                {$themeStore === 'Light'
+                    ? 'bg-[#428646] border-[#3d7741]'
+                    : 'bg-[#386de3] border-[#4c7ce6]'}"
                 on:click={() => {
                     commandModal = !commandModal;
                 }}>Create the rule</button
@@ -1034,10 +1055,20 @@
                     <div
                         class="w-4/5 h-[370px] flex flex-col mx-auto my-auto border border-[#6e48ba] rounded-xl"
                     >
-                        <button class="flex text-[#6e48ba] mx-2 my-2">
-                            <span class="my-auto material-symbols-outlined">
-                                check_box_outline_blank
-                            </span>
+                        <button class="flex text-[#6e48ba] mx-2 my-2"
+                        on:click={()=>{
+                            selectedAllActivities = !selectedAllActivities;
+                            selectionAllActivities();
+                        }}>
+                            {#if selectedAllActivities}
+                                <span class="my-auto material-symbols-outlined">
+                                    check_box
+                                </span>
+                            {:else}
+                                <span class="my-auto material-symbols-outlined">
+                                    check_box_outline_blank
+                                </span>
+                            {/if}
                             <h1 class="my-auto ml-2">Select all</h1>
                         </button>
                         <div class="w-full h-[1px] bg-[#6e48ba]"></div>
@@ -1088,14 +1119,10 @@
                         </div>
                     </div>
                     <button
-                        class="w-4/5 rounded border {$themeStore ===
-                                'Light'
-                                    ? 'border-[#875fc7] bg-[#f0e9f8] text-[#875fc7]'
-                                    : 'border-[#462a72] bg-[#211831] text-[#684ab4]'}  my-2 mx-auto"
+                        class="w-4/5 rounded border {$themeStore === 'Light'
+                            ? 'border-[#875fc7] bg-[#f0e9f8] text-[#875fc7]'
+                            : 'border-[#462a72] bg-[#211831] text-[#684ab4]'}  my-2 mx-auto"
                         on:click={() => {
-                            //localStorage.setItem("selectedActivities", JSON.stringify(selectedActivities));
-                            //goto("/createrules");
-                            //window.removeEventListener("keydown", handleKeyDown);
                             $createRuleforActivities = true;
                         }}
                     >
