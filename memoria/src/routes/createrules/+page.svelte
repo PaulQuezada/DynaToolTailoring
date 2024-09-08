@@ -12,6 +12,7 @@
     } from "../../functions/importdata";
     import * as functionRulecreation from "../../functions/rulecreation";
 
+    
     // Variables
     let showLoader = true;
     let selectedAction = "";
