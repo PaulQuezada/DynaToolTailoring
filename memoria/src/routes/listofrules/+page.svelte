@@ -1088,7 +1088,10 @@
                         </div>
                     </div>
                     <button
-                        class="w-4/5 border border-[#7f5fc1] bg-[#f0e9f8] text-[#7f5fc1] my-2 mx-auto"
+                        class="w-4/5 rounded border {$themeStore ===
+                                'Light'
+                                    ? 'border-[#875fc7] bg-[#f0e9f8] text-[#875fc7]'
+                                    : 'border-[#462a72] bg-[#211831] text-[#684ab4]'}  my-2 mx-auto"
                         on:click={() => {
                             //localStorage.setItem("selectedActivities", JSON.stringify(selectedActivities));
                             //goto("/createrules");
