@@ -7,10 +7,7 @@
     import { onMount, onDestroy } from "svelte";
     import { writable, type Writable } from "svelte/store";
     import { fileUploadBpmn } from "../../functions/importdata";
-    import { fly } from "svelte/transition";
 
-    // Variable para la notificación
-    let notificationActive: boolean = false;
     // Variables
     let searchQuery = "";
     let actividades: Writable<activity[]> = writable([]);
@@ -45,13 +42,6 @@
     let selectedActivities: string[] = [];
     let createRuleforActivities: Writable<boolean> = writable(false);
 
-    // Función para mostrar la notificación durante 1 minuto
-    const showNotification = () => {
-        notificationActive = true;
-        setTimeout(() => {
-            notificationActive = false;
-        }, 30000); // 30000 ms = 30 segundos
-    };
     function handleKeyDown(event: KeyboardEvent) {
         if (event.metaKey && event.key === "b") {
             commandModal = !commandModal; // Cambia el valor de la variable
@@ -109,8 +99,6 @@
 
     // cuando montamos la pagina recolectamos los datos y los guardamos en el store
     onMount(async () => {
-        // Mostramos la notificación
-        showNotification();
         // Eliminamos el activitySelect del localstorage
         localStorage.removeItem("activitySelect");
         localStorage.removeItem("selectedActivities");
@@ -222,42 +210,6 @@
     }
 </script>
 
-{#if notificationActive}
-    <div
-        class="p-1 fixed top-4 right-4 bg-[#e9a845] w-[400px] text-white px-4 py-2 rounded shadow-lg z-50"
-        transition:fly={{ x: 300, duration: 500 }}
-    >
-        <div class="flex">
-            <span class="my-auto material-symbols-outlined"> info </span>
-            <p class="ml-2 mr-1 flex">Using the key combination</p>
-            <svg
-                class="mt-[3px] mr-1"
-                fill="#ffffff"
-                version="1.1"
-                id="Capa_1"
-                xmlns="http://www.w3.org/2000/svg"
-                xmlns:xlink="http://www.w3.org/1999/xlink"
-                width="20px"
-                height="20px"
-                viewBox="0 0 80 80"
-                xml:space="preserve"
-            >
-                <g>
-                    <path
-                        d="M64,48L64,48h-8V32h8c8.836,0,16-7.164,16-16S72.836,0,64,0c-8.837,0-16,7.164-16,16v8H32v-8c0-8.836-7.164-16-16-16
-                    S0,7.164,0,16s7.164,16,16,16h8v16h-8l0,0l0,0C7.164,48,0,55.164,0,64s7.164,16,16,16c8.837,0,16-7.164,16-16l0,0v-8h16v7.98
-                    c0,0.008-0.001,0.014-0.001,0.02c0,8.836,7.164,16,16,16s16-7.164,16-16S72.836,48.002,64,48z M64,8c4.418,0,8,3.582,8,8
-                    s-3.582,8-8,8h-8v-8C56,11.582,59.582,8,64,8z M8,16c0-4.418,3.582-8,8-8s8,3.582,8,8v8h-8C11.582,24,8,20.417,8,16z M16,72
-                    c-4.418,0-8-3.582-8-8s3.582-8,8-8l0,0h8v8C24,68.418,20.418,72,16,72z M32,48V32h16v16H32z M64,72c-4.418,0-8-3.582-8-8l0,0v-8
-                    h7.999c4.418,0,8,3.582,8,8S68.418,72,64,72z"
-                    />
-                </g>
-            </svg>
-            <p>+ B you can create the same rule for more than one activity</p>
-        </div>
-    </div>
-{/if}
-
 <div class="flex flex-col h-full w-full">
     <h1
         class="flex mt-3 mb-2 mx-auto text-4xl font-bold {$themeStore ===
@@ -273,6 +225,24 @@
             ? 'bg-[#ffffff] border-[#dad4e1] shadow-[0_0_30px_#f0e9f8]'
             : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c]'} transition duration-300"
     >
+        <!-- Command + B -->
+        <div
+            class="flex mt-2 w-3/4 h-[50px] rounded bg-[#fef8ca] border border-[#e3d290] mx-auto"
+        >
+            <span class="my-auto mx-2 text-[#936921] material-symbols-outlined">
+                lightbulb
+            </span>
+            <p class="my-auto w-3/4 text-[#202328] text-sm">
+                <strong>Using</strong> the key Command+B you can create the
+                same rule for more than one activity
+            </p>
+            <button
+                class="my-auto rounded py-1 px-2 text-sm bg-[#428646] border border-[#3d7741] text-white"
+                on:click={() => {
+                    commandModal = !commandModal;
+                }}>Create the rule</button
+            >
+        </div>
         <!-- Buscador -->
         <div class="relative mx-auto mt-5 w-3/4">
             <input
@@ -1128,11 +1098,6 @@
                     >
                         <h1 class="mx-auto">Create rule</h1>
                     </button>
-                    <p>
-                        Actividades seleccionadas: {JSON.stringify(
-                            selectedActivities,
-                        )}
-                    </p>
                 </div>
             </div>
         {:else}
