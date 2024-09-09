@@ -50,6 +50,7 @@
         const platform = navigator.platform.toLowerCase();
         const userAgent = navigator.userAgent.toLowerCase();
 
+        if (platform.includes("win")) {
             commandText = "Alt+B";
             return "Windows";
         } else if (platform.includes("mac")) {
