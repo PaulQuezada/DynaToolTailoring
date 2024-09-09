@@ -33,6 +33,7 @@ type Rule = SimpleRule | ConnectorRule | ComplexRule;
 
 interface activity {
     id: number;
+    type: string;
     name: string;
     subname: string;
     rules: Rule[];

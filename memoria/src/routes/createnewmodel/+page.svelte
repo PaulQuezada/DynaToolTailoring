@@ -65,7 +65,7 @@
     async function uploadBpmn(event: Event) {
         nameFileBpmn = await nameFileUpload(event);
         xmlBpmn = JSON.parse(JSON.stringify(await fileUpload(event))); // Extraer el contenido del archivo BPMN
-        extractTask = JSON.parse(JSON.stringify(await fileUploadBpmn(xmlBpmn))); // Extraer los atributos del archivo BPMN
+        extractTask = JSON.parse(JSON.stringify(await fileUploadBpmn(xmlBpmn))); // Extraer las tareas del archivo BPMN
         //console.log(nameFileBpmn);
         //console.log(xmlBpmn);
         //console.log(JSON.stringify(extractTask, null, 2));

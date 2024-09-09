@@ -2,9 +2,32 @@
 <script lang="ts">
     import "../../app.css";
     import { themeStore } from "../../stores";
+    import {
+        downloadXMIFile,
+        createCompleteModel,
+    } from "../../functions/exportdata";
+    import { downloadATL, baseATL } from "../../functions/atlcreation";
+
+    // Variables
+    let showModalData = false;
+    let titledatashow = "";
+    let datashow: string = "";
+    let code_copy: boolean = false;
+
+    function copyToClipboard() {
+        code_copy = true;
+        navigator.clipboard.writeText(datashow);
+
+        // Después de 2 segundos, volver a mostrar el icono original
+        setTimeout(() => {
+            code_copy = false;
+        }, 2000); // 2 segundos
+    }
 </script>
 
-<div class="flex flex-col h-full w-full">
+<div
+    class="flex flex-col h-full w-full ${showModalData ? 'filter blur-md' : ''}"
+>
     <h1
         class="flex mt-3 mb-2 mx-auto text-4xl font-bold {$themeStore ===
         'Light'
@@ -69,14 +92,39 @@
                     </div>
                 </div>
             </div>
-            <button
-                class="absolute top-0 right-0 -mt-4 -mr-4 rounded-full p-3 border-dashed border-2 {$themeStore ===
+            <div
+                class="absolute flex top-0 right-0 -mt-4 -mr-4 rounded-md p-2 border-dashed border-2 {$themeStore ===
                 'Light'
                     ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                     : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
             >
-                <span class="my-auto material-symbols-outlined">download</span>
-            </button>
+                <button
+                    class="mx-3"
+                    on:click={() => {
+                        downloadXMIFile();
+                    }}
+                >
+                    <span class="my-auto material-symbols-outlined"
+                        >download</span
+                    >
+                </button>
+                <div
+                    class="m-auto h-[30px] border-dashed border-2 {$themeStore ===
+                    'Light'
+                        ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
+                        : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
+                ></div>
+                <button
+                    class="mx-3"
+                    on:click={() => {
+                        titledatashow = "Tailoring rules model";
+                        datashow = createCompleteModel();
+                        showModalData = true;
+                    }}
+                >
+                    <span class="material-symbols-outlined"> visibility </span>
+                </button>
+            </div>
         </div>
         <!-- Apartado para descargar el ATL -->
         <div
@@ -114,14 +162,39 @@
                     </div>
                 </div>
             </div>
-            <button
-                class="absolute top-0 right-0 -mt-4 -mr-4 rounded-full p-3 border-dashed border-2 {$themeStore ===
+            <div
+                class="absolute flex top-0 right-0 -mt-4 -mr-4 rounded-md p-2 border-dashed border-2 {$themeStore ===
                 'Light'
                     ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                     : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
             >
-                <span class="my-auto material-symbols-outlined">download</span>
-            </button>
+                <button
+                    class="mx-3"
+                    on:click={() => {
+                        downloadATL();
+                    }}
+                >
+                    <span class="my-auto material-symbols-outlined"
+                        >download</span
+                    >
+                </button>
+                <div
+                    class="m-auto h-[30px] border-dashed border-2 {$themeStore ===
+                    'Light'
+                        ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
+                        : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
+                ></div>
+                <button
+                    class="mx-3"
+                    on:click={() => {
+                        titledatashow = "Tailoring rules code";
+                        datashow = baseATL();
+                        showModalData = true;
+                    }}
+                >
+                    <span class="material-symbols-outlined"> visibility </span>
+                </button>
+            </div>
         </div>
 
         <!-- Botones para seguir avanzando o no -->
@@ -155,3 +228,110 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para la visualización previa -->
+{#if showModalData}
+    <div
+        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+    >
+        <div
+            class="relative border rounded-lg shadow-lg p-8 h-[600px] w-1/2 {$themeStore ===
+            'Light'
+                ? 'bg-[#ffffff] border-[#f0eaf9] shadow-[0_0_30px_#f0eaf9]'
+                : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c]'}"
+        >
+            <button
+                on:click={() => {
+                    showModalData = false;
+                    code_copy = false;
+                }}
+                class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            >
+                <svg
+                    class="fill-current h-6 w-6"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                >
+                    <path
+                        d="M10 8.586l4.293-4.293 1.414 1.414L11.414 10l4.293 4.293-1.414 1.414L10 11.414l-4.293 4.293-1.414-1.414L8.586 10 4.293 5.707l1.414-1.414L10 8.586z"
+                    />
+                </svg>
+            </button>
+            <div class="flex flex-col relative">
+                <h2
+                    class="mx-auto text-2xl font-bold mb-4 {$themeStore ===
+                    'Light'
+                        ? 'text-[#14111b]'
+                        : 'text-[#b498df]'}"
+                >
+                    {titledatashow}
+                </h2>
+                <div class="absolute top-0 right-0 mt-[49px] mr-2 z-20">
+                    <button
+                        class="flex bg-[#b4b4b4] ml-2 rounded transition-transform duration-300 p-1"
+                        on:click={copyToClipboard}
+                    >
+                        {#if code_copy}
+                            <!-- Icono de check que crece -->
+                            <span class="my-auto material-symbols-outlined">
+                                check
+                            </span>
+                            <h1 class="my-auto">Copied!</h1>
+                        {:else}
+                            <!-- Icono de content_copy que se encoge -->
+                            <span class="my-auto material-symbols-outlined">
+                                content_copy
+                            </span>
+                        {/if}
+                    </button>
+                </div>
+                <code
+                    class="mx-auto w-full h-[500px] overflow-y-auto p-4 bg-[#2a2d3d] text-[#bbbed6] rounded-md font-mono text-sm relative"
+                >
+                    {#each datashow.split("\n") as line, index}
+                        <div class="flex flex-col">
+                            <div class="flex text-right">
+                                <span class="text-gray-500 mr-2">
+                                    {index + 1}
+                                </span>
+                                {#if titledatashow === "Tailoring rules code"}
+                                    <span class="whitespace-pre">
+                                        {@html line.replace(
+                                            /helper\sdef:/g,
+                                            '<span class="text-[#9cdbfb]">helper def:</span>',
+                                        )}
+                                    </span>
+                                {:else}
+                                    <span class="whitespace-pre text-[#bbbed6]">
+                                        {line}
+                                    </span>
+                                {/if}
+                            </div>
+                        </div>
+                    {/each}
+                </code>
+            </div>
+        </div>
+    </div>
+{/if}
+
+<button
+    class="flex bg-[#b4b4b4] ml-2 rounded-tl rounded-bl transition-transform duration-300"
+    on:click={copyToClipboard}
+>
+    {#if code_copy}
+        <!-- Icono de check que crece -->
+        <span
+            class="my-auto material-symbols-outlined text-green-500 transition-transform transform scale-0 animate-grow"
+        >
+            check
+        </span>
+    {:else}
+        <!-- Icono de content_copy que se encoge -->
+        <span
+            class="my-auto material-symbols-outlined transition-transform transform animate-shrink"
+        >
+            content_copy
+        </span>
+    {/if}
+</button>

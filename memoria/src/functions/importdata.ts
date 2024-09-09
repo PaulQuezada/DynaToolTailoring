@@ -45,7 +45,7 @@ export async function fileUploadContext(xmlContext: string) {
 
 
         // Recorrer las dimensiones del contexto organizacional y obtener los atributos
-        dimensions.forEach((dim: any) => {
+        await dimensions.forEach((dim: any) => {
             const contextAttributes = Array.isArray(dim.myContextAttributes)
                 ? dim.myContextAttributes
                 : [dim.myContextAttributes];
@@ -83,9 +83,12 @@ export async function fileUploadBpmn(xmlBpmn: string) {
         const newTaskNames = flowElements
             .filter(
                 (fe: { [x: string]: string }) =>
-                    fe["xsi:type"] === "bpmn2:Task",
+                    fe["xsi:type"] === "bpmn2:Task" || fe["xsi:type"] === "bpmn2:UserTask",
             )
-            .map((task: any) => task.name);
+            .map((task: any) => ({
+                name: task.name,
+                type: task["xsi:type"],
+            }));
         // Actualiza el store con los nuevos nombres de las tareas
         task = newTaskNames;
     }
@@ -204,6 +207,7 @@ export function convertRulesModel(xml: string, onlyAttributes: any[], attributes
         console.log(contentRule);
         const activity: activity = {
             id: index,
+            type: contentRule.getAttribute("typeofactivity") || "",
             name: contentRule.getAttribute("name") || "",
             subname: contentRule.getAttribute("subname") || "",
             rules: parseRules(contentRule, onlyAttributes, attributesAndValues),
@@ -221,7 +225,7 @@ export function convertRulesModel(xml: string, onlyAttributes: any[], attributes
 }
 
 // Función para transformar las reglas descritas en el XML a un objeto de reglas que puede ser procesada por la herramienta
-function parseRules(element: Element, onlyAttributes: any[], attributesAndValues: any[]): Rule[] {
+export function parseRules(element: Element, onlyAttributes: any[], attributesAndValues: any[]): Rule[] {
     const rules: Rule[] = [];
 
     // Iterar sobre todos los nodos Rule y ComplexRule directos de este elemento
