@@ -276,25 +276,27 @@
             var task = localStorage.getItem("taskNames")!;
             // Obtenemos el ultimo id de las reglas creadas para las actividades
             var lastId = 0;
+            var index: number;
             if (task != null && task != "[]" ) {
                 console.log(task)
                 console.log(task.length)
                 var jsonTask = JSON.parse(task);
                 lastId = jsonTask[jsonTask.length - 1].id;
+                index = lastId + 1;
+            }else{
+                index = 0;
             }
             var addRulesActivities: activity[] = [];
-            var index = lastId+1;
             const nameOfRule = JSON.parse(localStorage.getItem("nameRuleForActivities")!) ?? "";
             console.log("nameOfRule")
             // Ahora buscamos en jsonTask los objetos de las actividades seleccionadas y le agregamos las reglas
             activities_selected.forEach((activity) => {
-                
                 // creamos las reglas para cada una de las actividades seleccionadas
                 var ruleForActivity: activity = {
                     id: index,
                     name: activity.name,
                     rules: get(rules),
-                    type: "",
+                    type: activity.type,
                     subname: nameOfRule,
                 };
                 

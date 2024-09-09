@@ -43,10 +43,37 @@
     let selectedActivities: string[] = [];
     let createRuleforActivities: Writable<boolean> = writable(false);
 
+    let osName: string = 'Detectando...';
+    let commandText: string = "Detectando";
+    // Función para detectar el sistema operativo
+    function detectOS(): string {
+        const platform = navigator.platform.toLowerCase();
+        const userAgent = navigator.userAgent.toLowerCase();
+
+            commandText = "Alt+B";
+            return "Windows";
+        } else if (platform.includes("mac")) {
+            commandText = "Command+B";
+            return "MacOS";
+        } else if (platform.includes("linux")) {
+            commandText = "Alt+B";
+            return "Linux";
+        } else {
+            commandText = "Alt+B";
+            return "Unknown OS";
+        }
+    }
     function handleKeyDown(event: KeyboardEvent) {
-        if (event.metaKey && event.key === "b") {
-            commandModal = !commandModal; // Cambia el valor de la variable
-            console.log(`isActive: ${commandModal}`);
+        if (osName === "MacOS") {
+            if (event.metaKey && event.key === "b") {
+                commandModal = !commandModal; // Cambia el valor de la variable
+                console.log(`isActive: ${commandModal}`);
+            }
+        } else {
+            if (event.altKey && event.key === "b") {
+                commandModal = !commandModal; // Cambia el valor de la variable
+                console.log(`isActive: ${commandModal}`);
+            }
         }
     }
 
@@ -61,9 +88,9 @@
         }
     }
 
-    function selectionAllActivities(){
+    function selectionAllActivities() {
         selectedActivities = [];
-        if(selectedAllActivities){
+        if (selectedAllActivities) {
             $nombre_actividades.forEach((activity: any) => {
                 selectedActivities = [...selectedActivities, activity];
             });
@@ -110,6 +137,9 @@
 
     // cuando montamos la pagina recolectamos los datos y los guardamos en el store
     onMount(async () => {
+        // Detectar el sistema operativo
+        osName = detectOS();
+        console.log(osName);
         // Eliminamos el activitySelect del localstorage
         localStorage.removeItem("activitySelect");
         localStorage.removeItem("selectedActivities");
@@ -251,7 +281,7 @@
                 lightbulb
             </span>
             <p class="my-auto w-3/4 text-sm">
-                <strong>Using</strong> the key Command+B you can create the same
+                <strong>Using</strong> the key {commandText} you can create the same
                 rule for more than one activity
             </p>
             <button
@@ -1055,11 +1085,13 @@
                     <div
                         class="w-4/5 h-[370px] flex flex-col mx-auto my-auto border border-[#6e48ba] rounded-xl"
                     >
-                        <button class="flex text-[#6e48ba] mx-2 my-2"
-                        on:click={()=>{
-                            selectedAllActivities = !selectedAllActivities;
-                            selectionAllActivities();
-                        }}>
+                        <button
+                            class="flex text-[#6e48ba] mx-2 my-2"
+                            on:click={() => {
+                                selectedAllActivities = !selectedAllActivities;
+                                selectionAllActivities();
+                            }}
+                        >
                             {#if selectedAllActivities}
                                 <span class="my-auto material-symbols-outlined">
                                     check_box
