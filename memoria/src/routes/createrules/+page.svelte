@@ -25,8 +25,8 @@
     let showModalNivel1 = false;
     let showModalNivel2 = false;
     let showModalNivel3 = false;
-    let showModalCrear = false;
-    let showModalEliminar = false;
+    let showModalCreate = false;
+    let showModalDelete = false;
     let rule_selected: Rule, subrule_selected: Rule;
     let activities: activity[] = [];
     let divElement: HTMLElement;
@@ -56,11 +56,11 @@
     }
     function toggleModalCrear() {
         showModal = !showModal;
-        showModalCrear = !showModalCrear;
+        showModalCreate = !showModalCreate;
     }
     function toggleModalEliminar() {
         showModal = !showModal;
-        showModalEliminar = !showModalEliminar;
+        showModalDelete = !showModalDelete;
     }
 
     function addSimpleRule(parentComplexRuleId?: string, id?: string) {
@@ -166,7 +166,6 @@
         xmlBpmn = localStorage.getItem("xmlBpmn")!;
         var task = await fileUploadBpmn(xmlBpmn);
         // Los convertimos a un objeto JSON para manejarlos de mejor forma, dandole un id a cada actividad, subnombre y reglas (que por ahora estan vacias)
-        var id: number = 0;
         var taskNameConverted: activity[] = await task.map((task: any) => {
             var i = 0;
             return {
@@ -238,8 +237,8 @@
         // Si la regla es para una pura actividad
         if (activity_select) {
             // Obtenemos las actividades que estan en el localStorage
-            var task = localStorage.getItem("taskNames")!;
-            // Si taskNames no es nulo, lo convertimos a JSON y lo guardamos
+            var task = localStorage.getItem("rulesTask")!;
+            // Si rulesTask no es nulo, lo convertimos a JSON y lo guardamos
             if (activities != null) {
                 var jsonTask = JSON.parse(task);
             }
@@ -269,11 +268,11 @@
                 }
             });
             // Guardamos el objeto con las reglas en el localStorage
-            localStorage.setItem("taskNames", JSON.stringify(jsonTask));
+            localStorage.setItem("rulesTask", JSON.stringify(jsonTask));
         } else if (activities_selected) {
             // Si la regla es para más de una actividad
             // Obtenemos las actividades que estan en el localStorage
-            var task = localStorage.getItem("taskNames")!;
+            var task = localStorage.getItem("rulesTask")!;
             // Obtenemos el ultimo id de las reglas creadas para las actividades
             var lastId = 0;
             var index: number;
@@ -324,7 +323,7 @@
             });
             // Guardamos las nuevas reglas para las actividades en el localStorage
             localStorage.setItem(
-                "taskNames",
+                "rulesTask",
                 JSON.stringify([...JSON.parse(task), ...addRulesActivities]),
             );
         }
@@ -340,7 +339,7 @@
 <div
     class="w-full h-full ${showModal ? 'filter blur-md' : ''} {$themeStore ===
     'Light'
-        ? 'bg-[#f6f6f6]'
+        ? 'bg-[#f6f8fa]'
         : 'bg-[#14111b]'}  transition duration-100"
 >
     <div class="flex flex-col">
@@ -927,7 +926,7 @@
                         : 'border border-[#8973ae] text-[#8973ae] bg-[#251835]'}"
                     on:click={() => {
                         showModal = true;
-                        showModalCrear = true;
+                        showModalCreate = true;
                     }}
                 >
                     <div
@@ -1463,7 +1462,7 @@
     </div>
 {/if}
 <!-- Modal confirmacion para crear las reglas-->
-{#if showModalCrear}
+{#if showModalCreate}
     <div
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
     >
@@ -1513,7 +1512,7 @@
                             : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300"
                         on:click={() => {
                             showModal = false;
-                            showModalCrear = false;
+                            showModalDelete = false;
                             addRulesLocalStorage();
                             goto("/listofrules");
                         }}
@@ -1536,7 +1535,7 @@
                             : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300"
                         on:click={() => {
                             showModal = false;
-                            showModalCrear = false;
+                            showModalCreate = false;
                         }}
                     >
                         <div class="flex flex-row my-auto">
@@ -1557,7 +1556,7 @@
 {/if}
 
 <!-- Modal -->
-{#if showModalEliminar}
+{#if showModalDelete}
     <div
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
     >
@@ -1590,7 +1589,7 @@
                     on:click={() => {
                         clearAllRules();
                         showModal = false;
-                        showModalEliminar = false;
+                        showModalDelete = false;
                         goto("/listofrules");
                     }}>Delete</button
                 >

@@ -45,7 +45,7 @@
         const result = fileUploadTailoringModel(xmlModel);
          
         if(result != undefined){
-            localStorage.setItem("taskNames", JSON.stringify(result[1] as activity[]));
+            localStorage.setItem("rulesTask", JSON.stringify(result[1] as activity[]));
             verifyModel = result[0] as boolean; 
         }
     }
@@ -120,7 +120,7 @@
             <div
                 class="relative flex justify-center mt-5 w-2/3 h-[250px] mb-10 mx-auto {$themeStore ===
                 'Light'
-                    ? 'border-[#b8a2de]'
+                    ? 'border-[#454752]'
                     : 'border-[#6746b4]'}"
             >
                 <input

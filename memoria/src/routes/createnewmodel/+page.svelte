@@ -5,8 +5,15 @@
     import { writable } from "svelte/store";
     import { themeStore } from "../../stores";
     import "../../app.css";
-    import { fileUploadContext, fileUploadBpmn, nameFileUpload, fileUpload } from "../../functions/importdata";
+    import {
+        fileUploadContext,
+        fileUploadBpmn,
+        nameFileUpload,
+        fileUpload,
+    } from "../../functions/importdata";
 
+    // Variable para saber si dropearan un archivo
+    let dropFile = writable(false);
     // Estado de la etapa actual
     let currentStage = writable(1);
 
@@ -16,9 +23,13 @@
     let xmlContext: string = "";
     let xmlBpmn: string = "";
 
+    // Variable para saber que etapas estan listas
+    let stageImportContext: boolean = false;
+    let stageImportBpmn: boolean = false;
+
     // Variables en donde se almacenaran los datos extraidos de los archivos
     let extractAttributes: any[] = [];
-    let extractTask:any = [];
+    let extractTask: any = [];
 
     // Variables que indicaran si estan verificados los archivos XMI
     let verifyContext = writable(false);
@@ -27,11 +38,33 @@
     // Función para manejar el avance a la siguiente etapa
     function handleNext() {
         currentStage.update((stage) => (stage < 3 ? stage + 1 : stage));
+        if($currentStage == 1) {
+            stageImportContext = false;
+            stageImportBpmn = false;
+        } else if ($currentStage == 2) {
+            stageImportContext = true;
+            stageImportBpmn = false;
+        } else if ($currentStage == 3) {
+            stageImportContext = true;
+            stageImportBpmn = true;
+        }
+        $dropFile = false;
     }
 
     // Función para manejar el retroceso a la etapa anterior
     function handleBack() {
         currentStage.update((stage) => (stage > 1 ? stage - 1 : stage));
+        if ($currentStage == 1) {
+            stageImportContext = false;
+            stageImportBpmn = false;
+        } else if ($currentStage == 2) {
+            stageImportContext = true;
+            stageImportBpmn = false;
+        } else if ($currentStage == 3) {
+            stageImportContext = true;
+            stageImportBpmn = true;
+        }
+        $dropFile = false;
     }
 
     // Variable reactiva para el título
@@ -54,24 +87,33 @@
     async function uploadContext(event: Event) {
         nameFileContex = await nameFileUpload(event);
         xmlContext = JSON.parse(JSON.stringify(await fileUpload(event))); // Extraer el contenido del archivo XMI
-        extractAttributes = JSON.parse(JSON.stringify(await fileUploadContext(xmlContext))); // Extraer los atributos del archivo XMI
-        //console.log(nameFileContex);
-        //console.log(xmlContext);
-        //console.log(JSON.stringify(extractAttributes, null, 2));
-        verifyContext.set(extractAttributes.length > 0); // Verificar si el attributeContext tiene datos, entonces es correcto
+        try {
+            extractAttributes = JSON.parse(
+                JSON.stringify(await fileUploadContext(xmlContext)),
+            ); // Extraer los atributos del archivo XMI
+            //console.log(nameFileContex);
+            //console.log(xmlContext);
+            //console.log(JSON.stringify(extractAttributes, null, 2));
+            verifyContext.set(extractAttributes.length > 0); // Verificar si el attributeContext tiene datos, entonces es correcto
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     // Función para manejar la carga de archivos BPMN
     async function uploadBpmn(event: Event) {
         nameFileBpmn = await nameFileUpload(event);
         xmlBpmn = JSON.parse(JSON.stringify(await fileUpload(event))); // Extraer el contenido del archivo BPMN
-        extractTask = JSON.parse(JSON.stringify(await fileUploadBpmn(xmlBpmn))); // Extraer las tareas del archivo BPMN
-        //console.log(nameFileBpmn);
-        //console.log(xmlBpmn);
-        //console.log(JSON.stringify(extractTask, null, 2));
-        verifyBpmn.set(extractTask.length > 0); // Verificar si el attributeContext tiene datos entonces, es correcto
+        try {
+            extractTask = JSON.parse(JSON.stringify(await fileUploadBpmn(xmlBpmn))); // Extraer las tareas del archivo BPMN
+            //console.log(nameFileBpmn);
+            //console.log(xmlBpmn);
+            //console.log(JSON.stringify(extractTask, null, 2));
+            verifyBpmn.set(extractTask.length > 0); // Verificar si el attributeContext tiene datos entonces, es correcto
+        } catch (error) {
+            console.log(error);
+        }
     }
-
 </script>
 
 <div class="flex flex-col h-full w-full">
@@ -94,12 +136,22 @@
             {#each [1, 2, 3] as stage}
                 {#if $themeStore === "Light"}
                     <div
-                        class="flex w-[40px] h-[40px] border {$currentStage ===
+                        class="flex w-[40px] h-[40px] border {$currentStage ==
                         stage
-                            ? 'border border-[#14111c]'
-                            : 'border-[#875fc7]'} bg-[#f1e9f9] text-[#875fc7] border border-[#875fc7] rounded-full p-2"
+                            ? 'border-[#454752] border-[1.5px]'
+                            : 'border-[#7f5fc1]'} bg-[#f1e9f9] text-[#7a60bb] rounded-full p-2"
                     >
-                        <h1 class="my-auto mx-auto">{stage}</h1>
+                        {#if stage == 1 && stageImportContext}<span
+                                class="material-symbols-outlined"
+                            >
+                                check
+                            </span>{:else if stage == 2 && stageImportBpmn}<span
+                                class="material-symbols-outlined"
+                            >
+                                check
+                            </span>{:else}
+                            <h1 class="my-auto mx-auto">{stage}</h1>
+                        {/if}
                     </div>
                     {#if stage < 3}
                         <div
@@ -108,12 +160,22 @@
                     {/if}
                 {:else}
                     <div
-                        class="flex w-[40px] h-[40px] border {$currentStage ===
+                        class="flex w-[40px] h-[40px] border {$currentStage ==
                         stage
-                            ? 'border-[#ffffff]'
-                            : 'border-[#523085]'} bg-[#251835] text-[#523085] border border-[#523085] rounded-full p-2"
+                            ? 'border-[#ffffff] border-[1.5px]'
+                            : 'border-[#523085]'} bg-[#251835] text-[#523085] rounded-full p-2"
                     >
-                        <h1 class="my-auto mx-auto">{stage}</h1>
+                        {#if stage == 1 && stageImportContext}<span
+                                class="material-symbols-outlined"
+                            >
+                                check
+                            </span>{:else if stage == 2 && stageImportBpmn}<span
+                                class="material-symbols-outlined"
+                            >
+                                check
+                            </span>{:else}
+                            <h1 class="my-auto mx-auto">{stage}</h1>
+                        {/if}
                     </div>
                     {#if stage < 3}
                         <div
@@ -140,42 +202,96 @@
         <!-- Importar modelo del contexto XMI -->
         {#if $currentStage === 1}
             <!-- Apartado para importar arrastrando o manualmente -->
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
             <div
-                class="relative flex justify-center mt-5 w-2/3 h-[250px] mb-10 mx-auto {$themeStore ===
+                class="relative z-99 flex justify-center mt-5 w-2/3 h-[250px] mb-10 mx-auto rounded-xl {$themeStore ===
                 'Light'
-                    ? 'border-[#b8a2de]'
-                    : 'border-[#6746b4]'}"
+                    ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
+                    : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'} border-2 border-dashed"
+                on:dragover={(e) => {
+                    e.preventDefault();
+                    $dropFile = true;
+                }}
+                on:dragleave={(e) => {
+                    e.preventDefault();
+                    $dropFile = false;
+                }}
+                on:durationchange={(e) => {
+                    e.preventDefault();
+                    $dropFile = false;
+                }}
             >
+                <!-- Input oculto para cargar el archivo -->
                 <input
                     type="file"
                     id="fileUploadContext"
-                    class="absolute mt-2 w-full h-full border-2 border-dashed rounded-xl p-5 mx-2 transition duration-300 {$themeStore ===
-                    'Light'
-                        ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
-                        : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
-                    on:change={uploadContext}
+                    class="absolute h-full w-full bg-red border opacity-0 cursor-pointer top-0 left-0 z-10"
+                    on:change={async (e) => {
+                        await uploadContext(e);
+                        if($verifyContext) $dropFile = true;
+                    }}
                 />
                 <div
-                    class="absolute mt-10 p-10 flex flex-col text-center items-center mx-auto"
+                    class="absolute mt-10 p-10 flex flex-col text-center items-center mx-auto {$dropFile
+                        ? 'animate-pulse'
+                        : ''}"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        height="48px"
-                        viewBox="0 -960 960 960"
-                        width="48px"
-                        fill={$themeStore === "Light" ? "#7f5fc0" : "#6746b4"}
-                    >
-                        <path
-                            d="M280-280h400v-60H280v60Zm197-126 158-157-42-42-85 84v-199h-60v199l-85-84-42 42 156 157Zm3 326q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-156t86-127Q252-817 325-848.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 82-31.5 155T763-197.5q-54 54.5-127 86T480-80Zm0-60q142 0 241-99.5T820-480q0-142-99-241t-241-99q-141 0-240.5 99T140-480q0 141 99.5 240.5T480-140Zm0-340Z"
-                        />
-                    </svg>
-                    <h1
-                        class="font-black {$themeStore === 'Light'
-                            ? 'text-[#7f5fc0]'
-                            : 'text-[#6746b4]'}"
-                    >
-                        Drag your file here
-                    </h1>
+                    {#if $verifyContext}
+                        <svg
+                            height="48px"
+                            width="48px"
+                            viewBox="0 0 24 24"
+                            fill={$themeStore === "Light"
+                                ? "#7f5fc0"
+                                : "#6746b4"}
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path
+                                d="M13.5 3H12H8C6.34315 3 5 4.34315 5 6V18C5 19.6569 6.34315 21 8 21H10M13.5 3L19 8.625M13.5 3V7.625C13.5 8.17728 13.9477 8.625 14.5 8.625H19M19 8.625V12.8125"
+                                stroke="#000000"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
+                            <path
+                                d="M13 19L15 21L20 16"
+                                stroke="#000000"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
+                        </svg>
+                        <h1
+                            class="font-black {$themeStore === 'Light'
+                                ? 'text-[#7f5fc0]'
+                                : 'text-[#6746b4]'} 
+                        "
+                        >
+                            Imported model!
+                        </h1>
+                    {:else}
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            height="48px"
+                            viewBox="0 -960 960 960"
+                            width="48px"
+                            fill={$themeStore === "Light"
+                                ? "#7f5fc0"
+                                : "#6746b4"}
+                        >
+                            <path
+                                d="M280-280h400v-60H280v60Zm197-126 158-157-42-42-85 84v-199h-60v199l-85-84-42 42 156 157Zm3 326q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-156t86-127Q252-817 325-848.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 82-31.5 155T763-197.5q-54 54.5-127 86T480-80Zm0-60q142 0 241-99.5T820-480q0-142-99-241t-241-99q-141 0-240.5 99T140-480q0 141 99.5 240.5T480-140Zm0-340Z"
+                            />
+                        </svg>
+                        <h1
+                            class="font-black {$themeStore === 'Light'
+                                ? 'text-[#7f5fc0]'
+                                : 'text-[#6746b4]'} 
+                        "
+                        >
+                            Drag your file here
+                        </h1>
+                    {/if}
                 </div>
             </div>
 
@@ -235,44 +351,90 @@
         <!-- Importar proceso de negocio hecho en BPMN en .XMI -->
         {#if $currentStage === 2}
             <!-- Apartado para importar arrastrando o manualmente -->
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
             <div
-                class="relative flex justify-center mt-5 w-2/3 h-[250px] mb-10 mx-auto {$themeStore ===
+                class="relative z-99 flex justify-center mt-5 w-2/3 h-[250px] mb-10 mx-auto rounded-xl {$themeStore ===
                 'Light'
-                    ? 'border-[#b8a2de]'
-                    : 'border-[#6746b4]'}"
+                    ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
+                    : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'} border-2 border-dashed"
+                on:dragover={(e) => {
+                    e.preventDefault();
+                    $dropFile = true;
+                }}
+                on:dragleave={(e) => {
+                    e.preventDefault();
+                    $dropFile = false;
+                }}
+                on:durationchange={(e) => {
+                    e.preventDefault();
+                    $dropFile = false;
+                }}
             >
+                <!-- Input oculto para cargar el archivo -->
                 <input
                     type="file"
                     id="fileUploadContext"
-                    class="absolute mt-2 w-full h-full border-2 border-dashed rounded-xl p-5 mx-2 transition duration-300 {$themeStore ===
-                    'Light'
-                        ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
-                        : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
-                    on:change={uploadBpmn}
+                    class="absolute h-full w-full bg-red border opacity-0 cursor-pointer top-0 left-0 z-10"
+                    on:change={async (e) => {
+                        await uploadBpmn(e);
+                        if(verifyBpmn) {$dropFile = true;}
+                    }}
                 />
                 <div
-                    class="absolute mt-10 p-10 flex flex-col text-center items-center mx-auto"
+                    class="absolute mt-10 p-10 flex flex-col text-center items-center mx-auto {$dropFile
+                        ? 'animate-pulse'
+                        : ''}"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        height="48px"
-                        viewBox="0 -960 960 960"
-                        width="48px"
-                        fill={$themeStore === "Light" ? "#7f5fc0" : "#6746b4"}
-                    >
-                        <path
-                            d="M280-280h400v-60H280v60Zm197-126 158-157-42-42-85 84v-199h-60v199l-85-84-42 42 156 157Zm3 326q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-156t86-127Q252-817 325-848.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 82-31.5 155T763-197.5q-54 54.5-127 86T480-80Zm0-60q142 0 241-99.5T820-480q0-142-99-241t-241-99q-141 0-240.5 99T140-480q0 141 99.5 240.5T480-140Zm0-340Z"
-                        />
-                    </svg>
+                    {#if $verifyBpmn}
+                        <svg
+                            height="48px"
+                            width="48px"
+                            viewBox="0 0 24 24"
+                            fill={$themeStore === "Light"
+                                ? "#7f5fc0"
+                                : "#6746b4"}
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path
+                                d="M13.5 3H12H8C6.34315 3 5 4.34315 5 6V18C5 19.6569 6.34315 21 8 21H10M13.5 3L19 8.625M13.5 3V7.625C13.5 8.17728 13.9477 8.625 14.5 8.625H19M19 8.625V12.8125"
+                                stroke="#000000"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
+                            <path
+                                d="M13 19L15 21L20 16"
+                                stroke="#000000"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
+                        </svg>{:else}
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            height="48px"
+                            viewBox="0 -960 960 960"
+                            width="48px"
+                            fill={$themeStore === "Light"
+                                ? "#7f5fc0"
+                                : "#6746b4"}
+                        >
+                            <path
+                                d="M280-280h400v-60H280v60Zm197-126 158-157-42-42-85 84v-199h-60v199l-85-84-42 42 156 157Zm3 326q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-156t86-127Q252-817 325-848.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 82-31.5 155T763-197.5q-54 54.5-127 86T480-80Zm0-60q142 0 241-99.5T820-480q0-142-99-241t-241-99q-141 0-240.5 99T140-480q0 141 99.5 240.5T480-140Zm0-340Z"
+                            />
+                        </svg>
+                    {/if}
                     <h1
                         class="font-black {$themeStore === 'Light'
                             ? 'text-[#7f5fc0]'
-                            : 'text-[#6746b4]'}"
+                            : 'text-[#6746b4]'} 
+                        "
                     >
                         Drag your file here
                     </h1>
                 </div>
             </div>
+
             <!-- Botones para seguir avanzando o no -->
             <div class="flex justify-between mx-10 mb-4">
                 <button

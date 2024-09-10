@@ -217,8 +217,6 @@ export function convertRulesModel(xml: string, onlyAttributes: any[], attributes
         };
         activities.push(activity);
     });
-    //taskNames.set(activities);
-    //localStorage.setItem("taskNames", JSON.stringify(activities));
     console.log("activities 1");
     console.log(activities);
     return activities;

@@ -12,7 +12,7 @@
         localStorage.clear();
         setTimeout(() => {
             showLoader = false;
-        }, 2000); // Oculta el loader después de 2000 milisegundos (2 segundos)
+        }, 1000); // Oculta el loader después de 1000 milisegundos (1 segundos)
     });
 </script>
 

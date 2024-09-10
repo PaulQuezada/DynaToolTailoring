@@ -157,7 +157,7 @@ function shouldAddConnectorAtTopLevel(rules: Writable<Rule[]>): boolean {
 
 // Limpiar todas las reglas realizadas
 export function clearAllRules(activities: activity[]): activity[] {
-    var tasks = JSON.parse(localStorage.getItem("taskNames")!);
+    var tasks = JSON.parse(localStorage.getItem("rulesTask")!);
     var activitySelect = JSON.parse(
         localStorage.getItem("activitySelect")!,
     );
@@ -171,7 +171,7 @@ export function clearAllRules(activities: activity[]): activity[] {
             }
         }
     });
-    localStorage.setItem("taskNames", JSON.stringify(tasks));
+    localStorage.setItem("rulesTask", JSON.stringify(tasks));
     activities = tasks;
     return activities;
 }
