@@ -4,24 +4,24 @@
     import { goto } from "$app/navigation";
     import { themeStore } from "../../stores";
     import "../types";
-    import { onMount, onDestroy } from "svelte";
+    import { onMount } from "svelte";
     import { writable, type Writable } from "svelte/store";
     import { fileUploadBpmn } from "../../functions/importdata";
 
     // Variables
     let searchQuery = "";
-    let actividades: Writable<activity[]> = writable([]);
-    let nombre_actividades = writable<any[]>([]);
+    let activities: Writable<activity[]> = writable([]);
+    let name_activities = writable<any[]>([]);
     let showModal = false;
     let showModalCrear = false;
     let showModalEditar = false;
     let showModalFiltro = false;
-    let idactividad_eliminar: number;
-    let idactividad_editar: number;
-    let nombre_actividad_crear: String;
-    let subnombre_actividad_crear: String;
-    let tipo_actividad_crear: String;
-    let subnombre_actividad_editar: String;
+    let idactivity_delete: number;
+    let idactivity_edit: number;
+    let name_activity_create: String;
+    let subname_activity_create: String;
+    let activity_type_create: String;
+    let subname_activity_edit: String;
 
     // Variables filtros
     let filterNormalTask = true;
@@ -29,13 +29,13 @@
     let filterAnotherTask = false;
 
     // Variables para la barra de datos
-    let numeroReglasEliminarMantener: number = 0;
-    let numeroReglasReemplazar: number = 0;
-    let numeroReglasSinTipo: number = 0;
-    let porcentajeEliminarMantener: number = 0;
-    let porcentajeReemplazar: number = 0;
-    let porcentajeSinTipo: number = 0;
-    let mostrarBarra: boolean = false;
+    let numberRulesDeleteOrKeep: number = 0;
+    let numberRulesReplace: number = 0;
+    let numberRulesWithoutType: number = 0;
+    let percentageRemoveOrKeep: number = 0;
+    let percentageReplace: number = 0;
+    let percentageWithoutType: number = 0;
+    let showBar: boolean = false;
 
     // Variable para crear para varias actividades la misma regla
     let commandModal: boolean = false;
@@ -43,12 +43,11 @@
     let selectedActivities: string[] = [];
     let createRuleforActivities: Writable<boolean> = writable(false);
 
-    let osName: string = 'Detectando...';
-    let commandText: string = "Detectando";
+    let osName: string = "detecting...";
+    let commandText: string = "detected";
     // Función para detectar el sistema operativo
     function detectOS(): string {
         const platform = navigator.platform.toLowerCase();
-        const userAgent = navigator.userAgent.toLowerCase();
 
         if (platform.includes("win")) {
             commandText = "Alt+B";
@@ -92,7 +91,7 @@
     function selectionAllActivities() {
         selectedActivities = [];
         if (selectedAllActivities) {
-            $nombre_actividades.forEach((activity: any) => {
+            $name_activities.forEach((activity: any) => {
                 selectedActivities = [...selectedActivities, activity];
             });
         }
@@ -100,38 +99,38 @@
 
     // Filtrar actividades por nombre y por tipo
     $: {
-        numeroReglasEliminarMantener = 0;
-        numeroReglasReemplazar = 0;
-        porcentajeEliminarMantener = 0;
-        porcentajeReemplazar = 0;
-        if ($actividades.length !== 0) {
-            $actividades.forEach((regla_activity: activity) => {
+        numberRulesDeleteOrKeep = 0;
+        numberRulesReplace = 0;
+        percentageRemoveOrKeep = 0;
+        percentageReplace = 0;
+        if ($activities.length !== 0) {
+            $activities.forEach((regla_activity: activity) => {
                 if (regla_activity.deleted !== undefined) {
-                    numeroReglasEliminarMantener++;
+                    numberRulesDeleteOrKeep++;
                 } else if (regla_activity.replaced !== undefined) {
-                    numeroReglasReemplazar++;
+                    numberRulesReplace++;
                 } else {
-                    numeroReglasSinTipo++;
+                    numberRulesWithoutType++;
                 }
             });
             if (
-                numeroReglasEliminarMantener !== 0 ||
-                numeroReglasReemplazar !== 0 ||
-                numeroReglasSinTipo !== 0
+                numberRulesDeleteOrKeep !== 0 ||
+                numberRulesReplace !== 0 ||
+                numberRulesWithoutType !== 0
             ) {
                 // Calculamos el porcentaje de las reglas
-                porcentajeEliminarMantener =
-                    (numeroReglasEliminarMantener / $actividades.length) * 100;
-                porcentajeReemplazar =
-                    (numeroReglasReemplazar / $actividades.length) * 100;
-                porcentajeSinTipo =
-                    (numeroReglasSinTipo / $actividades.length) * 100;
+                percentageRemoveOrKeep =
+                    (numberRulesDeleteOrKeep / $activities.length) * 100;
+                    percentageReplace =
+                    (numberRulesReplace / $activities.length) * 100;
+                    percentageWithoutType =
+                    (numberRulesWithoutType / $activities.length) * 100;
                 // Truncamos el porcentaje
-                porcentajeEliminarMantener = Math.trunc(
-                    porcentajeEliminarMantener,
+                percentageRemoveOrKeep = Math.trunc(
+                    percentageRemoveOrKeep,
                 );
-                porcentajeReemplazar = Math.trunc(porcentajeReemplazar);
-                porcentajeSinTipo = Math.trunc(porcentajeSinTipo);
+                percentageReplace = Math.trunc(percentageReplace);
+                percentageWithoutType = Math.trunc(percentageWithoutType);
             }
         }
     }
@@ -145,20 +144,20 @@
         localStorage.removeItem("activitySelect");
         localStorage.removeItem("selectedActivities");
         localStorage.removeItem("nameRuleForActivities");
-        // Verificamos si taskNames existe en el localStorage
-        var taskLocalStorage = localStorage.getItem("taskNames")!;
+        // Verificamos si rulesTask existe en el localStorage
+        var taskLocalStorage = localStorage.getItem("rulesTask")!;
         console.log(taskLocalStorage);
         if (taskLocalStorage != null) {
             const jsonTask = JSON.parse(taskLocalStorage);
             console.log(jsonTask);
-            // Ahora igualamos taskNames con jsonTask
-            actividades.set(jsonTask);
+            // Ahora igualamos rulesTask con jsonTask
+            activities.set(jsonTask);
             // Extraemos solo los nombres de las actividades(sin que se repitan)
             saveNamesActivities();
         } else {
             console.log("No hay actividades");
             await loadDataBPMN();
-            localStorage.setItem("taskNames", JSON.stringify([])); // Inicializamos las reglas para cada actividad en vacio
+            localStorage.setItem("rulesTask", JSON.stringify([])); // Inicializamos las reglas para cada actividad en vacio
         }
         // Se agrega el event listener cuando el componente se monta
         window.addEventListener("keydown", handleKeyDown);
@@ -190,35 +189,35 @@
                 name: task.name,
                 type: task.type,
             }));
-        nombre_actividades.set(uniqueTaskNames);
+        name_activities.set(uniqueTaskNames);
         console.log(uniqueTaskNames);
     }
 
     // Función para guardar los nombres de las actividades
     function saveNamesActivities() {
-        const actividades_json = JSON.parse(localStorage.getItem("taskNames")!);
+        const actividades_json = JSON.parse(localStorage.getItem("rulesTask")!);
         if (actividades_json.length == 0) {
             loadDataBPMN();
         } else {
             loadDataBPMN();
-            actividades.set(actividades_json);
+            activities.set(actividades_json);
         }
     }
 
     // Filtrar actividades por nombre y por tipo
-    $: filteredActivities = $nombre_actividades.filter((activity) =>
+    $: filteredActivities = $name_activities.filter((activity) =>
         activity.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
     function deleteActivityById(taskId: number): void {
-        var tasks = JSON.parse(localStorage.getItem("taskNames")!);
+        var tasks = JSON.parse(localStorage.getItem("rulesTask")!);
         var newTasks = tasks.filter((task: any) => task.id !== taskId);
-        localStorage.setItem("taskNames", JSON.stringify(newTasks));
-        actividades.set(newTasks);
+        localStorage.setItem("rulesTask", JSON.stringify(newTasks));
+        activities.set(newTasks);
     }
 
     function createRuleActivity() {
-        var tasks = JSON.parse(localStorage.getItem("taskNames")!);
+        var tasks = JSON.parse(localStorage.getItem("rulesTask")!);
         // Objetenemos el ultimo id de las actividades si es que no esta vacio
         var lastId: number = 0;
         if (tasks.length == 0) {
@@ -230,25 +229,25 @@
         // Creamos la regla
         var newRule = {
             id: lastId + 1,
-            name: nombre_actividad_crear,
-            subname: subnombre_actividad_crear,
-            type: tipo_actividad_crear,
+            name: name_activity_create,
+            subname: subname_activity_create,
+            type: activity_type_create,
             rules: [],
         };
         tasks.push(newRule);
-        localStorage.setItem("taskNames", JSON.stringify(tasks));
-        actividades.set(tasks);
+        localStorage.setItem("rulesTask", JSON.stringify(tasks));
+        activities.set(tasks);
     }
 
     function editRuleActivity() {
-        var tasks = JSON.parse(localStorage.getItem("taskNames")!);
+        var tasks = JSON.parse(localStorage.getItem("rulesTask")!);
         tasks.forEach((task: any) => {
-            if (task.id === idactividad_editar) {
-                task.subname = subnombre_actividad_editar;
+            if (task.id === idactivity_delete) {
+                task.subname = subname_activity_edit;
             }
         });
-        localStorage.setItem("taskNames", JSON.stringify(tasks));
-        actividades.set(tasks);
+        localStorage.setItem("rulesTask", JSON.stringify(tasks));
+        activities.set(tasks);
     }
 </script>
 
@@ -267,20 +266,43 @@
             ? 'bg-[#ffffff] border-[#dad4e1] shadow-[0_0_30px_#f0e9f8]'
             : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c]'} transition duration-300"
     >
-        <!-- Command + B -->
+        <!-- Command + B or Alt + B-->
         <div
             class="flex mt-3 w-3/4 h-[50px] rounded border mx-auto {$themeStore ===
             'Light'
                 ? 'bg-[#fef8ca] border-[#e3d290] text-[#202328]'
                 : 'bg-[#5e4821] border-[#27211a] text-white'}"
         >
-            <span
-                class="my-auto mx-2
-            {$themeStore === 'Light' ? 'text-[#936921]' : 'text-[#c99b3e]'}
-                      material-symbols-outlined"
-            >
-                lightbulb
-            </span>
+            <!-- Mostramos los iconos de los S.O-->
+            {#if osName === "MacOS"}
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-[30px] h-[30px] my-auto mx-2 {$themeStore ===
+                    'Light'
+                        ? 'fill-[#936921]'
+                        : 'fill-[#c99b3e]'}"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        d="M19.665 16.811a10.316 10.316 0 0 1-1.021 1.837c-.537.767-.978 1.297-1.316 1.592-.525.482-1.089.73-1.692.744-.432 0-.954-.123-1.562-.373-.61-.249-1.17-.371-1.683-.371-.537 0-1.113.122-1.73.371-.616.25-1.114.381-1.495.393-.577.025-1.154-.229-1.729-.764-.367-.32-.826-.87-1.377-1.648-.59-.829-1.075-1.794-1.455-2.891-.407-1.187-.611-2.335-.611-3.447 0-1.273.275-2.372.826-3.292a4.857 4.857 0 0 1 1.73-1.751 4.65 4.65 0 0 1 2.34-.662c.46 0 1.063.142 1.81.422s1.227.422 1.436.422c.158 0 .689-.167 1.593-.498.853-.307 1.573-.434 2.163-.384 1.6.129 2.801.759 3.6 1.895-1.43.867-2.137 2.08-2.123 3.637.012 1.213.453 2.222 1.317 3.023a4.33 4.33 0 0 0 1.315.863c-.106.307-.218.6-.336.882zM15.998 2.38c0 .95-.348 1.838-1.039 2.659-.836.976-1.846 1.541-2.941 1.452a2.955 2.955 0 0 1-.021-.36c0-.913.396-1.889 1.103-2.688.352-.404.8-.741 1.343-1.009.542-.264 1.054-.41 1.536-.435.013.128.019.255.019.381z"
+                    />
+                </svg>
+            {:else if osName == "Windows"}
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-[30px] h-[30px] my-auto mx-2 {$themeStore ===
+                    'Light'
+                        ? 'fill-[#936921]'
+                        : 'fill-[#c99b3e]'}"
+                    viewBox="0 0 24 24"
+                    style="color:#936921 ;"
+                >
+                    <path
+                        d="m3 5.557 7.357-1.002.004 7.097-7.354.042L3 5.557zm7.354 6.913.006 7.103-7.354-1.011v-6.14l7.348.048zm.892-8.046L21.001 3v8.562l-9.755.077V4.424zm9.758 8.113-.003 8.523-9.755-1.378-.014-7.161 9.772.016z"
+                    />
+                </svg>
+            {/if}
+
             <p class="my-auto w-3/4 text-sm">
                 <strong>Using</strong> the key {commandText} you can create the same
                 rule for more than one activity
@@ -318,7 +340,7 @@
         </div>
 
         <!-- Barra con porcentajes -->
-        {#if mostrarBarra}
+        {#if showBar}
             <div
                 class="mx-auto w-3/4 border-b border-x {$themeStore === 'Light'
                     ? 'border-[#875fc7] bg-[#ffffff]'
@@ -326,35 +348,35 @@
             >
                 <div class="flex flex-row w-full mx-auto my-auto py-2 px-8">
                     <!-- Barra para mostrar las reglas para eliminar o no eliminar -->
-                    {#if porcentajeEliminarMantener > 0}
+                    {#if percentageRemoveOrKeep > 0}
                         <div
                             class="border rounded-l rounded-r flex h-[20px] bg-[#4476c0]"
-                            style="width: {porcentajeEliminarMantener}%"
+                            style="width: {percentageRemoveOrKeep}%"
                         >
                             <span class="text-white mx-auto my-auto text-xs"
-                                >{porcentajeEliminarMantener}%</span
+                                >{percentageRemoveOrKeep}%</span
                             >
                         </div>
                     {/if}
                     <!-- Barra para mostrar las reglas para reemplazar -->
-                    {#if porcentajeReemplazar > 0}
+                    {#if percentageReplace > 0}
                         <div
-                            class="border rounded-r flex w-[{porcentajeReemplazar}%] h-[20px] bg-[#cb6329]"
-                            style="width: {porcentajeReemplazar}%"
+                            class="border rounded-r flex w-[{percentageReplace}%] h-[20px] bg-[#cb6329]"
+                            style="width: {percentageReplace}%"
                         >
                             <span class="text-white mx-auto my-auto text-xs"
-                                >{porcentajeReemplazar}%</span
+                                >{percentageReplace}%</span
                             >
                         </div>
                     {/if}
                     <!-- Barra para mostrar las reglas sin tipo -->
-                    {#if porcentajeSinTipo > 0}
+                    {#if percentageWithoutType > 0}
                         <div
-                            class="border rounded-r flex w-[{porcentajeSinTipo}%] h-[20px] bg-[#523e78]"
-                            style="width: {porcentajeSinTipo}%"
+                            class="border rounded-r flex w-[{percentageWithoutType}%] h-[20px] bg-[#523e78]"
+                            style="width: {percentageWithoutType}%"
                         >
                             <span class="text-white mx-auto my-auto text-xs"
-                                >{porcentajeSinTipo}%</span
+                                >{percentageWithoutType}%</span
                             >
                         </div>
                     {/if}
@@ -365,7 +387,7 @@
                             class="w-[10px] h-[10px] rounded-xl bg-[#4476c0] my-auto mx-2"
                         ></div>
                         <h1 class="text-[#4476c0] my-auto">
-                            Created delete/keep rules: {numeroReglasEliminarMantener}
+                            Created delete/keep rules: {numberRulesDeleteOrKeep}
                         </h1>
                     </div>
                     <div class="flex flex-row">
@@ -373,7 +395,7 @@
                             class="w-[10px] h-[10px] rounded-xl bg-[#cb6329] my-auto mx-2"
                         ></div>
                         <h1 class="text-[#cb6329] my-auto">
-                            Created replacement rules: {numeroReglasReemplazar}
+                            Created replacement rules: {numberRulesReplace}
                         </h1>
                     </div>
                     <div class="flex flex-row">
@@ -381,7 +403,7 @@
                             class="w-[10px] h-[10px] rounded-xl bg-[#523e78] my-auto mx-2"
                         ></div>
                         <h1 class="text-[#523e78] my-auto">
-                            Rules created without type: {numeroReglasSinTipo}
+                            Rules created without type: {numberRulesWithoutType}
                         </h1>
                     </div>
                 </div>
@@ -389,7 +411,7 @@
                     <button
                         class="w-[40px] mx-auto border-t border-r border-l border-[#8161c1] rounded-tl rounded-tr"
                         on:click={() => {
-                            mostrarBarra = false;
+                            showBar = false;
                         }}
                     >
                         <span
@@ -410,7 +432,7 @@
                 <button
                     class="w-[40px] mx-auto border-b border-l border-r border-[#8161c1] rounded-bl rounded-br"
                     on:click={() => {
-                        mostrarBarra = true;
+                        showBar = true;
                     }}
                 >
                     <span
@@ -467,9 +489,9 @@
                                     ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                     : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                 on:click={() => {
-                                    nombre_actividad_crear =
+                                    name_activity_create =
                                         nombre_actividad.name;
-                                    tipo_actividad_crear =
+                                    activity_type_create =
                                         nombre_actividad.type;
                                     showModalCrear = true;
                                 }}
@@ -477,10 +499,10 @@
                                 Add Rule
                             </button>
                         </div>
-                        {#each $actividades as activity (activity.id)}
+                        <!-- Reglas de la actividad -->
+                        {#each $activities as activity (activity.id)}
                             {#if activity.name == nombre_actividad.name}
                                 <div class="flex">
-                                    <!-- Timeline -->
                                     <div class="flex-col">
                                         <div
                                             class="w-[2px] ml-12 h-[32px] bg-[#7546c1]"
@@ -526,7 +548,7 @@
                                                                 ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                                 : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                                             on:click={() => {
-                                                                idactividad_editar =
+                                                                idactivity_delete =
                                                                     activity.id;
                                                                 showModalEditar = true;
                                                             }}
@@ -557,7 +579,7 @@
                                                                 ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                                 : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                                             on:click={() => {
-                                                                idactividad_editar =
+                                                                idactivity_edit =
                                                                     activity.id;
                                                                 showModalEditar = true;
                                                             }}
@@ -608,7 +630,7 @@
                                                             ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                             : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                                         on:click={() => {
-                                                            idactividad_eliminar =
+                                                            idactivity_delete =
                                                                 activity.id;
                                                             showModal = true;
                                                         }}
@@ -655,7 +677,7 @@
                                                             ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                             : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                                         on:click={() => {
-                                                            idactividad_eliminar =
+                                                            idactivity_delete =
                                                                 activity.id;
                                                             showModal = true;
                                                         }}
@@ -745,7 +767,7 @@
                         ? 'bg-[#efe9f8] border-[#5e3fa1] text-[#5e3fa1] hover:shadow-[0_0_2px_#7443bf]'
                         : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300"
                     on:click={() => {
-                        deleteActivityById(idactividad_eliminar);
+                        deleteActivityById(idactivity_delete);
                         showModal = false;
                     }}>Delete</button
                 >
@@ -774,7 +796,7 @@
                 Create a rule for an activity
             </h1>
             <input
-                bind:value={subnombre_actividad_crear}
+                bind:value={subname_activity_create}
                 class="text-[#6f40b8] pl-5 pr-14 mx-auto mb-5 h-[50px] w-full rounded-lg border {$themeStore ===
                 'Light'
                     ? 'border-[#875fc7] bg-[#ffffff]'
@@ -786,7 +808,7 @@
                 on:keydown={(event) => {
                     if (event.key === "Enter") {
                         createRuleActivity();
-                        subnombre_actividad_crear = "";
+                        subname_activity_create = "";
                         showModalCrear = false;
                     }
                 }}
@@ -802,14 +824,14 @@
                         : 'border border-[#8973ae] text-[#8973ae] bg-[#251835]'} transition duration-300"
                     on:click={() => {
                         createRuleActivity();
-                        subnombre_actividad_crear = "";
+                        subname_activity_create = "";
                         showModalCrear = false;
                     }}
                     on:keydown={(event) => {
                         console.log(event);
                         if (event.key === "Enter") {
                             createRuleActivity();
-                            subnombre_actividad_crear = "";
+                            subname_activity_create = "";
                             showModalCrear = false;
                         }
                     }}>Crear regla</button
@@ -839,7 +861,7 @@
                 Edit rule name
             </h1>
             <input
-                bind:value={subnombre_actividad_editar}
+                bind:value={subname_activity_edit}
                 class="text-[#6f40b8] pl-5 pr-14 mx-auto mb-5 h-[50px] w-full rounded-lg border {$themeStore ===
                 'Light'
                     ? 'border-[#875fc7] bg-[#ffffff]'
@@ -851,7 +873,7 @@
                 on:keydown={(event) => {
                     if (event.key === "Enter") {
                         editRuleActivity();
-                        subnombre_actividad_crear = "";
+                        subname_activity_edit = "";
                         showModalEditar = false;
                     }
                 }}
@@ -867,7 +889,7 @@
                         : 'border border-[#8973ae] text-[#8973ae] bg-[#251835]'} transition duration-300"
                     on:click={() => {
                         editRuleActivity();
-                        subnombre_actividad_crear = "";
+                        subname_activity_create = "";
                         showModalEditar = false;
                     }}>Editar nombre</button
                 >
@@ -1200,7 +1222,7 @@
                         rules
                     </h1>
                     <input
-                        bind:value={subnombre_actividad_crear}
+                        bind:value={subname_activity_create}
                         class="text-[#6f40b8] pl-5 pr-14 mx-auto mb-5 h-[50px] w-full rounded-lg border {$themeStore ===
                         'Light'
                             ? 'border-[#875fc7] bg-[#ffffff]'
@@ -1213,7 +1235,7 @@
                             if (event.key === "Enter") {
                                 localStorage.setItem(
                                     "nameRuleForActivities",
-                                    JSON.stringify(subnombre_actividad_crear),
+                                    JSON.stringify(subname_activity_create),
                                 );
                                 localStorage.setItem(
                                     "selectedActivities",
@@ -1232,7 +1254,7 @@
                         on:click={() => {
                             localStorage.setItem(
                                 "nameRuleForActivities",
-                                JSON.stringify(subnombre_actividad_crear),
+                                JSON.stringify(subname_activity_create),
                             );
                             localStorage.setItem(
                                 "selectedActivities",

@@ -314,24 +314,3 @@
         </div>
     </div>
 {/if}
-
-<button
-    class="flex bg-[#b4b4b4] ml-2 rounded-tl rounded-bl transition-transform duration-300"
-    on:click={copyToClipboard}
->
-    {#if code_copy}
-        <!-- Icono de check que crece -->
-        <span
-            class="my-auto material-symbols-outlined text-green-500 transition-transform transform scale-0 animate-grow"
-        >
-            check
-        </span>
-    {:else}
-        <!-- Icono de content_copy que se encoge -->
-        <span
-            class="my-auto material-symbols-outlined transition-transform transform animate-shrink"
-        >
-            content_copy
-        </span>
-    {/if}
-</button>

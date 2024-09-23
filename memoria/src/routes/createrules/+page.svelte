@@ -12,7 +12,6 @@
     } from "../../functions/importdata";
     import * as functionRulecreation from "../../functions/rulecreation";
 
-    
     // Variables
     let showLoader = true;
     let selectedAction = "";
@@ -25,21 +24,23 @@
     let showModalNivel1 = false;
     let showModalNivel2 = false;
     let showModalNivel3 = false;
-    let showModalCrear = false;
-    let showModalEliminar = false;
+    let showModalCreate = false;
+    let showModalDelete = false;
     let rule_selected: Rule, subrule_selected: Rule;
-    let activities: activity[] = [];
+    let rules_activities: activity[] = [];
     let divElement: HTMLElement;
     let yOffset = 0;
 
+    // Variables para almacenar los datos importantes
     let xmlContext: string = "";
     let xmlBpmn: string = "";
     let attributesContext: any[] = [];
 
+    // Variables que contienen la/s actividad/es a la cual se le crearan las reglas
     let activity_select: activity;
-
     let activities_selected: { name: string; type: string }[] = [];
 
+    // Variable para contener las reglas creadas
     let rules = writable<Rule[]>([]);
 
     function toggleModalNivel1() {
@@ -56,11 +57,11 @@
     }
     function toggleModalCrear() {
         showModal = !showModal;
-        showModalCrear = !showModalCrear;
+        showModalCreate = !showModalCreate;
     }
     function toggleModalEliminar() {
         showModal = !showModal;
-        showModalEliminar = !showModalEliminar;
+        showModalDelete = !showModalDelete;
     }
 
     function addSimpleRule(parentComplexRuleId?: string, id?: string) {
@@ -165,8 +166,9 @@
         // Extraemos los datos el archivo BPMN
         xmlBpmn = localStorage.getItem("xmlBpmn")!;
         var task = await fileUploadBpmn(xmlBpmn);
-        // Los convertimos a un objeto JSON para manejarlos de mejor forma, dandole un id a cada actividad, subnombre y reglas (que por ahora estan vacias)
-        var id: number = 0;
+        /* Los convertimos a un objeto JSON para manejarlos de mejor forma, 
+        dandole un id a cada actividad, subnombre y reglas (que por ahora estan vacias SOLO de manera local en esta vista)
+        Todas las reglas guardadas estaran en el localStorage. */
         var taskNameConverted: activity[] = await task.map((task: any) => {
             var i = 0;
             return {
@@ -178,9 +180,9 @@
             };
         });
         // Guardar las actividades convertidas
-        activities = taskNameConverted;
+        rules_activities = taskNameConverted;
         // guardo solo los nombres del taskName
-        replaceaction = activities.map((task) => task.name);
+        replaceaction = rules_activities.map((task) => task.name);
     }
 
     // Función para guardar los cambios del atributo en las reglas
@@ -238,9 +240,9 @@
         // Si la regla es para una pura actividad
         if (activity_select) {
             // Obtenemos las actividades que estan en el localStorage
-            var task = localStorage.getItem("taskNames")!;
-            // Si taskNames no es nulo, lo convertimos a JSON y lo guardamos
-            if (activities != null) {
+            var task = localStorage.getItem("rulesTask")!;
+            // Si existen reglas creadas para alguna actividad, lo convertimos a JSON y lo guardamos
+            if (task != null && task != "[]") {
                 var jsonTask = JSON.parse(task);
             }
             // Ahora buscamos en jsonTask el objeto de la actividad seleccionada y le agregamos las reglas
@@ -269,26 +271,28 @@
                 }
             });
             // Guardamos el objeto con las reglas en el localStorage
-            localStorage.setItem("taskNames", JSON.stringify(jsonTask));
+            localStorage.setItem("rulesTask", JSON.stringify(jsonTask));
         } else if (activities_selected) {
             // Si la regla es para más de una actividad
             // Obtenemos las actividades que estan en el localStorage
-            var task = localStorage.getItem("taskNames")!;
+            var task = localStorage.getItem("rulesTask")!;
             // Obtenemos el ultimo id de las reglas creadas para las actividades
             var lastId = 0;
             var index: number;
-            if (task != null && task != "[]" ) {
-                console.log(task)
-                console.log(task.length)
+            if (task != null && task != "[]") {
+                console.log(task);
+                console.log(task.length);
                 var jsonTask = JSON.parse(task);
                 lastId = jsonTask[jsonTask.length - 1].id;
                 index = lastId + 1;
-            }else{
+            } else {
                 index = 0;
             }
             var addRulesActivities: activity[] = [];
-            const nameOfRule = JSON.parse(localStorage.getItem("nameRuleForActivities")!) ?? "";
-            console.log("nameOfRule")
+            const nameOfRule =
+                JSON.parse(localStorage.getItem("nameRuleForActivities")!) ??
+                "";
+            console.log("nameOfRule");
             // Ahora buscamos en jsonTask los objetos de las actividades seleccionadas y le agregamos las reglas
             activities_selected.forEach((activity) => {
                 // creamos las reglas para cada una de las actividades seleccionadas
@@ -299,7 +303,7 @@
                     type: activity.type,
                     subname: nameOfRule,
                 };
-                
+
                 if (
                     selectedAction1 === "Delete Action" &&
                     selectedAction2 === "Not delete this activity"
@@ -324,7 +328,7 @@
             });
             // Guardamos las nuevas reglas para las actividades en el localStorage
             localStorage.setItem(
-                "taskNames",
+                "rulesTask",
                 JSON.stringify([...JSON.parse(task), ...addRulesActivities]),
             );
         }
@@ -332,15 +336,15 @@
 
     // Limpiar todas las reglas realizadas
     function clearAllRules() {
-        const result = functionRulecreation.clearAllRules(activities);
-        activities = result;
+        const result = functionRulecreation.clearAllRules(rules_activities);
+        rules_activities = result;
     }
 </script>
 
 <div
     class="w-full h-full ${showModal ? 'filter blur-md' : ''} {$themeStore ===
     'Light'
-        ? 'bg-[#f6f6f6]'
+        ? 'bg-[#f6f8fa]'
         : 'bg-[#14111b]'}  transition duration-100"
 >
     <div class="flex flex-col">
@@ -927,7 +931,7 @@
                         : 'border border-[#8973ae] text-[#8973ae] bg-[#251835]'}"
                     on:click={() => {
                         showModal = true;
-                        showModalCrear = true;
+                        showModalCreate = true;
                     }}
                 >
                     <div
@@ -1463,7 +1467,7 @@
     </div>
 {/if}
 <!-- Modal confirmacion para crear las reglas-->
-{#if showModalCrear}
+{#if showModalCreate}
     <div
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
     >
@@ -1513,7 +1517,7 @@
                             : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300"
                         on:click={() => {
                             showModal = false;
-                            showModalCrear = false;
+                            showModalDelete = false;
                             addRulesLocalStorage();
                             goto("/listofrules");
                         }}
@@ -1536,7 +1540,7 @@
                             : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300"
                         on:click={() => {
                             showModal = false;
-                            showModalCrear = false;
+                            showModalCreate = false;
                         }}
                     >
                         <div class="flex flex-row my-auto">
@@ -1557,7 +1561,7 @@
 {/if}
 
 <!-- Modal -->
-{#if showModalEliminar}
+{#if showModalDelete}
     <div
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
     >
@@ -1590,7 +1594,7 @@
                     on:click={() => {
                         clearAllRules();
                         showModal = false;
-                        showModalEliminar = false;
+                        showModalDelete = false;
                         goto("/listofrules");
                     }}>Delete</button
                 >

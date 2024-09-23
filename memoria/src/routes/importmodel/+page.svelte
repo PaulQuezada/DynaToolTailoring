@@ -6,8 +6,12 @@
     import { writable } from "svelte/store";
     import { themeStore } from "../../stores";
     import { fileUpload, nameFileUpload, fileUploadTailoringModel } from "../../functions/importdata";
+    
     // Estado de la etapa actual
     let currentStage = writable(1);
+
+    // Variable para saber si dropearan un archivo
+    let dropFile = writable(false);
 
     // Variables que contendran los contenidos del contexto organizacional y del BPMN
     let nameFileModel = writable("");
@@ -45,7 +49,7 @@
         const result = fileUploadTailoringModel(xmlModel);
          
         if(result != undefined){
-            localStorage.setItem("taskNames", JSON.stringify(result[1] as activity[]));
+            localStorage.setItem("rulesTask", JSON.stringify(result[1] as activity[]));
             verifyModel = result[0] as boolean; 
         }
     }
@@ -116,43 +120,96 @@
         ></div>
         <!-- Importar modelo del contexto XMI -->
         {#if $currentStage === 1}
-            <!-- Apartado para importar arrastrando o manualmente -->
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
             <div
-                class="relative flex justify-center mt-5 w-2/3 h-[250px] mb-10 mx-auto {$themeStore ===
+                class="relative z-99 flex justify-center mt-5 w-2/3 h-[250px] mb-10 mx-auto rounded-xl {$themeStore ===
                 'Light'
-                    ? 'border-[#b8a2de]'
-                    : 'border-[#6746b4]'}"
+                    ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
+                    : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'} border-2 border-dashed"
+                on:dragover={(e) => {
+                    e.preventDefault();
+                    $dropFile = true;
+                }}
+                on:dragleave={(e) => {
+                    e.preventDefault();
+                    $dropFile = false;
+                }}
+                on:durationchange={(e) => {
+                    e.preventDefault();
+                    $dropFile = false;
+                }}
             >
+                <!-- Input oculto para cargar el archivo -->
                 <input
                     type="file"
                     id="fileUploadContext"
-                    class="absolute mt-2 w-full h-full border-2 border-dashed rounded-xl p-5 mx-2 transition duration-300 {$themeStore ===
-                    'Light'
-                        ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
-                        : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
-                    on:change={fileUploadModel}
+                    class="absolute h-full w-full bg-red border opacity-0 cursor-pointer top-0 left-0 z-10"
+                    on:change={async (e) => {
+                        await fileUploadModel(e);
+                        if (verifyModel) $dropFile = true;
+                    }}
                 />
                 <div
-                    class="absolute mt-10 p-10 flex flex-col text-center items-center mx-auto"
+                    class="absolute mt-10 p-10 flex flex-col text-center items-center mx-auto {$dropFile
+                        ? 'animate-pulse'
+                        : ''}"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        height="48px"
-                        viewBox="0 -960 960 960"
-                        width="48px"
-                        fill={$themeStore === "Light" ? "#7f5fc0" : "#6746b4"}
-                    >
-                        <path
-                            d="M280-280h400v-60H280v60Zm197-126 158-157-42-42-85 84v-199h-60v199l-85-84-42 42 156 157Zm3 326q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-156t86-127Q252-817 325-848.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 82-31.5 155T763-197.5q-54 54.5-127 86T480-80Zm0-60q142 0 241-99.5T820-480q0-142-99-241t-241-99q-141 0-240.5 99T140-480q0 141 99.5 240.5T480-140Zm0-340Z"
-                        />
-                    </svg>
-                    <h1
-                        class="font-black {$themeStore === 'Light'
-                            ? 'text-[#7f5fc0]'
-                            : 'text-[#6746b4]'}"
-                    >
-                        Drag your file here
-                    </h1>
+                    {#if verifyModel}
+                        <svg
+                            height="48px"
+                            width="48px"
+                            viewBox="0 0 24 24"
+                            fill={$themeStore === "Light"
+                                ? "#7f5fc0"
+                                : "#6746b4"}
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path
+                                d="M13.5 3H12H8C6.34315 3 5 4.34315 5 6V18C5 19.6569 6.34315 21 8 21H10M13.5 3L19 8.625M13.5 3V7.625C13.5 8.17728 13.9477 8.625 14.5 8.625H19M19 8.625V12.8125"
+                                stroke="#000000"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
+                            <path
+                                d="M13 19L15 21L20 16"
+                                stroke="#000000"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
+                        </svg>
+                        <h1
+                            class="font-black {$themeStore === 'Light'
+                                ? 'text-[#7f5fc0]'
+                                : 'text-[#6746b4]'} 
+                        "
+                        >
+                            Imported model!
+                        </h1>
+                    {:else}
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            height="48px"
+                            viewBox="0 -960 960 960"
+                            width="48px"
+                            fill={$themeStore === "Light"
+                                ? "#7f5fc0"
+                                : "#6746b4"}
+                        >
+                            <path
+                                d="M280-280h400v-60H280v60Zm197-126 158-157-42-42-85 84v-199h-60v199l-85-84-42 42 156 157Zm3 326q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-156t86-127Q252-817 325-848.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 82-31.5 155T763-197.5q-54 54.5-127 86T480-80Zm0-60q142 0 241-99.5T820-480q0-142-99-241t-241-99q-141 0-240.5 99T140-480q0 141 99.5 240.5T480-140Zm0-340Z"
+                            />
+                        </svg>
+                        <h1
+                            class="font-black {$themeStore === 'Light'
+                                ? 'text-[#7f5fc0]'
+                                : 'text-[#6746b4]'} 
+                        "
+                        >
+                            Drag your file here
+                        </h1>
+                    {/if}
                 </div>
             </div>
 

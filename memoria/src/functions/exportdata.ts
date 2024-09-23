@@ -74,7 +74,7 @@ function createModelSubrule(subReglas: any[] | string): string {
 export function createCompleteModel() {
     let contextoXML = localStorage.getItem("xmlContext")!;
     let actividadesBPMN = localStorage.getItem("xmlBpmn")!;
-    const reglas = JSON.parse(localStorage.getItem("taskNames")!);
+    const reglas = JSON.parse(localStorage.getItem("rulesTask")!);
 
     contextoXML = removeXMIHeader(contextoXML);
     actividadesBPMN = removeXMIHeader(actividadesBPMN);
