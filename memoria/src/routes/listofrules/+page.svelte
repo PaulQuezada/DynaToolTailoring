@@ -4,24 +4,24 @@
     import { goto } from "$app/navigation";
     import { themeStore } from "../../stores";
     import "../types";
-    import { onMount, onDestroy } from "svelte";
+    import { onMount } from "svelte";
     import { writable, type Writable } from "svelte/store";
     import { fileUploadBpmn } from "../../functions/importdata";
 
     // Variables
     let searchQuery = "";
-    let actividades: Writable<activity[]> = writable([]);
-    let nombre_actividades = writable<any[]>([]);
+    let activities: Writable<activity[]> = writable([]);
+    let name_activities = writable<any[]>([]);
     let showModal = false;
     let showModalCrear = false;
     let showModalEditar = false;
     let showModalFiltro = false;
-    let idactividad_eliminar: number;
-    let idactividad_editar: number;
-    let nombre_actividad_crear: String;
-    let subnombre_actividad_crear: String;
-    let tipo_actividad_crear: String;
-    let subnombre_actividad_editar: String;
+    let idactivity_delete: number;
+    let idactivity_edit: number;
+    let name_activity_create: String;
+    let subname_activity_create: String;
+    let activity_type_create: String;
+    let subname_activity_edit: String;
 
     // Variables filtros
     let filterNormalTask = true;
@@ -29,13 +29,13 @@
     let filterAnotherTask = false;
 
     // Variables para la barra de datos
-    let numeroReglasEliminarMantener: number = 0;
-    let numeroReglasReemplazar: number = 0;
-    let numeroReglasSinTipo: number = 0;
-    let porcentajeEliminarMantener: number = 0;
-    let porcentajeReemplazar: number = 0;
-    let porcentajeSinTipo: number = 0;
-    let mostrarBarra: boolean = false;
+    let numberRulesDeleteOrKeep: number = 0;
+    let numberRulesReplace: number = 0;
+    let numberRulesWithoutType: number = 0;
+    let percentageRemoveOrKeep: number = 0;
+    let percentageReplace: number = 0;
+    let percentageWithoutType: number = 0;
+    let showBar: boolean = false;
 
     // Variable para crear para varias actividades la misma regla
     let commandModal: boolean = false;
@@ -43,8 +43,8 @@
     let selectedActivities: string[] = [];
     let createRuleforActivities: Writable<boolean> = writable(false);
 
-    let osName: string = "detectando...";
-    let commandText: string = "Detectando";
+    let osName: string = "detecting...";
+    let commandText: string = "detected";
     // Función para detectar el sistema operativo
     function detectOS(): string {
         const platform = navigator.platform.toLowerCase();
@@ -91,7 +91,7 @@
     function selectionAllActivities() {
         selectedActivities = [];
         if (selectedAllActivities) {
-            $nombre_actividades.forEach((activity: any) => {
+            $name_activities.forEach((activity: any) => {
                 selectedActivities = [...selectedActivities, activity];
             });
         }
@@ -99,38 +99,38 @@
 
     // Filtrar actividades por nombre y por tipo
     $: {
-        numeroReglasEliminarMantener = 0;
-        numeroReglasReemplazar = 0;
-        porcentajeEliminarMantener = 0;
-        porcentajeReemplazar = 0;
-        if ($actividades.length !== 0) {
-            $actividades.forEach((regla_activity: activity) => {
+        numberRulesDeleteOrKeep = 0;
+        numberRulesReplace = 0;
+        percentageRemoveOrKeep = 0;
+        percentageReplace = 0;
+        if ($activities.length !== 0) {
+            $activities.forEach((regla_activity: activity) => {
                 if (regla_activity.deleted !== undefined) {
-                    numeroReglasEliminarMantener++;
+                    numberRulesDeleteOrKeep++;
                 } else if (regla_activity.replaced !== undefined) {
-                    numeroReglasReemplazar++;
+                    numberRulesReplace++;
                 } else {
-                    numeroReglasSinTipo++;
+                    numberRulesWithoutType++;
                 }
             });
             if (
-                numeroReglasEliminarMantener !== 0 ||
-                numeroReglasReemplazar !== 0 ||
-                numeroReglasSinTipo !== 0
+                numberRulesDeleteOrKeep !== 0 ||
+                numberRulesReplace !== 0 ||
+                numberRulesWithoutType !== 0
             ) {
                 // Calculamos el porcentaje de las reglas
-                porcentajeEliminarMantener =
-                    (numeroReglasEliminarMantener / $actividades.length) * 100;
-                porcentajeReemplazar =
-                    (numeroReglasReemplazar / $actividades.length) * 100;
-                porcentajeSinTipo =
-                    (numeroReglasSinTipo / $actividades.length) * 100;
+                percentageRemoveOrKeep =
+                    (numberRulesDeleteOrKeep / $activities.length) * 100;
+                    percentageReplace =
+                    (numberRulesReplace / $activities.length) * 100;
+                    percentageWithoutType =
+                    (numberRulesWithoutType / $activities.length) * 100;
                 // Truncamos el porcentaje
-                porcentajeEliminarMantener = Math.trunc(
-                    porcentajeEliminarMantener,
+                percentageRemoveOrKeep = Math.trunc(
+                    percentageRemoveOrKeep,
                 );
-                porcentajeReemplazar = Math.trunc(porcentajeReemplazar);
-                porcentajeSinTipo = Math.trunc(porcentajeSinTipo);
+                percentageReplace = Math.trunc(percentageReplace);
+                percentageWithoutType = Math.trunc(percentageWithoutType);
             }
         }
     }
@@ -151,7 +151,7 @@
             const jsonTask = JSON.parse(taskLocalStorage);
             console.log(jsonTask);
             // Ahora igualamos rulesTask con jsonTask
-            actividades.set(jsonTask);
+            activities.set(jsonTask);
             // Extraemos solo los nombres de las actividades(sin que se repitan)
             saveNamesActivities();
         } else {
@@ -189,7 +189,7 @@
                 name: task.name,
                 type: task.type,
             }));
-        nombre_actividades.set(uniqueTaskNames);
+        name_activities.set(uniqueTaskNames);
         console.log(uniqueTaskNames);
     }
 
@@ -200,12 +200,12 @@
             loadDataBPMN();
         } else {
             loadDataBPMN();
-            actividades.set(actividades_json);
+            activities.set(actividades_json);
         }
     }
 
     // Filtrar actividades por nombre y por tipo
-    $: filteredActivities = $nombre_actividades.filter((activity) =>
+    $: filteredActivities = $name_activities.filter((activity) =>
         activity.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
@@ -213,7 +213,7 @@
         var tasks = JSON.parse(localStorage.getItem("rulesTask")!);
         var newTasks = tasks.filter((task: any) => task.id !== taskId);
         localStorage.setItem("rulesTask", JSON.stringify(newTasks));
-        actividades.set(newTasks);
+        activities.set(newTasks);
     }
 
     function createRuleActivity() {
@@ -229,25 +229,25 @@
         // Creamos la regla
         var newRule = {
             id: lastId + 1,
-            name: nombre_actividad_crear,
-            subname: subnombre_actividad_crear,
-            type: tipo_actividad_crear,
+            name: name_activity_create,
+            subname: subname_activity_create,
+            type: activity_type_create,
             rules: [],
         };
         tasks.push(newRule);
         localStorage.setItem("rulesTask", JSON.stringify(tasks));
-        actividades.set(tasks);
+        activities.set(tasks);
     }
 
     function editRuleActivity() {
         var tasks = JSON.parse(localStorage.getItem("rulesTask")!);
         tasks.forEach((task: any) => {
-            if (task.id === idactividad_editar) {
-                task.subname = subnombre_actividad_editar;
+            if (task.id === idactivity_delete) {
+                task.subname = subname_activity_edit;
             }
         });
         localStorage.setItem("rulesTask", JSON.stringify(tasks));
-        actividades.set(tasks);
+        activities.set(tasks);
     }
 </script>
 
@@ -340,7 +340,7 @@
         </div>
 
         <!-- Barra con porcentajes -->
-        {#if mostrarBarra}
+        {#if showBar}
             <div
                 class="mx-auto w-3/4 border-b border-x {$themeStore === 'Light'
                     ? 'border-[#875fc7] bg-[#ffffff]'
@@ -348,35 +348,35 @@
             >
                 <div class="flex flex-row w-full mx-auto my-auto py-2 px-8">
                     <!-- Barra para mostrar las reglas para eliminar o no eliminar -->
-                    {#if porcentajeEliminarMantener > 0}
+                    {#if percentageRemoveOrKeep > 0}
                         <div
                             class="border rounded-l rounded-r flex h-[20px] bg-[#4476c0]"
-                            style="width: {porcentajeEliminarMantener}%"
+                            style="width: {percentageRemoveOrKeep}%"
                         >
                             <span class="text-white mx-auto my-auto text-xs"
-                                >{porcentajeEliminarMantener}%</span
+                                >{percentageRemoveOrKeep}%</span
                             >
                         </div>
                     {/if}
                     <!-- Barra para mostrar las reglas para reemplazar -->
-                    {#if porcentajeReemplazar > 0}
+                    {#if percentageReplace > 0}
                         <div
-                            class="border rounded-r flex w-[{porcentajeReemplazar}%] h-[20px] bg-[#cb6329]"
-                            style="width: {porcentajeReemplazar}%"
+                            class="border rounded-r flex w-[{percentageReplace}%] h-[20px] bg-[#cb6329]"
+                            style="width: {percentageReplace}%"
                         >
                             <span class="text-white mx-auto my-auto text-xs"
-                                >{porcentajeReemplazar}%</span
+                                >{percentageReplace}%</span
                             >
                         </div>
                     {/if}
                     <!-- Barra para mostrar las reglas sin tipo -->
-                    {#if porcentajeSinTipo > 0}
+                    {#if percentageWithoutType > 0}
                         <div
-                            class="border rounded-r flex w-[{porcentajeSinTipo}%] h-[20px] bg-[#523e78]"
-                            style="width: {porcentajeSinTipo}%"
+                            class="border rounded-r flex w-[{percentageWithoutType}%] h-[20px] bg-[#523e78]"
+                            style="width: {percentageWithoutType}%"
                         >
                             <span class="text-white mx-auto my-auto text-xs"
-                                >{porcentajeSinTipo}%</span
+                                >{percentageWithoutType}%</span
                             >
                         </div>
                     {/if}
@@ -387,7 +387,7 @@
                             class="w-[10px] h-[10px] rounded-xl bg-[#4476c0] my-auto mx-2"
                         ></div>
                         <h1 class="text-[#4476c0] my-auto">
-                            Created delete/keep rules: {numeroReglasEliminarMantener}
+                            Created delete/keep rules: {numberRulesDeleteOrKeep}
                         </h1>
                     </div>
                     <div class="flex flex-row">
@@ -395,7 +395,7 @@
                             class="w-[10px] h-[10px] rounded-xl bg-[#cb6329] my-auto mx-2"
                         ></div>
                         <h1 class="text-[#cb6329] my-auto">
-                            Created replacement rules: {numeroReglasReemplazar}
+                            Created replacement rules: {numberRulesReplace}
                         </h1>
                     </div>
                     <div class="flex flex-row">
@@ -403,7 +403,7 @@
                             class="w-[10px] h-[10px] rounded-xl bg-[#523e78] my-auto mx-2"
                         ></div>
                         <h1 class="text-[#523e78] my-auto">
-                            Rules created without type: {numeroReglasSinTipo}
+                            Rules created without type: {numberRulesWithoutType}
                         </h1>
                     </div>
                 </div>
@@ -411,7 +411,7 @@
                     <button
                         class="w-[40px] mx-auto border-t border-r border-l border-[#8161c1] rounded-tl rounded-tr"
                         on:click={() => {
-                            mostrarBarra = false;
+                            showBar = false;
                         }}
                     >
                         <span
@@ -432,7 +432,7 @@
                 <button
                     class="w-[40px] mx-auto border-b border-l border-r border-[#8161c1] rounded-bl rounded-br"
                     on:click={() => {
-                        mostrarBarra = true;
+                        showBar = true;
                     }}
                 >
                     <span
@@ -489,9 +489,9 @@
                                     ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                     : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                 on:click={() => {
-                                    nombre_actividad_crear =
+                                    name_activity_create =
                                         nombre_actividad.name;
-                                    tipo_actividad_crear =
+                                    activity_type_create =
                                         nombre_actividad.type;
                                     showModalCrear = true;
                                 }}
@@ -500,7 +500,7 @@
                             </button>
                         </div>
                         <!-- Reglas de la actividad -->
-                        {#each $actividades as activity (activity.id)}
+                        {#each $activities as activity (activity.id)}
                             {#if activity.name == nombre_actividad.name}
                                 <div class="flex">
                                     <div class="flex-col">
@@ -548,7 +548,7 @@
                                                                 ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                                 : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                                             on:click={() => {
-                                                                idactividad_editar =
+                                                                idactivity_delete =
                                                                     activity.id;
                                                                 showModalEditar = true;
                                                             }}
@@ -579,7 +579,7 @@
                                                                 ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                                 : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                                             on:click={() => {
-                                                                idactividad_editar =
+                                                                idactivity_edit =
                                                                     activity.id;
                                                                 showModalEditar = true;
                                                             }}
@@ -630,7 +630,7 @@
                                                             ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                             : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                                         on:click={() => {
-                                                            idactividad_eliminar =
+                                                            idactivity_delete =
                                                                 activity.id;
                                                             showModal = true;
                                                         }}
@@ -677,7 +677,7 @@
                                                             ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                             : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                                         on:click={() => {
-                                                            idactividad_eliminar =
+                                                            idactivity_delete =
                                                                 activity.id;
                                                             showModal = true;
                                                         }}
@@ -767,7 +767,7 @@
                         ? 'bg-[#efe9f8] border-[#5e3fa1] text-[#5e3fa1] hover:shadow-[0_0_2px_#7443bf]'
                         : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300"
                     on:click={() => {
-                        deleteActivityById(idactividad_eliminar);
+                        deleteActivityById(idactivity_delete);
                         showModal = false;
                     }}>Delete</button
                 >
@@ -796,7 +796,7 @@
                 Create a rule for an activity
             </h1>
             <input
-                bind:value={subnombre_actividad_crear}
+                bind:value={subname_activity_create}
                 class="text-[#6f40b8] pl-5 pr-14 mx-auto mb-5 h-[50px] w-full rounded-lg border {$themeStore ===
                 'Light'
                     ? 'border-[#875fc7] bg-[#ffffff]'
@@ -808,7 +808,7 @@
                 on:keydown={(event) => {
                     if (event.key === "Enter") {
                         createRuleActivity();
-                        subnombre_actividad_crear = "";
+                        subname_activity_create = "";
                         showModalCrear = false;
                     }
                 }}
@@ -824,14 +824,14 @@
                         : 'border border-[#8973ae] text-[#8973ae] bg-[#251835]'} transition duration-300"
                     on:click={() => {
                         createRuleActivity();
-                        subnombre_actividad_crear = "";
+                        subname_activity_create = "";
                         showModalCrear = false;
                     }}
                     on:keydown={(event) => {
                         console.log(event);
                         if (event.key === "Enter") {
                             createRuleActivity();
-                            subnombre_actividad_crear = "";
+                            subname_activity_create = "";
                             showModalCrear = false;
                         }
                     }}>Crear regla</button
@@ -861,7 +861,7 @@
                 Edit rule name
             </h1>
             <input
-                bind:value={subnombre_actividad_editar}
+                bind:value={subname_activity_edit}
                 class="text-[#6f40b8] pl-5 pr-14 mx-auto mb-5 h-[50px] w-full rounded-lg border {$themeStore ===
                 'Light'
                     ? 'border-[#875fc7] bg-[#ffffff]'
@@ -873,7 +873,7 @@
                 on:keydown={(event) => {
                     if (event.key === "Enter") {
                         editRuleActivity();
-                        subnombre_actividad_crear = "";
+                        subname_activity_edit = "";
                         showModalEditar = false;
                     }
                 }}
@@ -889,7 +889,7 @@
                         : 'border border-[#8973ae] text-[#8973ae] bg-[#251835]'} transition duration-300"
                     on:click={() => {
                         editRuleActivity();
-                        subnombre_actividad_crear = "";
+                        subname_activity_create = "";
                         showModalEditar = false;
                     }}>Editar nombre</button
                 >
@@ -1222,7 +1222,7 @@
                         rules
                     </h1>
                     <input
-                        bind:value={subnombre_actividad_crear}
+                        bind:value={subname_activity_create}
                         class="text-[#6f40b8] pl-5 pr-14 mx-auto mb-5 h-[50px] w-full rounded-lg border {$themeStore ===
                         'Light'
                             ? 'border-[#875fc7] bg-[#ffffff]'
@@ -1235,7 +1235,7 @@
                             if (event.key === "Enter") {
                                 localStorage.setItem(
                                     "nameRuleForActivities",
-                                    JSON.stringify(subnombre_actividad_crear),
+                                    JSON.stringify(subname_activity_create),
                                 );
                                 localStorage.setItem(
                                     "selectedActivities",
@@ -1254,7 +1254,7 @@
                         on:click={() => {
                             localStorage.setItem(
                                 "nameRuleForActivities",
-                                JSON.stringify(subnombre_actividad_crear),
+                                JSON.stringify(subname_activity_create),
                             );
                             localStorage.setItem(
                                 "selectedActivities",

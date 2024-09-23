@@ -6,6 +6,7 @@
     import { writable } from "svelte/store";
     import { themeStore } from "../../stores";
     import { fileUpload, nameFileUpload, fileUploadTailoringModel } from "../../functions/importdata";
+    
     // Estado de la etapa actual
     let currentStage = writable(1);
 
