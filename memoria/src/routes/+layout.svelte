@@ -13,11 +13,11 @@
 </script>
 
 <div
-    class="h-screen w-screen {$themeStore === "Light"
+    class="{$themeStore === "Light"
         ? "bg-[#ffffff]"
         : "bg-gradient-to-br from-[#14111b] to-[#281428]"} transition duration-300"
 >
-    <div class="h-full w-full">
+    <div class="h-screen w-screen">
         <div class="flex-1 h-1/6 flex justify-between">
             <div class="flex my-auto mx-5">
                 <span
