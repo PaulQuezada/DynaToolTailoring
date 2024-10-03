@@ -4,6 +4,9 @@
     import { goto } from "$app/navigation";
     import { writable } from "svelte/store";
     import { themeStore } from "../../stores";
+    import { getNotificationsContext } from "svelte-notifications";
+    const { addNotification } = getNotificationsContext();
+    import "../types";
     import "../../app.css";
     import {
         fileUploadContext,
@@ -98,6 +101,16 @@
         } catch (error) {
             console.log(error);
         }
+
+        // Mostramos la notificación de error
+        if ($verifyContext == false) {
+            addNotification({
+                text: "Error uploading file",
+                position: "top-right",
+                type: "error",
+                removeAfter: 3000,
+            });
+        }
     }
 
     // Función para manejar la carga de archivos BPMN
@@ -114,6 +127,16 @@
             verifyBpmn.set(extractTask.length > 0); // Verificar si el attributeContext tiene datos entonces, es correcto
         } catch (error) {
             console.log(error);
+        }
+
+        // Mostramos la notificación de error
+        if ($verifyBpmn == false) {
+            addNotification({
+                text: "Error uploading file",
+                position: "top-right",
+                type: "error",
+                removeAfter: 3000,
+            });
         }
     }
 </script>
@@ -229,6 +252,7 @@
                     id="fileUploadContext"
                     class="absolute h-full w-full bg-red border opacity-0 cursor-pointer top-0 left-0 z-10"
                     on:change={async (e) => {
+                        verifyContext.set(false);
                         await uploadContext(e);
                         if ($verifyContext) $dropFile = true;
                     }}
@@ -378,6 +402,7 @@
                     id="fileUploadContext"
                     class="absolute h-full w-full bg-red border opacity-0 cursor-pointer top-0 left-0 z-10"
                     on:change={async (e) => {
+                        verifyBpmn.set(false);
                         await uploadBpmn(e);
                         if (verifyBpmn) {
                             $dropFile = true;
@@ -637,24 +662,45 @@
                         <h1 class="my-auto text-sm mx-2">Back</h1>
                     </div>
                 </button>
-                <button
-                    class="font-bold border rounded-md p-2 hover:shadow-2xl transition duration-300 {$themeStore ===
-                    'Light'
-                        ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
-                        : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
-                    on:click={() => {
-                        localStorage.setItem("xmlContext", xmlContext);
-                        localStorage.setItem("xmlBpmn", xmlBpmn);
-                        goto("/listofrules");
-                    }}
-                >
-                    <div class="flex my-auto">
-                        <h1 class="my-auto text-sm mx-2">Next Stage</h1>
-                        <span class="material-symbols-outlined text-lg ml-1">
-                            arrow_forward_ios
-                        </span>
-                    </div>
-                </button>
+                {#if $verifyBpmn && $verifyContext}
+                    <button
+                        class="font-bold border rounded-md p-2 hover:shadow-2xl transition duration-300 {$themeStore ===
+                        'Light'
+                            ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
+                            : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
+                        on:click={() => {
+                            localStorage.setItem("xmlContext", xmlContext);
+                            localStorage.setItem("xmlBpmn", xmlBpmn);
+                            goto("/listofrules");
+                        }}
+                    >
+                        <div class="flex my-auto">
+                            <h1 class="my-auto text-sm mx-2">Next Stage</h1>
+                            <span
+                                class="material-symbols-outlined text-lg ml-1"
+                            >
+                                arrow_forward_ios
+                            </span>
+                        </div>
+                    </button>
+                {:else}
+                    <button
+                        class="font-bold border rounded-md p-2 disabled:opacity-50 transition duration-300 {$themeStore ===
+                        'Light'
+                            ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
+                            : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
+                        disabled
+                    >
+                        <div class="flex my-auto">
+                            <h1 class="my-auto text-sm mx-2">Next Stage</h1>
+                            <span
+                                class="material-symbols-outlined text-lg ml-1"
+                            >
+                                arrow_forward_ios
+                            </span>
+                        </div>
+                    </button>
+                {/if}
             </div>
         {/if}
     </div>

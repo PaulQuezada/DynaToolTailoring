@@ -1,5 +1,6 @@
 <script lang="ts">
     // Importamos las librerias necesarias
+    import { fly } from "svelte/transition";
     import { onMount } from "svelte";
     import { goto } from "$app/navigation";
     import { writable, get } from "svelte/store";
@@ -11,6 +12,8 @@
         fileUploadContext,
     } from "../../functions/importdata";
     import * as functionRulecreation from "../../functions/rulecreation";
+    import { getNotificationsContext } from "svelte-notifications";
+    const { addNotification } = getNotificationsContext();
 
     // Variables
     let showLoader = true;
@@ -102,6 +105,38 @@
         return null;
     }
 
+    // Verificamos que este todo correcto, enviamos notificacion de error o de exito
+    function verification() {
+        if (
+            selectedAction1 === "Delete Action" &&
+            (selectedAction2 === "Delete this activity" ||
+                selectedAction2 === "Not delete this activity")
+        ) {
+            addNotification({
+                text: "Rule created successfully",
+                position: "top-right",
+                type: "success",
+                removeAfter: 3000,
+            });
+        } else if (
+            selectedAction1 === "Replace Action" &&
+            selectedAction2 != ""
+        ) {
+            addNotification({
+                text: "Rule created successfully",
+                position: "top-right",
+                type: "success",
+                removeAfter: 3000,
+            });
+        } else {
+            addNotification({
+                text: "Error in the rules or their configuration",
+                position: "top-right",
+                type: "error",
+                removeAfter: 3000,
+            });
+        }
+    }
     onMount(() => {
         // Inicializamos los datos
         initializeData();
@@ -1516,6 +1551,7 @@
                             ? 'bg-[#efe9f8] border-[#5e3fa1] text-[#5e3fa1] hover:shadow-[0_0_2px_#7443bf]'
                             : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300"
                         on:click={() => {
+                            verification();
                             showModal = false;
                             showModalDelete = false;
                             addRulesLocalStorage();

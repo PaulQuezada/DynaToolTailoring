@@ -242,10 +242,11 @@
     function editRuleActivity() {
         var tasks = JSON.parse(localStorage.getItem("rulesTask")!);
         tasks.forEach((task: any) => {
-            if (task.id === idactivity_delete) {
+            if (task.id === idactivity_edit) {
                 task.subname = subname_activity_edit;
             }
         });
+        console.log(tasks);
         localStorage.setItem("rulesTask", JSON.stringify(tasks));
         activities.set(tasks);
     }
@@ -891,7 +892,7 @@
                         editRuleActivity();
                         subname_activity_create = "";
                         showModalEditar = false;
-                    }}>Editar nombre</button
+                    }}>Edit name</button
                 >
             </div>
         </div>
