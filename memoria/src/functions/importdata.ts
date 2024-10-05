@@ -1,17 +1,7 @@
-import { XMLParser } from "fast-xml-parser";
+import { getDataContext, setDataContext, setDataProcess } from "./datamanager";
 
 
 // ********** Importar datos BPMN y el contexto en formato XMI **********
-
-// Creando la instancia del parser y del builder que se utilizará para procesar los archivos XML
-const parserOptions = {
-    ignoreAttributes: false,
-    attributeNamePrefix: "",
-    allowBooleanAttributes: true,
-    parseNodeValue: true,
-    parseAttributeValue: true,
-};
-const parser = new XMLParser(parserOptions);
 
 // Función para extraer el nombre del archivo
 export async function nameFileUpload(event: Event) {
@@ -32,16 +22,15 @@ export async function fileUpload(event: Event) {
 }
 
 // Función para extraer los datos del archivo contexto organizacional
-export async function fileUploadContext(xmlContext: string) {
+export async function fileUploadContext(xmlContext: any) {
     let attributesContext: any[] = []; // Variable para almacenar los datos del contexto organizacional
     if (xmlContext !== "") {
-        const jsonObj = parser.parse(xmlContext);
         // se obtienen los datos que nos interesan del contexto organizacional
         const dimensions = Array.isArray(
-            jsonObj["spcm:Context"].myDimensions,
+            xmlContext["spcm:Context"].myDimensions,
         )
-            ? jsonObj["spcm:Context"].myDimensions
-            : [jsonObj["spcm:Context"].myDimensions];
+            ? xmlContext["spcm:Context"].myDimensions
+            : [xmlContext["spcm:Context"].myDimensions];
 
 
         // Recorrer las dimensiones del contexto organizacional y obtener los atributos
@@ -71,24 +60,29 @@ export async function fileUploadContext(xmlContext: string) {
 }
 
 // Función para extraer los datos del archivo BPMN
-export async function fileUploadBpmn(xmlBpmn: string) {
+export async function fileUploadBpmn(xmlBpmn: any) {
     let task: any = []; // Variable para almacenar los nombres de las tareas
     if (xmlBpmn !== "") {
-        const jsonObj = parser.parse(xmlBpmn);
-        const rootElements = jsonObj["bpmn2:Definitions"].rootElements;
+        console.log(xmlBpmn);
+        const rootElements = xmlBpmn["bpmn2:Definitions"].rootElements;
         const flowElements = Array.isArray(rootElements.flowElements)
             ? rootElements.flowElements
             : [rootElements.flowElements];
 
+        // Tipo de tareas que se pueden encontrar en el archivo de procesos de negocios
         const newTaskNames = flowElements
             .filter(
                 (fe: { [x: string]: string }) =>
-                    fe["xsi:type"] === "bpmn2:Task" || fe["xsi:type"] === "bpmn2:UserTask",
+                    /^bpmn2:.*Task/.test(fe["xsi:type"]) || /^bpmn2:.*task/.test(fe["xsi:type"]), // Filtrar solo los elementos que sean tareas
             )
             .map((task: any) => ({
                 name: task.name,
                 type: task["xsi:type"],
             }));
+        
+        console.log(flowElements);
+        console.log(newTaskNames);
+
         // Actualiza el store con los nuevos nombres de las tareas
         task = newTaskNames;
     }
@@ -99,7 +93,7 @@ export async function fileUploadBpmn(xmlBpmn: string) {
 // ********** Importar modelo con reglas de transformación **********
 
 // Función para extraer los datos del archivo de reglas de transformación
-export function fileUploadTailoringModel(xmlModel: string) {
+export function fileUploadTailoringModel(xmlModel: any) {
     let isSuccessful: boolean = false; // Variable para almacenar si la carga del archivo fue exitosa
     if (xmlModel !== "") {
         // Variables para almacenar los datos extraidos del archivo
@@ -133,10 +127,10 @@ export function fileUploadTailoringModel(xmlModel: string) {
             ? `<?xml version="1.0" encoding="UTF-8"?>\n<RulesModel>${rulesModel}</RulesModel>`
             : "";
 
-        // Verificar si el archivo tiene datos y si los tiene lo agregamos al localStorage
+        // Verificar si el archivo tiene datos y si los tiene lo agregamos al sistema
         if (contextModel && bpmnModel && rulesModel) {
-            localStorage.setItem("xmlContext", contextModel);
-            localStorage.setItem("xmlBpmn", bpmnModel);
+           setDataContext(contextModel);
+           setDataProcess(bpmnModel);
             attributesAndValues = loadAtributtes()[0];
             onlyAttributes = loadAtributtes()[1];
             activities = convertRulesModel(rulesModel, onlyAttributes, attributesAndValues);
@@ -148,7 +142,7 @@ export function fileUploadTailoringModel(xmlModel: string) {
         }
 
         return [isSuccessful, activities];
-    }else{
+    } else {
         return undefined;
     }
 }
@@ -156,12 +150,10 @@ export function fileUploadTailoringModel(xmlModel: string) {
 
 // Función para extraer los atributos y valores de cada dimensión del archivo de reglas de transformación
 export function loadAtributtes(): any[] {
-    let xmlContext = localStorage.getItem("xmlContext")!;
-    const jsonObj = parser.parse(xmlContext);
-    console.log(jsonObj);
-    const dimensions = Array.isArray(jsonObj["spcm:Context"].myDimensions)
-        ? jsonObj["spcm:Context"].myDimensions
-        : [jsonObj["spcm:Context"].myDimensions];
+    let xmlContext: any = getDataContext();
+    const dimensions = Array.isArray(xmlContext["spcm:Context"].myDimensions)
+        ? xmlContext["spcm:Context"].myDimensions
+        : [xmlContext["spcm:Context"].myDimensions];
 
     // Usar una variable temporal para almacenar los atributos y valores de cada dimensión
     let attributesAndValues: any[] = [];
@@ -276,6 +268,7 @@ export function parseRules(element: Element, onlyAttributes: any[], attributesAn
     return rules;
 }
 
+// Función para buscar los valores de los atributos
 function searchValues(value: String, attributesAndValues: any[]): any[] {
     return attributesAndValues.filter((attr) => attr.Attribute === value)[0]
         .values;

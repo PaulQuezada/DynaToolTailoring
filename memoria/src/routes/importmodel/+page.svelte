@@ -6,6 +6,8 @@
     import { writable } from "svelte/store";
     import { themeStore } from "../../stores";
     import { fileUpload, nameFileUpload, fileUploadTailoringModel } from "../../functions/importdata";
+    import "../../functions/datamanager";
+    import { setDataRulesTask } from "../../functions/datamanager";
     
     // Estado de la etapa actual
     let currentStage = writable(1);
@@ -49,7 +51,7 @@
         const result = fileUploadTailoringModel(xmlModel);
          
         if(result != undefined){
-            localStorage.setItem("rulesTask", JSON.stringify(result[1] as activity[]));
+            setDataRulesTask(JSON.stringify(result[1] as activity[]));
             verifyModel = result[0] as boolean; 
         }
     }
