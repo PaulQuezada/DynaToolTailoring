@@ -5,6 +5,11 @@
     import { writable } from "svelte/store";
     import { themeStore } from "../../stores";
     import { getNotificationsContext } from "svelte-notifications";
+    import { XMLParser } from "fast-xml-parser";
+    import {
+        setDataContext,
+        setDataProcess,
+    } from "../../functions/datamanager";
     const { addNotification } = getNotificationsContext();
     import "../types";
     import "../../app.css";
@@ -14,6 +19,16 @@
         nameFileUpload,
         fileUpload,
     } from "../../functions/importdata";
+
+    // Creando la instancia del parser y del builder que se utilizará para procesar los archivos XML
+    const parserOptions = {
+        ignoreAttributes: false,
+        attributeNamePrefix: "",
+        allowBooleanAttributes: true,
+        parseNodeValue: true,
+        parseAttributeValue: true,
+    };
+    const parser = new XMLParser(parserOptions);
 
     // Variable para saber si dropearan un archivo
     let dropFile = writable(false);
@@ -89,10 +104,11 @@
     // Función para manejar la carga de archivos contexto organizacional
     async function uploadContext(event: Event) {
         nameFileContex = await nameFileUpload(event);
-        xmlContext = JSON.parse(JSON.stringify(await fileUpload(event))); // Extraer el contenido del archivo XMI
+        xmlContext = await fileUpload(event); // Extraer el contenido del archivo XMI
         try {
+            const jsonContext = parser.parse(xmlContext); // Convertir el archivo XMI a JSON
             extractAttributes = JSON.parse(
-                JSON.stringify(await fileUploadContext(xmlContext)),
+                JSON.stringify(await fileUploadContext(jsonContext)),
             ); // Extraer los atributos del archivo XMI
             //console.log(nameFileContex);
             //console.log(xmlContext);
@@ -116,10 +132,11 @@
     // Función para manejar la carga de archivos BPMN
     async function uploadBpmn(event: Event) {
         nameFileBpmn = await nameFileUpload(event);
-        xmlBpmn = JSON.parse(JSON.stringify(await fileUpload(event))); // Extraer el contenido del archivo BPMN
+        xmlBpmn = await fileUpload(event); // Extraer el contenido del archivo BPMN
         try {
+            const jsonBpmn = parser.parse(xmlBpmn); // Convertir el archivo de procesos de negocios a JSON
             extractTask = JSON.parse(
-                JSON.stringify(await fileUploadBpmn(xmlBpmn)),
+                JSON.stringify(await fileUploadBpmn(jsonBpmn)),
             ); // Extraer las tareas del archivo BPMN
             //console.log(nameFileBpmn);
             //console.log(xmlBpmn);
@@ -669,8 +686,8 @@
                             ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                             : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                         on:click={() => {
-                            localStorage.setItem("xmlContext", xmlContext);
-                            localStorage.setItem("xmlBpmn", xmlBpmn);
+                            setDataContext(xmlContext);
+                            setDataProcess(xmlBpmn);
                             goto("/listofrules");
                         }}
                     >

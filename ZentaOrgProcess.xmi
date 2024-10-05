@@ -2,9 +2,9 @@
 <bpmn2:Definitions xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL-XMI" name="">
 	<rootElements xsi:type="bpmn2:Process" name="Process">
 		<documentation text=""/>
-		<flowElements xsi:type="bpmn2:Task" name="Create stories">
+		<flowElements xsi:type="bpmn2:UserTask" name="Create stories">
 		</flowElements>
-		<flowElements xsi:type="bpmn2:Task" name="Prioritize user stories">
+		<flowElements xsi:type="bpmn2:OtroTask" name="Prioritize user stories">
 		</flowElements>
 		<flowElements xsi:type="bpmn2:DataObjectReference" name="Gantt dataObjectRef=">
 		</flowElements>

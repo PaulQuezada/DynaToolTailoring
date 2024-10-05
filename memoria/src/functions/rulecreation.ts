@@ -1,4 +1,5 @@
 import { get, type Writable } from "svelte/store";
+import { getDataRulesTask, getDataSelectedActivity, setDataRulesTask } from "./datamanager";
 
 // Función crea un id único para las reglas
 function getUniqueId(): string {
@@ -157,10 +158,8 @@ function shouldAddConnectorAtTopLevel(rules: Writable<Rule[]>): boolean {
 
 // Limpiar todas las reglas realizadas
 export function clearAllRules(activities: activity[]): activity[] {
-    var tasks = JSON.parse(localStorage.getItem("rulesTask")!);
-    var activitySelect = JSON.parse(
-        localStorage.getItem("activitySelect")!,
-    );
+    var tasks = getDataRulesTask();
+    var activitySelect = getDataSelectedActivity();
     tasks.forEach((task: any) => {
         if (task.id === activitySelect.id) {
             {
@@ -171,7 +170,7 @@ export function clearAllRules(activities: activity[]): activity[] {
             }
         }
     });
-    localStorage.setItem("rulesTask", JSON.stringify(tasks));
+    setDataRulesTask(JSON.stringify(tasks));
     activities = tasks;
     return activities;
 }

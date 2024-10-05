@@ -4,10 +4,6 @@
     let activeSection = "get-started";
     import Notifications from "svelte-notifications";
     import { themeStore } from "../stores";
-    import { fly } from "svelte/transition";
-    // Variable para mostrar la notificación
-    let show_notification = false;
-    let notification_data: any = null;
     function setActive(section: string) {
         activeSection = section;
     }
