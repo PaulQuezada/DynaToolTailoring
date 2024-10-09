@@ -19,6 +19,7 @@
         setDataSelectedActivities,
         setDataSelectedActivity,
     } from "../../functions/datamanager";
+    import { rule } from "postcss";
     const { addNotification } = getNotificationsContext();
     // Variables
     let searchQuery = "";
@@ -61,10 +62,17 @@
     // Función para validar los datos antes de pasar a la siguiente vista
     function validateToNextStage(): Boolean {
         const rulesTask = getDataRulesTask();
-        if (rulesTask.length == 0) {
-            return false;
+        if (rulesTask.length != 0) {
+            var validate = true;
+            rulesTask.forEach((ruleTask: activity) => {
+                // Si al menos una regla esta vacia, no se puede pasar a la siguiente vista
+                if(ruleTask.rules.length == 0){
+                    validate = false;
+                }
+            });
+            return validate;
         } else {
-            return true;
+            return false;
         }
     }
     // Función para detectar el sistema operativo
@@ -739,12 +747,16 @@
                 'Light'
                     ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                     : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
+                on:click={() => {
+                    goto("/");
+                    window.removeEventListener("keydown", handleKeyDown);
+                }}
             >
                 <div class="flex my-auto">
                     <span class="material-symbols-outlined text-lg mr-1"
                         >arrow_back_ios</span
                     >
-                    <h1 class="my-auto text-sm mx-2">Back Stage</h1>
+                    <h1 class="my-auto text-sm mx-2">Back Home</h1>
                 </div>
             </button>
             <button
@@ -753,15 +765,16 @@
                     ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                     : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                 on:click={() => {
+                    validateToNextStage()
                     if (validateToNextStage()) {
                         goto("/savefiles");
                         window.removeEventListener("keydown", handleKeyDown);
                     } else {
                         addNotification({
-                            text: "You must create at least one rule to proceed to the next stage",
+                            text: "You can't have empty rules to proceed to the next stage",
                             position: "top-right",
                             type: "error",
-                            removeAfter: 3000,
+                            removeAfter: 4000,
                         });
                     }
                 }}
