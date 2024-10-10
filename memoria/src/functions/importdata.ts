@@ -67,18 +67,20 @@ export function filtertypes(element: any, otherTypes?: String[]) {
         filtered_data = element
             .filter(
                 (fe: { [x: string]: string }) =>
-                    /^bpmn2:.*Task/.test(fe["xsi:type"]) || /^bpmn2:.*task/.test(fe["xsi:type"]) || otherTypes.includes(fe["xsi:type"]), 
+                    /^bpmn2:.*Task/.test(fe["xsi:type"]) ||
+                    /^bpmn2:.*task/.test(fe["xsi:type"]) ||
+                    otherTypes.some((type) => fe["xsi:type"] === `bpmn2:${type}`) // Comparar correctamente con prefijo bpmn2:
             )
             .map((task: any) => ({
                 name: task.name,
                 type: task["xsi:type"],
             }));
     } else {
-        // Filtrar solo los elementos que sean tareas(que tengan "task" en su tipo de elemento)
+        // Filtrar solo los elementos que sean tareas (que tengan "task" en su tipo de elemento)
         filtered_data = element
             .filter(
                 (fe: { [x: string]: string }) =>
-                    /^bpmn2:.*Task/.test(fe["xsi:type"]) || /^bpmn2:.*task/.test(fe["xsi:type"]), // Filtrar solo los elementos que sean tareas
+                    /^bpmn2:.*Task/.test(fe["xsi:type"]) || /^bpmn2:.*task/.test(fe["xsi:type"]) // Filtrar solo los elementos que sean tareas
             )
             .map((task: any) => ({
                 name: task.name,
@@ -87,6 +89,7 @@ export function filtertypes(element: any, otherTypes?: String[]) {
     }
     return filtered_data;
 }
+
 
 // Función para extraer los datos del archivo BPMN
 export async function fileUploadBpmn(xmlBpmn: any) {
