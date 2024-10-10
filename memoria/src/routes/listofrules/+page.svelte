@@ -293,7 +293,6 @@
         activities.set(tasks);
     }
 </script>
-<h1>{filterAnotherTask}{filterNormalTask}{filterUserTask}</h1>
 <div class="flex flex-col h-full w-full">
     <h1
         class="flex mt-3 mb-2 mx-auto text-4xl font-bold {$themeStore ===
