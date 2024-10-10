@@ -523,7 +523,7 @@
                                     ? 'text-[#855dc7]'
                                     : 'text-[#6d44ba]'}"
                             >
-                                {nombre_actividad.name} {nombre_actividad.type}
+                                {nombre_actividad.name}
                             </h1>
                             <button
                                 class="border rounded-md p-2 mx-10 text-sm {$themeStore ===
