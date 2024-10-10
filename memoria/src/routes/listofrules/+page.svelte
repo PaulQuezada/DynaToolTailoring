@@ -100,8 +100,8 @@
         if (
             (typeActivity == "bpmn2:Task" && filterNormalTask) ||
             (typeActivity == "bpmn2:UserTask" && filterUserTask) ||
-            (typeActivity.type != "bpmn2:Task" &&
-                typeActivity.type != "bpmn2:UserTask" &&
+            (typeActivity != "bpmn2:Task" &&
+                typeActivity != "bpmn2:UserTask" &&
                 filterAnotherTask)
         ) {
             return true;
@@ -246,7 +246,7 @@
         }
     }
 
-    // Filtrar actividades por nombre y por tipo
+    // Filtrar actividades por nombre
     $: filteredActivities = $name_activities.filter((activity) =>
         activity.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
@@ -293,7 +293,7 @@
         activities.set(tasks);
     }
 </script>
-
+<h1>{filterAnotherTask}{filterNormalTask}{filterUserTask}</h1>
 <div class="flex flex-col h-full w-full">
     <h1
         class="flex mt-3 mb-2 mx-auto text-4xl font-bold {$themeStore ===
@@ -524,7 +524,7 @@
                                     ? 'text-[#855dc7]'
                                     : 'text-[#6d44ba]'}"
                             >
-                                {nombre_actividad.name}
+                                {nombre_actividad.name} {nombre_actividad.type}
                             </h1>
                             <button
                                 class="border rounded-md p-2 mx-10 text-sm {$themeStore ===
