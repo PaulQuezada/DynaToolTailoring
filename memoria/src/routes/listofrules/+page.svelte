@@ -1101,21 +1101,6 @@
                         </label>
                     </div>
                 </div>
-                <div class="mt-auto mx-10">
-                    <button
-                        class="w-full h-[40px] rounded-md text-sm {$themeStore ===
-                        'Light'
-                            ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
-                            : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'} border"
-                        on:click={() => {
-                            showModalFiltro = false;
-                        }}
-                    >
-                        <div class="flex mx-10">
-                            <h1 class="my-auto mx-auto">Apply filter</h1>
-                        </div>
-                    </button>
-                </div>
             </div>
         </div>
     </div>
