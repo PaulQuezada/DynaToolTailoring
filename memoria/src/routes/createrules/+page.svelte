@@ -160,8 +160,8 @@
     async function initializeData() {
         showLoader = true; // Mostramos el loader
         // Aqui recolectamos los datos del sistema
-        xmlContext = getDataContext();
-        xmlBpmn = getDataProcess();
+        xmlContext = await getDataContext();
+        xmlBpmn = await getDataProcess();
         await handleFileUploadContext();
         await loadDataBPMN();
         console.log("111");
@@ -206,14 +206,14 @@
 
     // Función para manejar la carga de archivos contexto organizacional
     async function handleFileUploadContext() {
-        xmlContext = getDataContext();
+        xmlContext = await getDataContext();
         attributesContext = await fileUploadContext(xmlContext);
     }
 
     // Función para manejar la carga de archivos BPMN
     async function loadDataBPMN() {
         // Extraemos los datos el archivo BPMN
-        xmlBpmn =  getDataProcess();
+        xmlBpmn =  await getDataProcess();
         var task = await fileUploadBpmn(xmlBpmn);
         /* Los convertimos a un objeto JSON para manejarlos de mejor forma, 
         dandole un id a cada actividad, subnombre y reglas (que por ahora estan vacias SOLO de manera local en esta vista)

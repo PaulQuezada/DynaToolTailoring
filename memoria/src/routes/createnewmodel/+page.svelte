@@ -7,8 +7,7 @@
     import { getNotificationsContext } from "svelte-notifications";
     import { XMLParser } from "fast-xml-parser";
     import {
-        setDataContext,
-        setDataProcess,
+        setDataFile,
     } from "../../functions/datamanager";
     const { addNotification } = getNotificationsContext();
     import "../types";
@@ -686,8 +685,7 @@
                             ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                             : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                         on:click={() => {
-                            setDataContext(xmlContext);
-                            setDataProcess(xmlBpmn);
+                            setDataFile(xmlContext,xmlBpmn);
                             goto("/listofrules");
                         }}
                     >

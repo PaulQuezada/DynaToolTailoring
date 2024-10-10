@@ -1,5 +1,4 @@
-import { getDataContext, setDataContext, setDataProcess } from "./datamanager";
-
+import { getDataContext, parseDataForRootElements, setDataFile } from "./datamanager";
 
 // ********** Importar datos BPMN y el contexto en formato XMI **********
 
@@ -92,7 +91,8 @@ export function filtertypes(element: any, otherTypes?: String[]) {
 export async function fileUploadBpmn(xmlBpmn: any) {
     let task: any = []; // Variable para almacenar los nombres de las tareas
     if (xmlBpmn !== "") {
-        console.log(xmlBpmn);
+        // Parseamos el archivo BPMN para poder recorrer sus elementos
+        xmlBpmn = parseDataForRootElements(xmlBpmn);
         const rootElements = xmlBpmn["bpmn2:Definitions"].rootElements;
         const flowElements = Array.isArray(rootElements.flowElements)
             ? rootElements.flowElements
@@ -143,8 +143,7 @@ export function fileUploadTailoringModel(xmlModel: any) {
 
         // Verificar si el archivo tiene datos y si los tiene lo agregamos al sistema
         if (contextModel && bpmnModel && rulesModel) {
-            setDataContext(contextModel);
-            setDataProcess(bpmnModel);
+            setDataFile(contextModel, bpmnModel);
             attributesAndValues = loadAtributtes()[0];
             onlyAttributes = loadAtributtes()[1];
             activities = convertRulesModel(rulesModel, onlyAttributes, attributesAndValues);

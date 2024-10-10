@@ -208,7 +208,7 @@
     // Función para manejar la carga de archivos BPMN
     async function loadDataBPMN() {
         // Extraemos los datos el archivo BPMN
-        const xmlBpmn: string = getDataProcess();
+        const xmlBpmn: string = await getDataProcess();
         var task = await fileUploadBpmn(xmlBpmn);
         // Los convertimos a un objeto JSON para manejarlos de mejor forma, dandole un id a cada actividad, subnombre y reglas (que por ahora estan vacias)
         var id: number = 0;

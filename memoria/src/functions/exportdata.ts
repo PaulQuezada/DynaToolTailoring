@@ -1,5 +1,5 @@
 import "../functions/datamanager"
-import { getDataContext, getDataProcess, getDataRulesTask, setDataModelRules } from "../functions/datamanager";
+import { getDataRulesTask, setDataModelRules } from "../functions/datamanager";
 
 function removeXMIHeader(xmlString: any) {
     return xmlString.replace(/<\?xml.*\?>\s*/, ""); // Elimina la declaración XML y cualquier espacio adicional al inicio
