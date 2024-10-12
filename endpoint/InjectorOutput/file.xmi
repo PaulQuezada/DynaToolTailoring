@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:Definitions xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL-XMI" name="">
+	<rootElements xsi:type="bpmn2:Process" name="Process">
+		<documentation text=""/>
+		<flowElements xsi:type="bpmn2:Task" name="Create code">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:ExclusiveGateway" name="Gateway_0nx1ynk">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:Task" name="Estimate tasks">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:Task" name="Estimate tasks">
+		</flowElements>
+		<flowElements xsi:type="bpmn2:IntermediateThrowEvent" name="End">
+		</flowElements>
+	</rootElements>
+</bpmn2:Definitions>
