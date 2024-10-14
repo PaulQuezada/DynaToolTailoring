@@ -59,7 +59,7 @@
                 text: "The context was correctly saved in the system.",
                 position: "top-right",
                 type: "success",
-                removeAfter: 3000,
+                removeAfter: 2000,
             });
         }
         if(successProcess){
@@ -67,7 +67,7 @@
                 text: "The process was correctly saved in the system.",
                 position: "top-right",
                 type: "success",
-                removeAfter: 3000,
+                removeAfter: 2000,
             });
         }
         if (successTransform) {
@@ -75,7 +75,7 @@
                 text: "The data has been correctly saved in the system.",
                 position: "top-right",
                 type: "success",
-                removeAfter: 3000,
+                removeAfter: 2000,
             });
             goto("/listofrules");
         }

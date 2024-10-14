@@ -2,27 +2,40 @@
     import { themeStore } from "../../stores";
     import "../../functions/datamanager";
     import { enhance } from "$app/forms";
-    import { setDataContext, setDataProcess } from "../../functions/datamanager";
+    import {
+        setDataContext,
+        setDataProcess,
+    } from "../../functions/datamanager";
+    import LoaderView from "../../routes/loader.svelte";
     export let successTransform = false;
+    let loading = false;
 
-    function saveDataCreated(xmiContext: any, xmiProcess: any){
+    function saveDataCreated(xmiContext: any, xmiProcess: any) {
         setDataContext(xmiContext);
         setDataProcess(xmiProcess);
     }
 </script>
 
+{#if loading}
+    <LoaderView />
+{/if}
 <form
     method="POST"
     action="?/submit"
     use:enhance={() => {
+        loading = true;
         return async ({ update, result }) => {
             update({ reset: false });
-            if(result.type === "success" && result.data){
+            if (result.type === "success" && result.data) {
                 saveDataCreated(result.data.context, result.data.process);
                 successTransform = true;
-            }else{
-                console.error('No se pudieron extraer los datos del resultado.',result);
+            } else {
+                console.error(
+                    "No se pudieron extraer los datos del resultado.",
+                    result,
+                );
             }
+            loading = false;
         };
     }}
 >
