@@ -75,22 +75,14 @@
                 ? 'bg-[#ffffff] border-[#f3ecfa] shadow-[0_0_30px_#f3ecfa] hover:shadow-[0_0_2px_#812fc9]'
                 : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c] hover:shadow-[0_0_2px_#f3ecfa]'} border-2 mr-2 rounded-lg transition duration-300"
             on:click={() => {
-                goto("/createnewmodel");
+                goto("/contextandprocess");
             }}
         >
             <div
                 class="flex flex-col items-center mx-auto justify-center text-center"
             >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    height="120px"
-                    viewBox="0 -960 960 960"
-                    width="120px"
-                    fill="#812fc9"
-                >
-                    <path
-                        d="M510-378h60v-132h132v-60H570v-132h-60v132H378v60h132v132ZM260-200q-24 0-42-18t-18-42v-560q0-24 18-42t42-18h560q24 0 42 18t18 42v560q0 24-18 42t-42 18H260Zm0-60h560v-560H260v560ZM140-80q-24 0-42-18t-18-42v-620h60v620h620v60H140Zm120-740v560-560Z"
-                    />
+                <svg width="120px" height="120px" viewBox="0 0 32 32" fill="none" stroke="#812fc9"  stroke-linejoin="round" stroke-width="2">
+                    <path d="M30 18 L16 5 2 18Z M2 25 L30 25" />
                 </svg>
                 <h1 class="mt-10 text-[#812fc9] text-2xl font-bold">
                     Get started
