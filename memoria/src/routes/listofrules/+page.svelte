@@ -8,8 +8,19 @@
     import { get, writable, type Writable } from "svelte/store";
     import { fileUploadBpmn } from "../../functions/importdata";
     import "../../functions/datamanager";
-    import { deleteDataNameRuleForActivities, deleteDataSelectedActivity, getDataProcess, getDataRulesTask, setDataNameRuleForActivities, setDataRulesTask, setDataSelectedActivities, setDataSelectedActivity } from "../../functions/datamanager";
-
+    import { getNotificationsContext } from "svelte-notifications";
+    import {
+        deleteDataNameRuleForActivities,
+        deleteDataSelectedActivity,
+        getDataProcess,
+        getDataRulesTask,
+        setDataNameRuleForActivities,
+        setDataRulesTask,
+        setDataSelectedActivities,
+        setDataSelectedActivity,
+    } from "../../functions/datamanager";
+    import { rule } from "postcss";
+    const { addNotification } = getNotificationsContext();
     // Variables
     let searchQuery = "";
     let activities: Writable<activity[]> = writable([]);
@@ -47,6 +58,23 @@
 
     let osName: string = "detecting...";
     let commandText: string = "detected";
+
+    // Función para validar los datos antes de pasar a la siguiente vista
+    function validateToNextStage(): Boolean {
+        const rulesTask = getDataRulesTask();
+        if (rulesTask.length != 0) {
+            var validate = true;
+            rulesTask.forEach((ruleTask: activity) => {
+                // Si al menos una regla esta vacia, no se puede pasar a la siguiente vista
+                if(ruleTask.rules.length == 0){
+                    validate = false;
+                }
+            });
+            return validate;
+        } else {
+            return false;
+        }
+    }
     // Función para detectar el sistema operativo
     function detectOS(): string {
         const platform = navigator.platform.toLowerCase();
@@ -67,9 +95,15 @@
     }
 
     // Función para filtrar las actividades por tipo (En este caso por Task, UserTask y otro tipo que tenga el nombre task en algun lado)
-    function typefilters(typeActivity:any): Boolean{
+    function typefilters(typeActivity: any): Boolean {
         // Filtramos las actividades por tipo
-        if((typeActivity == "bpmn2:Task" && filterNormalTask) || (typeActivity == "bpmn2:UserTask" && filterUserTask) || (typeActivity.type != "bpmn2:Task" && typeActivity.type != "bpmn2:UserTask" && filterAnotherTask)){
+        if (
+            (typeActivity == "bpmn2:Task" && filterNormalTask) ||
+            (typeActivity == "bpmn2:UserTask" && filterUserTask) ||
+            (typeActivity != "bpmn2:Task" &&
+                typeActivity != "bpmn2:UserTask" &&
+                filterAnotherTask)
+        ) {
             return true;
         }
         return false;
@@ -133,14 +167,12 @@
                 // Calculamos el porcentaje de las reglas
                 percentageRemoveOrKeep =
                     (numberRulesDeleteOrKeep / $activities.length) * 100;
-                    percentageReplace =
+                percentageReplace =
                     (numberRulesReplace / $activities.length) * 100;
-                    percentageWithoutType =
+                percentageWithoutType =
                     (numberRulesWithoutType / $activities.length) * 100;
                 // Truncamos el porcentaje
-                percentageRemoveOrKeep = Math.trunc(
-                    percentageRemoveOrKeep,
-                );
+                percentageRemoveOrKeep = Math.trunc(percentageRemoveOrKeep);
                 percentageReplace = Math.trunc(percentageReplace);
                 percentageWithoutType = Math.trunc(percentageWithoutType);
             }
@@ -214,7 +246,7 @@
         }
     }
 
-    // Filtrar actividades por nombre y por tipo
+    // Filtrar actividades por nombre
     $: filteredActivities = $name_activities.filter((activity) =>
         activity.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
@@ -261,7 +293,6 @@
         activities.set(tasks);
     }
 </script>
-
 <div class="flex flex-col h-full w-full">
     <h1
         class="flex mt-3 mb-2 mx-auto text-4xl font-bold {$themeStore ===
@@ -483,7 +514,7 @@
             </div>
             <div class="text-center">
                 {#each filteredActivities as nombre_actividad}
-                    {#if filterNormalTask!=null && filterUserTask!=null && filterAnotherTask!=null && typefilters(nombre_actividad.type)}
+                    {#if filterNormalTask != null && filterUserTask != null && filterAnotherTask != null && typefilters(nombre_actividad.type)}
                         <!-- Tabla donde estaran las actividades listadas por nombre -->
                         <div class="flex justify-between mt-3">
                             <h1
@@ -715,12 +746,16 @@
                 'Light'
                     ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                     : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
+                on:click={() => {
+                    goto("/");
+                    window.removeEventListener("keydown", handleKeyDown);
+                }}
             >
                 <div class="flex my-auto">
                     <span class="material-symbols-outlined text-lg mr-1"
                         >arrow_back_ios</span
                     >
-                    <h1 class="my-auto text-sm mx-2">Back Stage</h1>
+                    <h1 class="my-auto text-sm mx-2">Back Home</h1>
                 </div>
             </button>
             <button
@@ -729,8 +764,18 @@
                     ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                     : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                 on:click={() => {
-                    goto("/savefiles");
-                    window.removeEventListener("keydown", handleKeyDown);
+                    validateToNextStage()
+                    if (validateToNextStage()) {
+                        goto("/savefiles");
+                        window.removeEventListener("keydown", handleKeyDown);
+                    } else {
+                        addNotification({
+                            text: "You can't have empty rules to proceed to the next stage",
+                            position: "top-right",
+                            type: "error",
+                            removeAfter: 4000,
+                        });
+                    }
                 }}
             >
                 <div class="flex my-auto">
@@ -1054,21 +1099,6 @@
                             >
                         </label>
                     </div>
-                </div>
-                <div class="mt-auto mx-10">
-                    <button
-                        class="w-full h-[40px] rounded-md text-sm {$themeStore ===
-                        'Light'
-                            ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
-                            : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'} border"
-                        on:click={() => {
-                            showModalFiltro = false;
-                        }}
-                    >
-                        <div class="flex mx-10">
-                            <h1 class="my-auto mx-auto">Apply filter</h1>
-                        </div>
-                    </button>
                 </div>
             </div>
         </div>

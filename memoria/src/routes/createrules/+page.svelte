@@ -106,8 +106,7 @@
         return null;
     }
 
-    // Verificamo que este no esten vacios los campos de las reglas simples, enviamos notificacion de error o de exito
-
+    // Verificamo que este no esten vacios los campos de las reglas simples, complejas y conectores, enviamos notificacion de error o de exito
     function validateEmptyFieldsRules(): Boolean {
         // Verificamos que las reglas simples tengan el atributo y el valor
         let rulesSimple = get(rules).filter((rule) => rule.type === "Simple");
@@ -930,6 +929,13 @@
                     bind:value={selectedAction1}
                     id="actions"
                     class="mt-5 w-1/2 mx-auto h-[30px] rounded-md border p-1 border-[#5b5966]"
+                    on:change={() => {
+                        if (selectedAction1 === "Delete Action") {
+                            selectedAction2 = "Delete this activity";
+                        } else {
+                            selectedAction2 = "";
+                        }
+                    }}
                 >
                     {#each actions as action}
                         <option value={action}>{action}</option>

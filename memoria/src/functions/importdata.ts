@@ -59,6 +59,38 @@ export async function fileUploadContext(xmlContext: any) {
     return attributesContext;
 }
 
+export function filtertypes(element: any, otherTypes?: String[]) {
+    // Tipo de tareas que se pueden encontrar en el archivo de procesos de negocios
+    var filtered_data;
+    // Verificar si se han seleccionado otros tipos de tareas
+    if (otherTypes != undefined) {
+        filtered_data = element
+            .filter(
+                (fe: { [x: string]: string }) =>
+                    /^bpmn2:.*Task/.test(fe["xsi:type"]) ||
+                    /^bpmn2:.*task/.test(fe["xsi:type"]) ||
+                    otherTypes.some((type) => fe["xsi:type"] === `bpmn2:${type}`) // Comparar correctamente con prefijo bpmn2:
+            )
+            .map((task: any) => ({
+                name: task.name,
+                type: task["xsi:type"],
+            }));
+    } else {
+        // Filtrar solo los elementos que sean tareas (que tengan "task" en su tipo de elemento)
+        filtered_data = element
+            .filter(
+                (fe: { [x: string]: string }) =>
+                    /^bpmn2:.*Task/.test(fe["xsi:type"]) || /^bpmn2:.*task/.test(fe["xsi:type"]) // Filtrar solo los elementos que sean tareas
+            )
+            .map((task: any) => ({
+                name: task.name,
+                type: task["xsi:type"],
+            }));
+    }
+    return filtered_data;
+}
+
+
 // Función para extraer los datos del archivo BPMN
 export async function fileUploadBpmn(xmlBpmn: any) {
     let task: any = []; // Variable para almacenar los nombres de las tareas
@@ -68,23 +100,8 @@ export async function fileUploadBpmn(xmlBpmn: any) {
         const flowElements = Array.isArray(rootElements.flowElements)
             ? rootElements.flowElements
             : [rootElements.flowElements];
-
-        // Tipo de tareas que se pueden encontrar en el archivo de procesos de negocios
-        const newTaskNames = flowElements
-            .filter(
-                (fe: { [x: string]: string }) =>
-                    /^bpmn2:.*Task/.test(fe["xsi:type"]) || /^bpmn2:.*task/.test(fe["xsi:type"]), // Filtrar solo los elementos que sean tareas
-            )
-            .map((task: any) => ({
-                name: task.name,
-                type: task["xsi:type"],
-            }));
-        
-        console.log(flowElements);
-        console.log(newTaskNames);
-
         // Actualiza el store con los nuevos nombres de las tareas
-        task = newTaskNames;
+        task = filtertypes(flowElements);
     }
     // Retorna los datos del archivo BPMN y los datos extraidos del archivo
     return task;
@@ -129,8 +146,8 @@ export function fileUploadTailoringModel(xmlModel: any) {
 
         // Verificar si el archivo tiene datos y si los tiene lo agregamos al sistema
         if (contextModel && bpmnModel && rulesModel) {
-           setDataContext(contextModel);
-           setDataProcess(bpmnModel);
+            setDataContext(contextModel);
+            setDataProcess(bpmnModel);
             attributesAndValues = loadAtributtes()[0];
             onlyAttributes = loadAtributtes()[1];
             activities = convertRulesModel(rulesModel, onlyAttributes, attributesAndValues);

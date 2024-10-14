@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<spcm:Context xmlns:spcm="http://contextmetamodel/1.0" xmlns:xmi="http://www.omg.org/XMI" description="Test" name="Test" xmi:id="d386473b-da9a-44a2-9f49-e130026fdf5c" xmi:version="2.0">
+	<myDimensions description="" name="Project" xmi:id="a446d6fc-8546-4e00-88ad-01648c95ef2b">
+		<myContextAttributes description="" name="Project size" xmi:id="4319ac4b-afc0-4dd1-95e4-e692defa61f9">
+			<posibleValues description="Large" name="Large" value="Large" xmi:id="1e78b71d-b7f0-4dbd-9da4-ace9f551218d"/>
+			<posibleValues description="Medium" name="Medium" value="Medium" xmi:id="6bc8a869-7765-4ca1-87d7-b77437e8e430"/>
+			<posibleValues description="Small" name="Small" value="Small" xmi:id="c866ecd6-a7df-4b6d-9ac8-b07678041069"/>
+		</myContextAttributes>
+		<myContextAttributes description="" name="Project type" xmi:id="a00524a2-2bac-402e-80d5-87dfef4b750e">
+			<posibleValues description="New" name="New" value="New" xmi:id="3f8f8964-3af1-41c2-b55b-7efdfed24d22"/>
+			<posibleValues description="Old" name="Old" value="Old" xmi:id="f1579472-9493-4ede-931c-2c760b795865"/>
+		</myContextAttributes>
+	</myDimensions>
+	<myDimensions description="" name="Team" xmi:id="0bf7e450-5aee-41f4-9d98-6471ca22f862">
+		<myContextAttributes description="" name="Technology knowledge" xmi:id="c8d17bf9-e203-446b-86fa-c3bf91db28f9">
+			<posibleValues description="High" name="High" value="High" xmi:id="a2bb2bde-c43d-440c-a691-f0c0dc973930"/>
+			<posibleValues description="Average" name="Average" value="Average" xmi:id="0425eccd-9371-483d-8545-0244e8295de8"/>
+			<posibleValues description="Low" name="Low" value="Low" xmi:id="b3fb0a00-62a2-45cb-b8b9-34d0df7891be"/>
+		</myContextAttributes>
+		<myContextAttributes description="" name="Domain knowledge" xmi:id="e8ff093b-93e6-4f2f-9f18-7df5ce1888b7">
+			<posibleValues description="High" name="High" value="High" xmi:id="191c5f6a-2451-4b21-8e60-ea058fbf6026"/>
+			<posibleValues description="Average" name="Average" value="Average" xmi:id="e8b9fc7c-4cd6-475b-92b5-632dd5a1ef6a"/>
+			<posibleValues description="Low" name="Low" value="Low" xmi:id="a421a2a6-1347-48f9-b32e-4873b010cae2"/>
+		</myContextAttributes>
+	</myDimensions>
+	<myContextConfigurations name="Context model" xmi:id="3e1dab1a-06b8-4868-a605-0e0cc9605487">
+		<contextAttributeConfiguration description="" myContextAttributeValue="1e78b71d-b7f0-4dbd-9da4-ace9f551218d" myContextElement="4319ac4b-afc0-4dd1-95e4-e692defa61f9" name="Project size" xmi:id="6457c3c7-39b1-47bd-a511-b158814f00a7"/>
+		<contextAttributeConfiguration description="" myContextAttributeValue="3f8f8964-3af1-41c2-b55b-7efdfed24d22" myContextElement="a00524a2-2bac-402e-80d5-87dfef4b750e" name="Project type" xmi:id="2130e68f-d29f-42af-9185-03728fde9476"/>
+		<contextAttributeConfiguration description="" myContextAttributeValue="a2bb2bde-c43d-440c-a691-f0c0dc973930" myContextElement="c8d17bf9-e203-446b-86fa-c3bf91db28f9" name="Technology knowledge" xmi:id="1e60facb-b2ef-46d3-a3d9-1af177393cc3"/>
+		<contextAttributeConfiguration description="" myContextAttributeValue="191c5f6a-2451-4b21-8e60-ea058fbf6026" myContextElement="e8ff093b-93e6-4f2f-9f18-7df5ce1888b7" name="Domain knowledge" xmi:id="26044978-c4cf-420f-9c0b-54e68dc2a754"/>
+	</myContextConfigurations>
+</spcm:Context>
