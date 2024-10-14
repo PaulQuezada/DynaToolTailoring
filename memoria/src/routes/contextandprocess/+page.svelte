@@ -265,7 +265,7 @@
                             >
                                 verified
                             </span>
-                            <h1 class="my-auto mr-2 text-sm">Verified data</h1>
+                            <h1 class="my-auto mr-2 text-sm">Correct data</h1>
                         </div>
                     {:else}
                         <div class="flex flex-row">
@@ -299,7 +299,7 @@
                                 ? 'text-[#7f5fc0]'
                                 : 'text-[#6746b4]'}"
                         >
-                            Filename: {nameFileContex}
+                            Filename in system: context.xmi
                         </h1>
                     </div>
                 </div>
@@ -324,7 +324,7 @@
                             >
                                 verified
                             </span>
-                            <h1 class="my-auto mr-2 text-sm">Verified data</h1>
+                            <h1 class="my-auto mr-2 text-sm">Correct data</h1>
                         </div>
                     {:else}
                         <div class="flex flex-row">
@@ -351,14 +351,14 @@
                                 ? 'text-[#7f5fc0]'
                                 : 'text-[#6746b4]'}"
                         >
-                            Business context model
+                            Process in BPMN notation
                         </h1>
                         <h1
                             class="text-sm {$themeStore === 'Light'
                                 ? 'text-[#7f5fc0]'
                                 : 'text-[#6746b4]'}"
                         >
-                            Filename: {nameFileBpmn}
+                            Filename in system: process.bpmn
                         </h1>
                     </div>
                 </div>

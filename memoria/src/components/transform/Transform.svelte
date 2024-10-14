@@ -33,7 +33,7 @@
             : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
     >
         <div class="flex my-auto">
-            <h1 class="my-auto text-sm mx-2">Next xd</h1>
+            <h1 class="my-auto text-sm mx-2">Next Stage</h1>
             <span class="material-symbols-outlined text-lg ml-1">
                 arrow_forward_ios
             </span>
