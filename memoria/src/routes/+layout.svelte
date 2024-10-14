@@ -18,7 +18,7 @@
     <div
         class="{$themeStore === 'Light'
             ? 'bg-[#ffffff]'
-            : 'bg-gradient-to-br from-[#14111b] to-[#281428]'} transition duration-300"
+            : 'bg-gradient-to-br from-[#14111b] to-[#281428]'} transition duration-500"
     >
         <div class="h-screen w-screen">
             <div class="flex-1 h-1/6 flex justify-between">
