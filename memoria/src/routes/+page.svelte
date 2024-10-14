@@ -93,7 +93,7 @@
                     />
                 </svg>
                 <h1 class="mt-10 text-[#812fc9] text-2xl font-bold">
-                    New model of tailoring rules
+                    Get started
                 </h1>
             </div>
         </button>
