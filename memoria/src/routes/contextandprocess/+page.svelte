@@ -10,17 +10,13 @@
     import TransformView from "../../components/transform/Transform.svelte";
     import "../types";
     import "../../app.css";
-
+    const { addNotification } = getNotificationsContext();
     let successContext: boolean = false;
     let successProcess: boolean = false;
     let successTransform: boolean = false;
 
     // Estado de la etapa actual
     let currentStage = writable(1);
-
-    // Variables que contendran los contenidos del contexto organizacional y del BPMN
-    let nameFileContex: string = "";
-    let nameFileBpmn: string = "";
 
     // Variable para saber que etapas estan listas
     let stageImportContext: boolean = false;
@@ -58,7 +54,29 @@
 
     // Variable reactiva para cuando cambie successTransform
     $: {
+        if(successContext){
+            addNotification({
+                text: "The context was correctly saved in the system.",
+                position: "top-right",
+                type: "success",
+                removeAfter: 3000,
+            });
+        }
+        if(successProcess){
+            addNotification({
+                text: "The process was correctly saved in the system.",
+                position: "top-right",
+                type: "success",
+                removeAfter: 3000,
+            });
+        }
         if (successTransform) {
+            addNotification({
+                text: "The data has been correctly saved in the system.",
+                position: "top-right",
+                type: "success",
+                removeAfter: 3000,
+            });
             goto("/listofrules");
         }
     }
@@ -380,7 +398,7 @@
                     </div>
                 </button>
                 {#if successContext && successProcess}
-                    <TransformView bind:successTransform/>
+                    <TransformView bind:successTransform />
                 {:else}
                     <h1>DATA PROBLEM</h1>
                 {/if}
