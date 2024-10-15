@@ -29,6 +29,7 @@
 	"type": "module",
 	"dependencies": {
 		"@types/node": "^22.7.5",
+		"bpmn-js": "^17.11.1",
 		"cors": "^2.8.5",
 		"express": "^4.21.1",
 		"fast-xml-parser": "^4.4.0",

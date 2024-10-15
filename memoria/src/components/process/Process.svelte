@@ -3,9 +3,11 @@
 	import { onMount } from "svelte";
 	import { themeStore } from "../../stores";
 	import { writable } from "svelte/store";
+	import BpmnVisualizerView from "./BpmnVisualizer.svelte";
 	export let successProcess = false;
 	let xml: string;
 	let dropFile = writable(false);
+	let showProcess = false;
 
 	onMount(() => {
 		// File manipulation
@@ -49,11 +51,38 @@
 		};
 	}}
 >
+	<!-- Donde se visualiza el archivo BPMN -->
+	{#if successProcess && xml}
+		<div class="flex w-2/3 mx-auto mt-2">
+			<button
+				class="w-1/3 border-2 py-1 border-[#dcc8f3] bg-[#ffffff] rounded text-[#45226d] transform transition-transform duration-150 ease-in-out hover:scale-[1.03]"
+				on:click={() => {
+					showProcess = !showProcess;
+				}}
+			>
+				<div class="flex">
+					{#if !showProcess}
+						<span
+							class="mx-2 text-[#742dc3] my-auto material-symbols-outlined"
+						>
+							account_tree
+						</span>
+						<h1 class="my-auto ml-1">View process</h1>
+					{:else}
+						<span class="mx-2 text-[#742dc3] material-symbols-outlined">
+							upload_file
+						</span>
+						<h1 class="my-auto ml-1">View file</h1>
+					{/if}
+				</div>
+			</button>
+		</div>
+	{/if}
 	<div
-		class="relative z-99 flex justify-center mt-5 w-2/3 h-[250px] mx-auto rounded-xl {$themeStore ===
+		class="relative z-99 flex justify-center mt-3 w-2/3 h-[250px] mx-auto rounded-xl {$themeStore ===
 		'Light'
 			? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
-			: 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'} border-2 border-dashed"
+			: 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'} border-2 border-dashed transform transition-transform duration-150 ease-in-out hover:scale-[1.01]"
 		on:dragover={(e) => {
 			e.preventDefault();
 			$dropFile = true;
@@ -70,6 +99,20 @@
 			console.log("Drag leave");
 		}}
 	>
+		<!-- Visualizador del proceso -->
+		{#if showProcess}
+			<div
+				class={`absolute flex z-50 text-center w-full h-full rounded-xl ${
+					$themeStore === "Light"
+						? "border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]"
+						: "border-[#6d44ba] bg-[#231833] text-[#6d44ba]"
+				}`}
+			>
+				<div class="z-50 w-full h-full">
+					<BpmnVisualizerView {xml} />
+				</div>
+			</div>
+		{/if}
 		<!-- Input oculto para cargar el archivo -->
 		<input
 			type="file"
