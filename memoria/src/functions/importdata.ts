@@ -32,28 +32,29 @@ export async function fileUploadContext(xmlContext: any) {
             ? xmlContext["spcm:Context"].myDimensions
             : [xmlContext["spcm:Context"].myDimensions];
 
-
         // Recorrer las dimensiones del contexto organizacional y obtener los atributos
         await dimensions.forEach((dim: any) => {
             const contextAttributes = Array.isArray(dim.myContextAttributes)
                 ? dim.myContextAttributes
                 : [dim.myContextAttributes];
-
-            contextAttributes.forEach((attr: any) => {
-                const values = Array.isArray(attr.posibleValues)
-                    ? attr.posibleValues
-                    : attr.posibleValues
-                        ? [attr.posibleValues]
-                        : [];
-                const attributeData = {
-                    Attribute: attr.name,
-                    values: values.map((val: any) =>
-                        val.name ? val.name : "Unknown",
-                    ),
-                };
-                attributesContext.push(attributeData); // almacenar los datos de los atributos a la variable
-            });
+            if (JSON.stringify(contextAttributes) != JSON.stringify([null])) {
+                contextAttributes.forEach((attr: any) => {
+                    const values = Array.isArray(attr.posibleValues)
+                        ? attr.posibleValues
+                        : attr.posibleValues
+                            ? [attr.posibleValues]
+                            : [];
+                    const attributeData = {
+                        Attribute: attr.name,
+                        values: values.map((val: any) =>
+                            val.name ? val.name : "Unknown",
+                        ),
+                    };
+                    attributesContext.push(attributeData); // almacenar los datos de los atributos a la variable
+                });
+            }
         });
+
     }
     // Retorna los datos del contexto organizacional y los datos extraidos del archivo
     return attributesContext;
