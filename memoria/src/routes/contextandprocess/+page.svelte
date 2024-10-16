@@ -87,7 +87,7 @@
     function getStageTitle(stage: number): string {
         switch (stage) {
             case 1:
-                return "Create your organizational context model in XMI notation";
+                return "Create your project context model in XMI notation";
             case 2:
                 return "Import your business process model in BPMN notation";
             case 3:
