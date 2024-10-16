@@ -37,9 +37,11 @@ helper def: selectTaskRule(tu:MM!TaskUse): MM!TaskDefinition = tu.linkTask;
 -- To make changes in the tasks
 
 -- Rules for delete the activity or not
+helper def: optionalRule(name:String): Boolean =
 ${generateOptionalRule(optionalRules)}
 
 -- Rules for replace the activity to another activity
+helper def: replaceRules(dd: MM!Task): String =
 ${generateReplaceRule(replaceRules)}
 
 -- User-created rules to delete or keep
@@ -154,12 +156,14 @@ to		dd:MM1!IntermediateThrowEvent(
 }
  
 rule Task {
-from	d:MM!Task(
-		 thisModule.optionalRule(d.name)	
+from    d:MM!Task(
+         thisModule.optionalRule(d.name)
 )
-to		dd:MM1!Task(
-		name <- d.name
+
+to        dd:MM1!Task(
+        name <- thisModule.replaceRules(d)
         )
+
 }
 `;
     return atlContent;
@@ -178,8 +182,6 @@ function obtainTransformationRules(): activity[] {
     // Extraer los datos del modelos reglas que están en el modelo completo generado
     const rulesModel = xmlDoc.querySelector("RulesModel");
     const contentRules = rulesModel ? rulesModel.querySelectorAll("ContentRule")! : [];
-    console.log("RulesModelNode: ", rulesModel);
-    console.log("RulesModelNode: ", contentRules);
 
     // Obtenemos los atributos y valores que se encuentran en el modelo importado incialmente
     const attributesAndValues = loadAtributtes()[0];
@@ -187,7 +189,6 @@ function obtainTransformationRules(): activity[] {
 
     // Recorremos el modelo de reglas para obtener la información de cada regla y almacenarla en la variable activities
     contentRules.forEach((contentRule, index) => {
-        console.log(contentRule);
         const activity: activity = {
             id: index,
             type: contentRule.getAttribute("typeofactivity") || "",
@@ -247,13 +248,13 @@ function findElementsByName(elements: activity[], name: string): activity[] {
 // Función para generar la función "GENERAL" de reglas opcionales
 function generateOptionalRule(elements: activity[]): string {
     if (elements.length === 0) {
-        return "";
+        return "true;";
     }
     const nameActivity: string[] = filterOnlyNames(elements);
     // Caso especial para un solo elemento
     if (nameActivity.length === 1) {
         const element = nameActivity[0];
-        let singlerule = `helper def: optionalRule(name:String): Boolean =\nif(Sequence{'${element}'}.includes(name)) then\n\t(if ('${element}' = name) then`;
+        let singlerule = `\nif(Sequence{'${element}'}.includes(name)) then\n\t(if ('${element}' = name) then`;
         const activities = findElementsByName(elements, element);
         let index = 0;
         activities.forEach(() => {
@@ -268,14 +269,13 @@ function generateOptionalRule(elements: activity[]): string {
     }
 
     // Manejo para más de un elemento
-    let rule = `helper def: optionalRule(name:String): Boolean =\nif(Sequence{${nameActivity.map(e => `'${e}'`).join(',')}}.includes(name)) then\n(`;
+    let rule = `\nif(Sequence{${nameActivity.map(e => `'${e}'`).join(',')}}.includes(name)) then\n(`;
     let activities: activity[] = [];
     let index: number = 0;
     nameActivity.forEach((element: string) => {
         if (index === 0) {
             rule += `if ('${element}' = name) then`;
             activities = findElementsByName(elements, element);
-            console.log("Activities: ", activities);
             activities.forEach((element, index_activities) => {
                 rule += `\n\t\tthisModule.ruleOpt${index + 1}()`;
                 if (index_activities < activities.length - 1) {
@@ -312,47 +312,46 @@ function generateOptionalRule(elements: activity[]): string {
 // Función para generar la función "GENERAL" de reglas de reemplazo
 function generateReplaceRule(elements: activity[]): string {
     if (elements.length === 0) {
-        return "";
+        return "dd.name;";
     }
     const nameActivity: string[] = filterOnlyNames(elements);
     // Caso especial para un solo elemento
     if (nameActivity.length === 1) {
         const element = nameActivity[0];
-        let singlerule = `helper def: replaceRules(name:String): Boolean =\nif(Sequence{'${element}'}.includes(name)) then\n\t(if ('${element}' = name) then`;
+        let singlerule = `\nif(Sequence{'${element}'}.includes(dd.name)) then\n\t(if ('${element}' = dd.name) then`;
         const activities = findElementsByName(elements, element);
         let index = 0;
         activities.forEach(() => {
-            singlerule += `\n\t\tthisModule.ruleRep${index + 1}()`;
+            singlerule += `\n\t\tthisModule.ruleRep${index + 1}(dd)`;
             if (index < activities.length - 1) {
                 singlerule += `\tor`;
             }
             index++;
         });
-        singlerule += `\n\telse\n\t\ttrue\n\tendif)\nelse\n\ttrue\nendif;`;
+        singlerule += `\n\telse\n\t\tdd.name\n\tendif)\nelse\n\tdd.name\nendif;`;
         return singlerule;
     }
 
     // Manejo para más de un elemento
-    let rule = `helper def: replaceRules(name:String): Boolean =\nif(Sequence{${nameActivity.map(e => `'${e}'`).join(',')}}.includes(name)) then\n(`;
+    let rule = `\nif(Sequence{${nameActivity.map(e => `'${e}'`).join(',')}}.includes(dd.name)) then\n(`;
     let activities: activity[] = [];
     let index: number = 0;
     nameActivity.forEach((element: string) => {
         if (index === 0) {
-            rule += `if ('${element}' = name) then`;
+            rule += `if ('${element}' = dd.name) then`;
             activities = findElementsByName(elements, element);
-            console.log("Activities: ", activities);
             activities.forEach((element, index_activities) => {
-                rule += `\n\t\tthisModule.ruleRep${index + 1}()`;
+                rule += `\n\t\tthisModule.ruleRep${index + 1}(dd)`;
                 if (index_activities < activities.length - 1) {
                     rule += `\tor`;
                 }
                 index++;
             });
         } else {
-            rule += `\n\telse\n\t\t(if ('${element}' = name) then`;
+            rule += `\n\telse\n\t\t(if ('${element}' = dd.name) then`;
             activities = findElementsByName(elements, element);
             activities.forEach((element, index_activities) => {
-                rule += `\n\t\t\tthisModule.ruleRep${index + 1}()`;
+                rule += `\n\t\t\tthisModule.ruleRep${index + 1}(dd)`;
                 if (index_activities < activities.length - 1) {
                     rule += `\tor`;
                 }
@@ -362,14 +361,14 @@ function generateReplaceRule(elements: activity[]): string {
     });
 
     // Cerrar el último if con else true, y añadir el paréntesis de cierre
-    rule += `\n\t\t\telse\n\t\t\t\ttrue\n\t\t\tendif)`;
+    rule += `\n\t\t\telse\n\t\t\t\tdd.name\n\t\t\tendif)`;
 
     // Cerrar los bloques intermedios si hay más de dos elementos
     for (let i = 0; i < nameActivity.length - 2; i++) {
         rule += `\n\t\tendif)`;
     }
 
-    rule += `\nendif)\nelse\n\ttrue\nendif;`;
+    rule += `\nendif)\nelse\n\tdd.name\nendif;`;
 
     return rule;
 }
@@ -386,6 +385,7 @@ function generateOptFunction(elements: activity[]): string {
     nameActivity.forEach((element) => {
         const activities = findElementsByName(elements, element);
         activities.forEach((activity) => {
+            // Parsear las reglas de la actividad
             ruleConditions = activity.rules.map(parseRule).join(" ");
             if (index === 0) {
                 ruleOptFunction = `helper def:ruleOpt${index + 1}():Boolean=if (${ruleConditions})`;
@@ -395,6 +395,7 @@ function generateOptFunction(elements: activity[]): string {
                     ruleOptFunction += ` then false else true endif;`;
                 }
             } else {
+                // Se agrega el salto de linea para que sea más legible
                 ruleOptFunction += `\nhelper def:ruleOpt${index + 1}():Boolean=if (${ruleConditions})`;
                 if (!activity.deleted) {
                     ruleOptFunction += ` then true else false endif;`;
@@ -420,16 +421,18 @@ function generateRepFunction(elements: activity[]): string {
     nameActivity.forEach((element) => {
         const activities = findElementsByName(elements, element);
         activities.forEach((activity) => {
+            // Parsear las reglas de la actividad
             ruleConditions = activity.rules.map(parseRule).join(" ");
             if (index === 0) {
-                ruleRepFunction = `helper def:ruleRep${index + 1}():Boolean=if (${ruleConditions})`;
+                ruleRepFunction = `helper def:ruleRep${index + 1}(task:MM!Task):String=if (${ruleConditions})`;
                 if (activity.replaced) {
-                    ruleRepFunction += ` then REEMPLAZO else NOREEMPLAZO endif;`;
+                    ruleRepFunction += ` then '${activity.replaceActivity}' else task.name endif;`;
                 }
             } else {
-                ruleRepFunction += `\nhelper def:ruleRep${index + 1}():Boolean=if (${ruleConditions})`;
+                // Se agrega el salto de linea para que sea más legible
+                ruleRepFunction += `\nhelper def:ruleRep${index + 1}(task:MM!Task):String=if (${ruleConditions})`;
                 if (activity.replaced) {
-                    ruleRepFunction += ` then REEMPLAZO else NOREEMPLAZO endif;`;
+                    ruleRepFunction += ` then '${activity.replaceActivity}' else task.name endif;`;
                 }
             }
             index++;

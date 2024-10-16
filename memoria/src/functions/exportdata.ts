@@ -1,4 +1,7 @@
-function removeXMIHeader(xmlString: string): string {
+import "../functions/datamanager"
+import { getDataContext, getDataProcess, getDataRulesTask, setDataModelRules } from "../functions/datamanager";
+
+function removeXMIHeader(xmlString: any) {
     return xmlString.replace(/<\?xml.*\?>\s*/, ""); // Elimina la declaración XML y cualquier espacio adicional al inicio
 }
 
@@ -72,10 +75,9 @@ function createModelSubrule(subReglas: any[] | string): string {
 }
 
 export function createCompleteModel() {
-    let contextoXML = localStorage.getItem("xmlContext")!;
-    let actividadesBPMN = localStorage.getItem("xmlBpmn")!;
-    const reglas = JSON.parse(localStorage.getItem("rulesTask")!);
-
+    let contextoXML = localStorage.getItem("xmlContext")!; // Se obtiene el contexto organizacional
+    let actividadesBPMN =localStorage.getItem("xmlBpmn")!; // Se obtiene el proceso de negocio
+    const reglas = getDataRulesTask();
     contextoXML = removeXMIHeader(contextoXML);
     actividadesBPMN = removeXMIHeader(actividadesBPMN);
 
@@ -92,8 +94,7 @@ export function createCompleteModel() {
 </RulesModel>
 </IntegratedModel>`;
 
-    console.log(documentoXML);
-    localStorage.setItem("xmiModelRules", documentoXML);
+    setDataModelRules(documentoXML);
     return documentoXML;
 }
 

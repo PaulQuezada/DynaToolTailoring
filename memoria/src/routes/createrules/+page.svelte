@@ -6,11 +6,15 @@
     import "../types";
     import { themeStore } from "../../stores";
     import Loader from "../loader.svelte";
+    import "../../functions/datamanager";
     import {
         fileUploadBpmn,
         fileUploadContext,
     } from "../../functions/importdata";
     import * as functionRulecreation from "../../functions/rulecreation";
+    import { getNotificationsContext } from "svelte-notifications";
+    import { getDataContext, getDataNameRuleForActivities, getDataProcess, getDataRulesTask, getDataSelectedActivities, getDataSelectedActivity, setDataRulesTask } from "../../functions/datamanager";
+    const { addNotification } = getNotificationsContext();
 
     // Variables
     let showLoader = true;
@@ -102,44 +106,83 @@
         return null;
     }
 
+    // Verificamo que este no esten vacios los campos de las reglas simples, complejas y conectores, enviamos notificacion de error o de exito
+    function validateEmptyFieldsRules(): Boolean {
+        // Verificamos que las reglas simples tengan el atributo y el valor
+        let rulesSimple = get(rules).filter((rule) => rule.type === "Simple");
+        let rulesComplex = get(rules).filter((rule) => rule.type === "Complex");
+        let rulesConector = get(rules).filter(
+            (rule) => rule.type === "Conector",
+        );
+        let rulesSimpleEmpty = rulesSimple.filter(
+            (rule) => rule.attribute === "" || rule.value === "",
+        );
+        let rulesComplexEmpty = rulesComplex.filter(
+            (rule) => rule.rules.length === 0,
+        );
+        let rulesConectorEmpty = rulesConector.filter(
+            (rule) => rule.logical_operator === "",
+        );
+        if (
+            rulesSimpleEmpty.length > 0 ||
+            rulesComplexEmpty.length > 0 ||
+            rulesConectorEmpty.length > 0
+        ) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    // Verificamo que este correcto la configuración de las reglas, enviamos notificacion de error o de exito
+    function validateActionsRules(): Boolean {
+        if (
+            selectedAction1 === "Delete Action" &&
+            (selectedAction2 === "Delete this activity" ||
+                selectedAction2 === "Not delete this activity")
+        ) {
+            return true;
+        } else if (
+            selectedAction1 === "Replace Action" &&
+            selectedAction2 != ""
+        ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
     onMount(() => {
         // Inicializamos los datos
         initializeData();
     });
 
-    // Función donde se incializan los datos, esto es cuando se carga la pagina y se obtienen los datos del localstorage
+    // Función donde se incializan los datos, esto es cuando se carga la pagina y se obtienen los datos del sistema
     async function initializeData() {
         showLoader = true; // Mostramos el loader
-        // Aqui recolectamos los datos del localstorage
-        xmlContext = localStorage.getItem("xmlContext")!;
-        xmlBpmn = localStorage.getItem("xmlBpmn")!;
+        // Aqui recolectamos los datos del sistema
+        xmlContext = getDataContext();
+        xmlBpmn = getDataProcess();
         await handleFileUploadContext();
         await loadDataBPMN();
-        console.log("111");
-        // Obtenemos la actividad seleccionada
-        var activitySelect = localStorage.getItem("activitySelect")!;
-        var selectedActivities = localStorage.getItem("selectedActivities")!;
+        // Obtenemos la actividad seleccionada o actividades seleccionadas
+        var activitySelect = getDataSelectedActivity(); 
+        var selectedActivities = getDataSelectedActivities();
         if (activitySelect != null) {
-            activity_select = JSON.parse(activitySelect);
+            activity_select = activitySelect;
             if (activity_select.rules != null) {
                 rules.set(activity_select.rules);
-                console.log(activity_select);
                 if (activity_select.deleted != null) {
-                    console.log("deleted");
                     selectedAction1 = "Delete Action";
                     selectedAction2 = activity_select.deleted
                         ? "Delete this activity"
                         : "Not delete this activity";
                 } else if (activity_select.replaced) {
-                    console.log("replaced");
                     selectedAction1 = "Replace Action";
                     selectedAction2 = activity_select.replaceActivity!;
-                } else {
-                    console.log("ERROR: No action");
                 }
             }
         } else if (selectedActivities != null) {
-            activities_selected = JSON.parse(selectedActivities);
+            activities_selected = selectedActivities;
         }
         showLoader = false; // Cuando carge todo, ocultamos el loader
 
@@ -157,18 +200,18 @@
 
     // Función para manejar la carga de archivos contexto organizacional
     async function handleFileUploadContext() {
-        xmlContext = localStorage.getItem("xmlContext")!;
+        xmlContext = getDataContext();
         attributesContext = await fileUploadContext(xmlContext);
     }
 
     // Función para manejar la carga de archivos BPMN
     async function loadDataBPMN() {
         // Extraemos los datos el archivo BPMN
-        xmlBpmn = localStorage.getItem("xmlBpmn")!;
+        xmlBpmn =  getDataProcess();
         var task = await fileUploadBpmn(xmlBpmn);
         /* Los convertimos a un objeto JSON para manejarlos de mejor forma, 
         dandole un id a cada actividad, subnombre y reglas (que por ahora estan vacias SOLO de manera local en esta vista)
-        Todas las reglas guardadas estaran en el localStorage. */
+        Todas las reglas guardadas estaran en el sistema. */
         var taskNameConverted: activity[] = await task.map((task: any) => {
             var i = 0;
             return {
@@ -198,10 +241,6 @@
                     (attr) => attr.Attribute == attributeSelect,
                 );
                 rule.values = attribute ? attribute.values : [];
-                console.log("Cambia el atributo de la regla");
-                console.log(rule);
-            } else {
-                console.log("No se encontro la regla");
             }
             return rs;
         });
@@ -215,8 +254,6 @@
             const rule = findRuleById(rs, rule_selected.id);
             if (rule && rule.type == "Simple") {
                 rule.value = valueSelect;
-            } else {
-                console.log("No se encontro la regla");
             }
             return rs;
         });
@@ -235,16 +272,12 @@
         });
     }
 
-    // Función para guardar los cambios de todas las reglas en el localStorage
-    function addRulesLocalStorage() {
+    // Función para guardar los cambios de todas las reglas en el sistema
+    function addRulesSystem() {
         // Si la regla es para una pura actividad
         if (activity_select) {
-            // Obtenemos las actividades que estan en el localStorage
-            var task = localStorage.getItem("rulesTask")!;
-            // Si existen reglas creadas para alguna actividad, lo convertimos a JSON y lo guardamos
-            if (task != null && task != "[]") {
-                var jsonTask = JSON.parse(task);
-            }
+            // Obtenemos las actividades que estan en el sistema
+            jsonTask = getDataRulesTask();
             // Ahora buscamos en jsonTask el objeto de la actividad seleccionada y le agregamos las reglas
             jsonTask.forEach((task: activity) => {
                 if (task.id === activity_select.id) {
@@ -270,29 +303,25 @@
                     }
                 }
             });
-            // Guardamos el objeto con las reglas en el localStorage
-            localStorage.setItem("rulesTask", JSON.stringify(jsonTask));
+            // Guardamos el objeto con las reglas en el sistema
+            setDataRulesTask(JSON.stringify(jsonTask));
         } else if (activities_selected) {
             // Si la regla es para más de una actividad
-            // Obtenemos las actividades que estan en el localStorage
-            var task = localStorage.getItem("rulesTask")!;
+            // Obtenemos las actividades que estan en el sistema
+            var task = getDataRulesTask();
             // Obtenemos el ultimo id de las reglas creadas para las actividades
             var lastId = 0;
             var index: number;
-            if (task != null && task != "[]") {
-                console.log(task);
-                console.log(task.length);
-                var jsonTask = JSON.parse(task);
+            if (task != null && JSON.stringify(task) != JSON.stringify([])) {
+                var jsonTask = task;
                 lastId = jsonTask[jsonTask.length - 1].id;
                 index = lastId + 1;
             } else {
                 index = 0;
             }
             var addRulesActivities: activity[] = [];
-            const nameOfRule =
-                JSON.parse(localStorage.getItem("nameRuleForActivities")!) ??
+            const nameOfRule = getDataNameRuleForActivities() ??
                 "";
-            console.log("nameOfRule");
             // Ahora buscamos en jsonTask los objetos de las actividades seleccionadas y le agregamos las reglas
             activities_selected.forEach((activity) => {
                 // creamos las reglas para cada una de las actividades seleccionadas
@@ -326,10 +355,9 @@
                 addRulesActivities.push(ruleForActivity);
                 index++;
             });
-            // Guardamos las nuevas reglas para las actividades en el localStorage
-            localStorage.setItem(
-                "rulesTask",
-                JSON.stringify([...JSON.parse(task), ...addRulesActivities]),
+            // Guardamos las nuevas reglas para las actividades en el sistema
+            setDataRulesTask(
+                JSON.stringify([...task, ...addRulesActivities]),
             );
         }
     }
@@ -391,20 +419,6 @@
                                         delete
                                     </span>
                                 </button>
-                                <div
-                                    class="absolute top-0 left-0 -mt-4 -ml-4 bg-[#dfe2eb] text-[#707382] rounded-full px-1"
-                                >
-                                    <div class="flex mx-1 my-1">
-                                        <span
-                                            class="my-auto text-sm material-symbols-outlined"
-                                        >
-                                            tag
-                                        </span>
-                                        <p class="my-auto text-xs">
-                                            {rule.numberRule}
-                                        </p>
-                                    </div>
-                                </div>
                                 <div class="mx-auto">
                                     <div
                                         class="flex justify-between mx-5 mt-2 text-[#e3e6fb]"
@@ -461,20 +475,6 @@
                                         delete
                                     </span>
                                 </button>
-                                <div
-                                    class="absolute top-0 left-0 -mt-4 -ml-4 bg-[#dfe2eb] text-[#707382] rounded-full px-1"
-                                >
-                                    <div class="flex mx-1 my-1">
-                                        <span
-                                            class="my-auto text-sm material-symbols-outlined"
-                                        >
-                                            tag
-                                        </span>
-                                        <p class="my-auto text-xs">
-                                            {rule.numberRule}
-                                        </p>
-                                    </div>
-                                </div>
                                 <div class="my-5">
                                     {#each rule.rules ?? [] as rulep1}
                                         {#if rulep1.type === "Simple"}
@@ -497,22 +497,6 @@
                                                         delete
                                                     </span>
                                                 </button>
-                                                <div
-                                                    class="absolute top-0 left-0 -mt-4 -ml-4 bg-[#dfe2eb] text-[#707382] rounded-full px-1"
-                                                >
-                                                    <div class="flex mx-1 my-1">
-                                                        <span
-                                                            class="my-auto text-sm material-symbols-outlined"
-                                                        >
-                                                            tag
-                                                        </span>
-                                                        <p
-                                                            class="my-auto text-xs"
-                                                        >
-                                                            {rulep1.numberRule}
-                                                        </p>
-                                                    </div>
-                                                </div>
                                                 <div class="mx-auto">
                                                     <div
                                                         class="flex justify-between mx-5 mt-2 text-[#e3e6fb]"
@@ -581,22 +565,6 @@
                                                         delete
                                                     </span>
                                                 </button>
-                                                <div
-                                                    class="absolute top-0 left-0 -mt-4 -ml-4 bg-[#dfe2eb] text-[#707382] rounded-full px-1"
-                                                >
-                                                    <div class="flex mx-1 my-1">
-                                                        <span
-                                                            class="my-auto text-sm material-symbols-outlined"
-                                                        >
-                                                            tag
-                                                        </span>
-                                                        <p
-                                                            class="my-auto text-xs"
-                                                        >
-                                                            {rulep1.numberRule}
-                                                        </p>
-                                                    </div>
-                                                </div>
                                                 <div class="my-5">
                                                     {#each rulep1.rules ?? [] as rulep2}
                                                         {#if rulep2.type === "Simple"}
@@ -619,24 +587,6 @@
                                                                         delete
                                                                     </span>
                                                                 </button>
-                                                                <div
-                                                                    class="absolute top-0 left-0 -mt-4 -ml-4 bg-[#dfe2eb] text-[#707382] rounded-full px-1"
-                                                                >
-                                                                    <div
-                                                                        class="flex mx-1 my-1"
-                                                                    >
-                                                                        <span
-                                                                            class="my-auto text-sm material-symbols-outlined"
-                                                                        >
-                                                                            tag
-                                                                        </span>
-                                                                        <p
-                                                                            class="my-auto text-xs"
-                                                                        >
-                                                                            {rulep2.numberRule}
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
                                                                 <div
                                                                     class="mx-auto"
                                                                 >
@@ -886,6 +836,13 @@
                     bind:value={selectedAction1}
                     id="actions"
                     class="mt-5 w-1/2 mx-auto h-[30px] rounded-md border p-1 border-[#5b5966]"
+                    on:change={() => {
+                        if (selectedAction1 === "Delete Action") {
+                            selectedAction2 = "Delete this activity";
+                        } else {
+                            selectedAction2 = "";
+                        }
+                    }}
                 >
                     {#each actions as action}
                         <option value={action}>{action}</option>
@@ -1517,9 +1474,27 @@
                             : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300"
                         on:click={() => {
                             showModal = false;
-                            showModalDelete = false;
-                            addRulesLocalStorage();
-                            goto("/listofrules");
+                            showModalCreate = false;
+                            if (
+                                validateActionsRules() &&
+                                validateEmptyFieldsRules()
+                            ) {
+                                addRulesSystem();
+                                addNotification({
+                                    text: "Rule created successfully",
+                                    position: "top-right",
+                                    type: "success",
+                                    removeAfter: 3000,
+                                });
+                                goto("/listofrules");
+                            } else {
+                                addNotification({
+                                    text: "Please fill in all the fields or the configuration of the rule",
+                                    position: "top-right",
+                                    type: "error",
+                                    removeAfter: 3000,
+                                });
+                            }
                         }}
                     >
                         <div class="flex flex-row my-auto">

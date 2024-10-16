@@ -11,9 +11,12 @@
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^3.0.0",
-		"@sveltejs/kit": "^2.0.0",
+		"@sveltejs/kit": "^2.7.0",
 		"@sveltejs/vite-plugin-svelte": "^3.0.0",
 		"@tsconfig/svelte": "^5.0.4",
+		"@types/express": "^5.0.0",
+		"@types/multer": "^1.4.12",
+		"@types/uuid": "^10.0.0",
 		"autoprefixer": "^10.4.19",
 		"postcss": "^8.4.38",
 		"svelte": "^4.2.7",
@@ -25,6 +28,15 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"fast-xml-parser": "^4.4.0"
+		"@types/node": "^22.7.5",
+		"bpmn-js": "^17.11.1",
+		"cors": "^2.8.5",
+		"express": "^4.21.1",
+		"fast-xml-parser": "^4.4.0",
+		"felte": "^1.2.14",
+		"multer": "^1.4.5-lts.1",
+		"svelte-notifications": "^0.9.98",
+		"svelte-toast": "^1.0.0",
+		"uuid": "^10.0.0"
 	}
 }

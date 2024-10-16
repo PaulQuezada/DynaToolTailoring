@@ -5,9 +5,21 @@
     import { themeStore } from "../../stores";
     import "../types";
     import { onMount } from "svelte";
-    import { writable, type Writable } from "svelte/store";
+    import { get, writable, type Writable } from "svelte/store";
     import { fileUploadBpmn } from "../../functions/importdata";
-
+    import "../../functions/datamanager";
+    import { getNotificationsContext } from "svelte-notifications";
+    import {
+        deleteDataNameRuleForActivities,
+        deleteDataSelectedActivity,
+        getDataProcess,
+        getDataRulesTask,
+        setDataNameRuleForActivities,
+        setDataRulesTask,
+        setDataSelectedActivities,
+        setDataSelectedActivity,
+    } from "../../functions/datamanager";
+    const { addNotification } = getNotificationsContext();
     // Variables
     let searchQuery = "";
     let activities: Writable<activity[]> = writable([]);
@@ -16,8 +28,8 @@
     let showModalCrear = false;
     let showModalEditar = false;
     let showModalFiltro = false;
-    let idactivity_delete: number;
-    let idactivity_edit: number;
+    let idruledelete: number;
+    let idruleedit: number;
     let name_activity_create: String;
     let subname_activity_create: String;
     let activity_type_create: String;
@@ -25,7 +37,7 @@
 
     // Variables filtros
     let filterNormalTask = true;
-    let filterUserTask = false;
+    let filterUserTask = true;
     let filterAnotherTask = false;
 
     // Variables para la barra de datos
@@ -45,6 +57,23 @@
 
     let osName: string = "detecting...";
     let commandText: string = "detected";
+
+    // Función para validar los datos antes de pasar a la siguiente vista
+    function validateToNextStage(): Boolean {
+        const rulesTask = getDataRulesTask();
+        if (rulesTask.length != 0) {
+            var validate = true;
+            rulesTask.forEach((ruleTask: activity) => {
+                // Si al menos una regla esta vacia, no se puede pasar a la siguiente vista
+                if(ruleTask.rules.length == 0){
+                    validate = false;
+                }
+            });
+            return validate;
+        } else {
+            return false;
+        }
+    }
     // Función para detectar el sistema operativo
     function detectOS(): string {
         const platform = navigator.platform.toLowerCase();
@@ -63,16 +92,30 @@
             return "Unknown OS";
         }
     }
+
+    // Función para filtrar las actividades por tipo (En este caso por Task, UserTask y otro tipo que tenga el nombre task en algun lado)
+    function typefilters(typeActivity: any): Boolean {
+        // Filtramos las actividades por tipo
+        if (
+            (typeActivity == "bpmn2:Task" && filterNormalTask) ||
+            (typeActivity == "bpmn2:UserTask" && filterUserTask) ||
+            (typeActivity != "bpmn2:Task" &&
+                typeActivity != "bpmn2:UserTask" &&
+                filterAnotherTask)
+        ) {
+            return true;
+        }
+        return false;
+    }
+
     function handleKeyDown(event: KeyboardEvent) {
         if (osName === "MacOS") {
             if (event.metaKey && event.key === "b") {
                 commandModal = !commandModal; // Cambia el valor de la variable
-                console.log(`isActive: ${commandModal}`);
             }
         } else {
             if (event.altKey && event.key === "b") {
                 commandModal = !commandModal; // Cambia el valor de la variable
-                console.log(`isActive: ${commandModal}`);
             }
         }
     }
@@ -121,14 +164,12 @@
                 // Calculamos el porcentaje de las reglas
                 percentageRemoveOrKeep =
                     (numberRulesDeleteOrKeep / $activities.length) * 100;
-                    percentageReplace =
+                percentageReplace =
                     (numberRulesReplace / $activities.length) * 100;
-                    percentageWithoutType =
+                percentageWithoutType =
                     (numberRulesWithoutType / $activities.length) * 100;
                 // Truncamos el porcentaje
-                percentageRemoveOrKeep = Math.trunc(
-                    percentageRemoveOrKeep,
-                );
+                percentageRemoveOrKeep = Math.trunc(percentageRemoveOrKeep);
                 percentageReplace = Math.trunc(percentageReplace);
                 percentageWithoutType = Math.trunc(percentageWithoutType);
             }
@@ -139,25 +180,20 @@
     onMount(async () => {
         // Detectar el sistema operativo
         osName = detectOS();
-        console.log(osName);
-        // Eliminamos el activitySelect del localstorage
-        localStorage.removeItem("activitySelect");
-        localStorage.removeItem("selectedActivities");
-        localStorage.removeItem("nameRuleForActivities");
-        // Verificamos si rulesTask existe en el localStorage
-        var taskLocalStorage = localStorage.getItem("rulesTask")!;
-        console.log(taskLocalStorage);
-        if (taskLocalStorage != null) {
-            const jsonTask = JSON.parse(taskLocalStorage);
-            console.log(jsonTask);
-            // Ahora igualamos rulesTask con jsonTask
-            activities.set(jsonTask);
+        // Eliminamos las actividad/es seleccionadas guardadas en el sistema (Esos datos solo sirven para cuando se crean las reglas)
+        deleteDataSelectedActivity();
+        deleteDataNameRuleForActivities();
+        deleteDataNameRuleForActivities();
+        // Verificamos si rulesTask existe en el sistema
+        var taskSystem = getDataRulesTask();
+        if (taskSystem != null) {
+            // Guardamos las actividades
+            activities.set(taskSystem);
             // Extraemos solo los nombres de las actividades(sin que se repitan)
             saveNamesActivities();
         } else {
-            console.log("No hay actividades");
             await loadDataBPMN();
-            localStorage.setItem("rulesTask", JSON.stringify([])); // Inicializamos las reglas para cada actividad en vacio
+            setDataRulesTask(JSON.stringify([])); // Inicializamos las reglas para cada actividad en vacio
         }
         // Se agrega el event listener cuando el componente se monta
         window.addEventListener("keydown", handleKeyDown);
@@ -166,7 +202,7 @@
     // Función para manejar la carga de archivos BPMN
     async function loadDataBPMN() {
         // Extraemos los datos el archivo BPMN
-        const xmlBpmn: string = localStorage.getItem("xmlBpmn")!;
+        const xmlBpmn: string = getDataProcess();
         var task = await fileUploadBpmn(xmlBpmn);
         // Los convertimos a un objeto JSON para manejarlos de mejor forma, dandole un id a cada actividad, subnombre y reglas (que por ahora estan vacias)
         var id: number = 0;
@@ -190,12 +226,11 @@
                 type: task.type,
             }));
         name_activities.set(uniqueTaskNames);
-        console.log(uniqueTaskNames);
     }
 
     // Función para guardar los nombres de las actividades
     function saveNamesActivities() {
-        const actividades_json = JSON.parse(localStorage.getItem("rulesTask")!);
+        const actividades_json = getDataRulesTask();
         if (actividades_json.length == 0) {
             loadDataBPMN();
         } else {
@@ -204,20 +239,20 @@
         }
     }
 
-    // Filtrar actividades por nombre y por tipo
+    // Filtrar actividades por nombre
     $: filteredActivities = $name_activities.filter((activity) =>
         activity.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
-    function deleteActivityById(taskId: number): void {
-        var tasks = JSON.parse(localStorage.getItem("rulesTask")!);
+    function deleteRuleById(taskId: number): void {
+        var tasks = getDataRulesTask();
         var newTasks = tasks.filter((task: any) => task.id !== taskId);
-        localStorage.setItem("rulesTask", JSON.stringify(newTasks));
+        setDataRulesTask(JSON.stringify(newTasks));
         activities.set(newTasks);
     }
 
     function createRuleActivity() {
-        var tasks = JSON.parse(localStorage.getItem("rulesTask")!);
+        var tasks = getDataRulesTask();
         // Objetenemos el ultimo id de las actividades si es que no esta vacio
         var lastId: number = 0;
         if (tasks.length == 0) {
@@ -225,7 +260,6 @@
         } else {
             lastId = tasks[tasks.length - 1].id;
         }
-        console.log(lastId);
         // Creamos la regla
         var newRule = {
             id: lastId + 1,
@@ -235,22 +269,23 @@
             rules: [],
         };
         tasks.push(newRule);
-        localStorage.setItem("rulesTask", JSON.stringify(tasks));
+        setDataRulesTask(JSON.stringify(tasks));
         activities.set(tasks);
     }
 
     function editRuleActivity() {
-        var tasks = JSON.parse(localStorage.getItem("rulesTask")!);
+        var tasks = getDataRulesTask();
+        console.log(tasks);
+        console.log(idruleedit);
         tasks.forEach((task: any) => {
-            if (task.id === idactivity_delete) {
+            if (task.id === idruleedit) {
                 task.subname = subname_activity_edit;
             }
         });
-        localStorage.setItem("rulesTask", JSON.stringify(tasks));
+        setDataRulesTask(JSON.stringify(tasks));
         activities.set(tasks);
     }
 </script>
-
 <div class="flex flex-col h-full w-full">
     <h1
         class="flex mt-3 mb-2 mx-auto text-4xl font-bold {$themeStore ===
@@ -472,7 +507,7 @@
             </div>
             <div class="text-center">
                 {#each filteredActivities as nombre_actividad}
-                    {#if (nombre_actividad.type == "bpmn2:Task" && filterNormalTask) || (nombre_actividad.type == "bpmn2:UserTask" && filterUserTask) || (nombre_actividad.type != "bpmn2:Task" && nombre_actividad.type != "bpmn2:UserTask" && filterAnotherTask)}
+                    {#if filterNormalTask != null && filterUserTask != null && filterAnotherTask != null && typefilters(nombre_actividad.type)}
                         <!-- Tabla donde estaran las actividades listadas por nombre -->
                         <div class="flex justify-between mt-3">
                             <h1
@@ -548,7 +583,7 @@
                                                                 ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                                 : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                                             on:click={() => {
-                                                                idactivity_delete =
+                                                               idruleedit =
                                                                     activity.id;
                                                                 showModalEditar = true;
                                                             }}
@@ -579,7 +614,7 @@
                                                                 ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                                 : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                                             on:click={() => {
-                                                                idactivity_edit =
+                                                                idruleedit =
                                                                     activity.id;
                                                                 showModalEditar = true;
                                                             }}
@@ -602,8 +637,7 @@
                                                             ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                             : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                                         on:click={() => {
-                                                            localStorage.setItem(
-                                                                "activitySelect",
+                                                            setDataSelectedActivity(
                                                                 JSON.stringify(
                                                                     activity,
                                                                 ),
@@ -630,7 +664,7 @@
                                                             ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                             : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                                         on:click={() => {
-                                                            idactivity_delete =
+                                                            idruledelete =
                                                                 activity.id;
                                                             showModal = true;
                                                         }}
@@ -649,8 +683,7 @@
                                                             ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                             : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                                         on:click={() => {
-                                                            localStorage.setItem(
-                                                                "activitySelect",
+                                                            setDataSelectedActivity(
                                                                 JSON.stringify(
                                                                     activity,
                                                                 ),
@@ -677,7 +710,7 @@
                                                             ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                             : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                                         on:click={() => {
-                                                            idactivity_delete =
+                                                            idruledelete =
                                                                 activity.id;
                                                             showModal = true;
                                                         }}
@@ -706,12 +739,16 @@
                 'Light'
                     ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                     : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
+                on:click={() => {
+                    goto("/");
+                    window.removeEventListener("keydown", handleKeyDown);
+                }}
             >
                 <div class="flex my-auto">
                     <span class="material-symbols-outlined text-lg mr-1"
                         >arrow_back_ios</span
                     >
-                    <h1 class="my-auto text-sm mx-2">Back Stage</h1>
+                    <h1 class="my-auto text-sm mx-2">Back Home</h1>
                 </div>
             </button>
             <button
@@ -720,8 +757,18 @@
                     ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                     : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                 on:click={() => {
-                    goto("/savefiles");
-                    window.removeEventListener("keydown", handleKeyDown);
+                    validateToNextStage()
+                    if (validateToNextStage()) {
+                        goto("/savefiles");
+                        window.removeEventListener("keydown", handleKeyDown);
+                    } else {
+                        addNotification({
+                            text: "You can't have empty rules to proceed to the next stage",
+                            position: "top-right",
+                            type: "error",
+                            removeAfter: 4000,
+                        });
+                    }
                 }}
             >
                 <div class="flex my-auto">
@@ -767,7 +814,7 @@
                         ? 'bg-[#efe9f8] border-[#5e3fa1] text-[#5e3fa1] hover:shadow-[0_0_2px_#7443bf]'
                         : 'bg-[#251835] border border-[#7443bf] text-[#7443bf] hover:shadow-[0_0_2px_#5e3fa1]'} transition duration-300"
                     on:click={() => {
-                        deleteActivityById(idactivity_delete);
+                        deleteRuleById(idruledelete);
                         showModal = false;
                     }}>Delete</button
                 >
@@ -828,7 +875,6 @@
                         showModalCrear = false;
                     }}
                     on:keydown={(event) => {
-                        console.log(event);
                         if (event.key === "Enter") {
                             createRuleActivity();
                             subname_activity_create = "";
@@ -889,9 +935,9 @@
                         : 'border border-[#8973ae] text-[#8973ae] bg-[#251835]'} transition duration-300"
                     on:click={() => {
                         editRuleActivity();
-                        subname_activity_create = "";
+                        subname_activity_edit = "";
                         showModalEditar = false;
-                    }}>Editar nombre</button
+                    }}>Edit name</button
                 >
             </div>
         </div>
@@ -1045,21 +1091,6 @@
                             >
                         </label>
                     </div>
-                </div>
-                <div class="mt-auto mx-10">
-                    <button
-                        class="w-full h-[40px] rounded-md text-sm {$themeStore ===
-                        'Light'
-                            ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
-                            : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'} border"
-                        on:click={() => {
-                            showModalFiltro = false;
-                        }}
-                    >
-                        <div class="flex mx-10">
-                            <h1 class="my-auto mx-auto">Apply filter</h1>
-                        </div>
-                    </button>
                 </div>
             </div>
         </div>
@@ -1233,12 +1264,10 @@
                         placeholder="Enter rule name"
                         on:keydown={(event) => {
                             if (event.key === "Enter") {
-                                localStorage.setItem(
-                                    "nameRuleForActivities",
+                                setDataNameRuleForActivities(
                                     JSON.stringify(subname_activity_create),
                                 );
-                                localStorage.setItem(
-                                    "selectedActivities",
+                                setDataSelectedActivities(
                                     JSON.stringify(selectedActivities),
                                 );
                                 goto("/createrules");
@@ -1252,12 +1281,10 @@
                     <button
                         class="w-full h-[50px] rounded-lg border border-[#7f5fc1] bg-[#f0e9f8] text-[#7f5fc1] mx-auto"
                         on:click={() => {
-                            localStorage.setItem(
-                                "nameRuleForActivities",
+                            setDataNameRuleForActivities(
                                 JSON.stringify(subname_activity_create),
                             );
-                            localStorage.setItem(
-                                "selectedActivities",
+                            setDataSelectedActivities(
                                 JSON.stringify(selectedActivities),
                             );
                             goto("/createrules");
