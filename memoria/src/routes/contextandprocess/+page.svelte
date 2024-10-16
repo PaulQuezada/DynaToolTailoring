@@ -108,7 +108,7 @@
         <strong class="text-[#7442c0]">Stage 1: &nbsp;</strong> Creating the files
     </h1>
     <div
-        class="mx-auto w-2/3 mt-10 flex flex-col rounded-lg shadow-lg border-2 {$themeStore ===
+        class="mx-auto w-2/3 overflow-y-auto mt-10 flex flex-col rounded-lg shadow-lg border-2 {$themeStore ===
         'Light'
             ? 'bg-[#ffffff] border-[#f0eaf9] shadow-[0_0_30px_#f0eaf9]'
             : 'bg-[#14111c] border-[#14111c] shadow-[0_0_30px_#31214c]'} transition duration-300"
