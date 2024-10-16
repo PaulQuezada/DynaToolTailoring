@@ -324,7 +324,7 @@
             // Obtenemos el ultimo id de las reglas creadas para las actividades
             var lastId = 0;
             var index: number;
-            if (task != null && task != "[]") {
+            if (task != null && JSON.stringify(task) != JSON.stringify([])) {
                 console.log(task);
                 console.log(task.length);
                 var jsonTask = task;
