@@ -182,8 +182,6 @@ function obtainTransformationRules(): activity[] {
     // Extraer los datos del modelos reglas que están en el modelo completo generado
     const rulesModel = xmlDoc.querySelector("RulesModel");
     const contentRules = rulesModel ? rulesModel.querySelectorAll("ContentRule")! : [];
-    console.log("RulesModelNode: ", rulesModel);
-    console.log("RulesModelNode: ", contentRules);
 
     // Obtenemos los atributos y valores que se encuentran en el modelo importado incialmente
     const attributesAndValues = loadAtributtes()[0];
@@ -191,7 +189,6 @@ function obtainTransformationRules(): activity[] {
 
     // Recorremos el modelo de reglas para obtener la información de cada regla y almacenarla en la variable activities
     contentRules.forEach((contentRule, index) => {
-        console.log(contentRule);
         const activity: activity = {
             id: index,
             type: contentRule.getAttribute("typeofactivity") || "",
@@ -279,7 +276,6 @@ function generateOptionalRule(elements: activity[]): string {
         if (index === 0) {
             rule += `if ('${element}' = name) then`;
             activities = findElementsByName(elements, element);
-            console.log("Activities: ", activities);
             activities.forEach((element, index_activities) => {
                 rule += `\n\t\tthisModule.ruleOpt${index + 1}()`;
                 if (index_activities < activities.length - 1) {

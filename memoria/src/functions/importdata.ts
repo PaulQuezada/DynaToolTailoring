@@ -91,18 +91,34 @@ export function filtertypes(element: any, otherTypes?: String[]) {
     return filtered_data;
 }
 
+function detectDuplicateData(tasks: any): any[] {
+    let seenNames = new Set();
+    
+    // Filtramos las tareas y solo mantenemos aquellas con nombres únicos
+    let uniqueTasks = tasks.filter((task: any) => {
+        if (!seenNames.has(task.name)) {
+            seenNames.add(task.name);
+            return true; // Mantén la tarea
+        }
+        return false; // Descarta las tareas con nombres duplicados
+    });
+    
+    return uniqueTasks;
+}
+
 
 // Función para extraer los datos del archivo BPMN
 export async function fileUploadBpmn(xmlBpmn: any) {
     let task: any = []; // Variable para almacenar los nombres de las tareas
     if (xmlBpmn !== "") {
-        console.log(xmlBpmn);
         const rootElements = xmlBpmn["bpmn2:Definitions"].rootElements;
         const flowElements = Array.isArray(rootElements.flowElements)
             ? rootElements.flowElements
             : [rootElements.flowElements];
         // Actualiza el store con los nuevos nombres de las tareas
         task = filtertypes(flowElements);
+        // Verificar si hay datos duplicados y si los hay los elimina
+        task = detectDuplicateData(task);
     }
     // Retorna los datos del archivo BPMN y los datos extraidos del archivo
     return task;
@@ -152,8 +168,6 @@ export function fileUploadTailoringModel(xmlModel: any) {
             attributesAndValues = loadAtributtes()[0];
             onlyAttributes = loadAtributtes()[1];
             activities = convertRulesModel(rulesModel, onlyAttributes, attributesAndValues);
-            console.log("activities 2");
-            console.log(activities);
             isSuccessful = true;
         } else {
             isSuccessful = false;
@@ -212,9 +226,7 @@ export function convertRulesModel(xml: string, onlyAttributes: any[], attributes
     const xmlDoc = parser.parseFromString(xml, "text/xml");
     const contentRules = xmlDoc.querySelectorAll("ContentRule");
     let activities: activity[] = [];
-    console.log(xml);
     contentRules.forEach((contentRule, index) => {
-        console.log(contentRule);
         const activity: activity = {
             id: index,
             type: contentRule.getAttribute("typeofactivity") || "",
@@ -227,8 +239,6 @@ export function convertRulesModel(xml: string, onlyAttributes: any[], attributes
         };
         activities.push(activity);
     });
-    console.log("activities 1");
-    console.log(activities);
     return activities;
 }
 
@@ -244,8 +254,6 @@ export function parseRules(element: Element, onlyAttributes: any[], attributesAn
 
             const id = ruleElement.getAttribute("id") || "";
             const typeAttribute = ruleElement.getAttribute("type") || "";
-
-            console.log(ruleType);
 
             if (ruleType === "Rule" || ruleType === "ComplexRule") {
                 if (typeAttribute === "Simple") {

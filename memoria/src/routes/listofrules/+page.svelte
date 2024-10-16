@@ -19,7 +19,6 @@
         setDataSelectedActivities,
         setDataSelectedActivity,
     } from "../../functions/datamanager";
-    import { rule } from "postcss";
     const { addNotification } = getNotificationsContext();
     // Variables
     let searchQuery = "";
@@ -113,12 +112,10 @@
         if (osName === "MacOS") {
             if (event.metaKey && event.key === "b") {
                 commandModal = !commandModal; // Cambia el valor de la variable
-                console.log(`isActive: ${commandModal}`);
             }
         } else {
             if (event.altKey && event.key === "b") {
                 commandModal = !commandModal; // Cambia el valor de la variable
-                console.log(`isActive: ${commandModal}`);
             }
         }
     }
@@ -183,21 +180,18 @@
     onMount(async () => {
         // Detectar el sistema operativo
         osName = detectOS();
-        console.log(osName);
         // Eliminamos las actividad/es seleccionadas guardadas en el sistema (Esos datos solo sirven para cuando se crean las reglas)
         deleteDataSelectedActivity();
         deleteDataNameRuleForActivities();
         deleteDataNameRuleForActivities();
         // Verificamos si rulesTask existe en el sistema
         var taskSystem = getDataRulesTask();
-        console.log(taskSystem);
         if (taskSystem != null) {
             // Guardamos las actividades
             activities.set(taskSystem);
             // Extraemos solo los nombres de las actividades(sin que se repitan)
             saveNamesActivities();
         } else {
-            console.log("No hay actividades");
             await loadDataBPMN();
             setDataRulesTask(JSON.stringify([])); // Inicializamos las reglas para cada actividad en vacio
         }
@@ -232,7 +226,6 @@
                 type: task.type,
             }));
         name_activities.set(uniqueTaskNames);
-        console.log(uniqueTaskNames);
     }
 
     // Función para guardar los nombres de las actividades
@@ -267,7 +260,6 @@
         } else {
             lastId = tasks[tasks.length - 1].id;
         }
-        console.log(lastId);
         // Creamos la regla
         var newRule = {
             id: lastId + 1,
@@ -283,12 +275,13 @@
 
     function editRuleActivity() {
         var tasks = getDataRulesTask();
+        console.log(tasks);
+        console.log(idruleedit);
         tasks.forEach((task: any) => {
             if (task.id === idruleedit) {
                 task.subname = subname_activity_edit;
             }
         });
-        console.log(tasks);
         setDataRulesTask(JSON.stringify(tasks));
         activities.set(tasks);
     }
@@ -590,7 +583,7 @@
                                                                 ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                                                                 : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                                                             on:click={() => {
-                                                                idruledelete =
+                                                               idruleedit =
                                                                     activity.id;
                                                                 showModalEditar = true;
                                                             }}
@@ -882,7 +875,6 @@
                         showModalCrear = false;
                     }}
                     on:keydown={(event) => {
-                        console.log(event);
                         if (event.key === "Enter") {
                             createRuleActivity();
                             subname_activity_create = "";
@@ -943,7 +935,7 @@
                         : 'border border-[#8973ae] text-[#8973ae] bg-[#251835]'} transition duration-300"
                     on:click={() => {
                         editRuleActivity();
-                        subname_activity_create = "";
+                        subname_activity_edit = "";
                         showModalEditar = false;
                     }}>Edit name</button
                 >

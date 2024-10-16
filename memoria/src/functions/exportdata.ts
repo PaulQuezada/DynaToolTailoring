@@ -78,8 +78,6 @@ export function createCompleteModel() {
     let contextoXML = localStorage.getItem("xmlContext")!; // Se obtiene el contexto organizacional
     let actividadesBPMN =localStorage.getItem("xmlBpmn")!; // Se obtiene el proceso de negocio
     const reglas = getDataRulesTask();
-
-    console.log(contextoXML);
     contextoXML = removeXMIHeader(contextoXML);
     actividadesBPMN = removeXMIHeader(actividadesBPMN);
 
@@ -96,7 +94,6 @@ export function createCompleteModel() {
 </RulesModel>
 </IntegratedModel>`;
 
-    console.log(documentoXML);
     setDataModelRules(documentoXML);
     return documentoXML;
 }

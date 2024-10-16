@@ -110,9 +110,6 @@
             extractAttributes = JSON.parse(
                 JSON.stringify(await fileUploadContext(jsonContext)),
             ); // Extraer los atributos del archivo XMI
-            //console.log(nameFileContex);
-            //console.log(xmlContext);
-            //console.log(JSON.stringify(extractAttributes, null, 2));
             verifyContext.set(extractAttributes.length > 0); // Verificar si el attributeContext tiene datos, entonces es correcto
         } catch (error) {
             console.log(error);
@@ -138,9 +135,6 @@
             extractTask = JSON.parse(
                 JSON.stringify(await fileUploadBpmn(jsonBpmn)),
             ); // Extraer las tareas del archivo BPMN
-            //console.log(nameFileBpmn);
-            //console.log(xmlBpmn);
-            //console.log(JSON.stringify(extractTask, null, 2));
             verifyBpmn.set(extractTask.length > 0); // Verificar si el attributeContext tiene datos entonces, es correcto
         } catch (error) {
             console.log(error);

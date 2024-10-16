@@ -58,8 +58,6 @@ export const actions: Actions = {
 		await applyInjector();
 		let contextContent = readFileSync('files/context.xmi', 'utf-8');
 		let processContent = readFileSync('injectorExtractor/InjectorOutput/process.xmi', 'utf-8');
-		console.log(contextContent);
-		console.log(processContent);
 		return {
 			success: true,
 			context: contextContent,

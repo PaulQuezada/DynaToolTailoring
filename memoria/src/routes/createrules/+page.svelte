@@ -164,7 +164,6 @@
         xmlBpmn = getDataProcess();
         await handleFileUploadContext();
         await loadDataBPMN();
-        console.log("111");
         // Obtenemos la actividad seleccionada o actividades seleccionadas
         var activitySelect = getDataSelectedActivity(); 
         var selectedActivities = getDataSelectedActivities();
@@ -172,19 +171,14 @@
             activity_select = activitySelect;
             if (activity_select.rules != null) {
                 rules.set(activity_select.rules);
-                console.log(activity_select);
                 if (activity_select.deleted != null) {
-                    console.log("deleted");
                     selectedAction1 = "Delete Action";
                     selectedAction2 = activity_select.deleted
                         ? "Delete this activity"
                         : "Not delete this activity";
                 } else if (activity_select.replaced) {
-                    console.log("replaced");
                     selectedAction1 = "Replace Action";
                     selectedAction2 = activity_select.replaceActivity!;
-                } else {
-                    console.log("ERROR: No action");
                 }
             }
         } else if (selectedActivities != null) {
@@ -247,10 +241,6 @@
                     (attr) => attr.Attribute == attributeSelect,
                 );
                 rule.values = attribute ? attribute.values : [];
-                console.log("Cambia el atributo de la regla");
-                console.log(rule);
-            } else {
-                console.log("No se encontro la regla");
             }
             return rs;
         });
@@ -264,8 +254,6 @@
             const rule = findRuleById(rs, rule_selected.id);
             if (rule && rule.type == "Simple") {
                 rule.value = valueSelect;
-            } else {
-                console.log("No se encontro la regla");
             }
             return rs;
         });
@@ -325,8 +313,6 @@
             var lastId = 0;
             var index: number;
             if (task != null && JSON.stringify(task) != JSON.stringify([])) {
-                console.log(task);
-                console.log(task.length);
                 var jsonTask = task;
                 lastId = jsonTask[jsonTask.length - 1].id;
                 index = lastId + 1;
@@ -336,7 +322,6 @@
             var addRulesActivities: activity[] = [];
             const nameOfRule = getDataNameRuleForActivities() ??
                 "";
-            console.log("nameOfRule");
             // Ahora buscamos en jsonTask los objetos de las actividades seleccionadas y le agregamos las reglas
             activities_selected.forEach((activity) => {
                 // creamos las reglas para cada una de las actividades seleccionadas

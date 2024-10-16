@@ -61,7 +61,6 @@
 	action="?/context"
 	use:enhance={() => {
 		return async ({ update, result }) => {
-			console.log(result);
 			update({ reset: false });
 			if (result.type === 'success') {
 				successContext = true;

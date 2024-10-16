@@ -67,8 +67,6 @@ export const applyInjector = async () => {
 		const { stdout, stderr } = await execPromise(
 			'cd injectorExtractor && java -jar injectorExtractor.jar "process.bpmn" "inyector"'
 		);
-
-		console.log('stdout: ' + stdout);
 		if (stderr) {
 			console.error('stderr: ' + stderr);
 		}

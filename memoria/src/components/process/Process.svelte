@@ -43,7 +43,6 @@
 	enctype="multipart/form-data"
 	use:enhance={() => {
 		return async ({ update, result }) => {
-			console.log("Result", result);
 			update({ reset: false });
 			if (result.type === "success") {
 				successProcess = true;
@@ -86,17 +85,14 @@
 		on:dragover={(e) => {
 			e.preventDefault();
 			$dropFile = true;
-			console.log("Drag over");
 		}}
 		on:dragleave={(e) => {
 			e.preventDefault();
 			$dropFile = false;
-			console.log("Drag leave");
 		}}
 		on:durationchange={(e) => {
 			e.preventDefault();
 			$dropFile = false;
-			console.log("Drag leave");
 		}}
 	>
 		<!-- Visualizador del proceso -->
