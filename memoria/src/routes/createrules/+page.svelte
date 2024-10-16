@@ -419,20 +419,6 @@
                                         delete
                                     </span>
                                 </button>
-                                <div
-                                    class="absolute top-0 left-0 -mt-4 -ml-4 bg-[#dfe2eb] text-[#707382] rounded-full px-1"
-                                >
-                                    <div class="flex mx-1 my-1">
-                                        <span
-                                            class="my-auto text-sm material-symbols-outlined"
-                                        >
-                                            tag
-                                        </span>
-                                        <p class="my-auto text-xs">
-                                            {rule.numberRule}
-                                        </p>
-                                    </div>
-                                </div>
                                 <div class="mx-auto">
                                     <div
                                         class="flex justify-between mx-5 mt-2 text-[#e3e6fb]"
@@ -489,20 +475,6 @@
                                         delete
                                     </span>
                                 </button>
-                                <div
-                                    class="absolute top-0 left-0 -mt-4 -ml-4 bg-[#dfe2eb] text-[#707382] rounded-full px-1"
-                                >
-                                    <div class="flex mx-1 my-1">
-                                        <span
-                                            class="my-auto text-sm material-symbols-outlined"
-                                        >
-                                            tag
-                                        </span>
-                                        <p class="my-auto text-xs">
-                                            {rule.numberRule}
-                                        </p>
-                                    </div>
-                                </div>
                                 <div class="my-5">
                                     {#each rule.rules ?? [] as rulep1}
                                         {#if rulep1.type === "Simple"}
@@ -525,22 +497,6 @@
                                                         delete
                                                     </span>
                                                 </button>
-                                                <div
-                                                    class="absolute top-0 left-0 -mt-4 -ml-4 bg-[#dfe2eb] text-[#707382] rounded-full px-1"
-                                                >
-                                                    <div class="flex mx-1 my-1">
-                                                        <span
-                                                            class="my-auto text-sm material-symbols-outlined"
-                                                        >
-                                                            tag
-                                                        </span>
-                                                        <p
-                                                            class="my-auto text-xs"
-                                                        >
-                                                            {rulep1.numberRule}
-                                                        </p>
-                                                    </div>
-                                                </div>
                                                 <div class="mx-auto">
                                                     <div
                                                         class="flex justify-between mx-5 mt-2 text-[#e3e6fb]"
@@ -609,22 +565,6 @@
                                                         delete
                                                     </span>
                                                 </button>
-                                                <div
-                                                    class="absolute top-0 left-0 -mt-4 -ml-4 bg-[#dfe2eb] text-[#707382] rounded-full px-1"
-                                                >
-                                                    <div class="flex mx-1 my-1">
-                                                        <span
-                                                            class="my-auto text-sm material-symbols-outlined"
-                                                        >
-                                                            tag
-                                                        </span>
-                                                        <p
-                                                            class="my-auto text-xs"
-                                                        >
-                                                            {rulep1.numberRule}
-                                                        </p>
-                                                    </div>
-                                                </div>
                                                 <div class="my-5">
                                                     {#each rulep1.rules ?? [] as rulep2}
                                                         {#if rulep2.type === "Simple"}
@@ -647,24 +587,6 @@
                                                                         delete
                                                                     </span>
                                                                 </button>
-                                                                <div
-                                                                    class="absolute top-0 left-0 -mt-4 -ml-4 bg-[#dfe2eb] text-[#707382] rounded-full px-1"
-                                                                >
-                                                                    <div
-                                                                        class="flex mx-1 my-1"
-                                                                    >
-                                                                        <span
-                                                                            class="my-auto text-sm material-symbols-outlined"
-                                                                        >
-                                                                            tag
-                                                                        </span>
-                                                                        <p
-                                                                            class="my-auto text-xs"
-                                                                        >
-                                                                            {rulep2.numberRule}
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
                                                                 <div
                                                                     class="mx-auto"
                                                                 >
