@@ -299,7 +299,7 @@
         class="mx-auto w-2/3 mt-10 flex flex-col rounded-lg shadow-lg border {$themeStore ===
         'Light'
             ? 'bg-[#ffffff] border-[#dad4e1] shadow-[0_0_30px_#f0e9f8]'
-            : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c]'} transition duration-300"
+            : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c]'} transition duration-300 overflow-y-auto"
     >
         <!-- Command + B or Alt + B-->
         <div
