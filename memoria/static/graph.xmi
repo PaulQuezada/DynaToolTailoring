@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dynatail:CGModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dynatail="http://www.example.org/dynatail" xsi:schemaLocation="http://www.example.org/dynatail dynatail.ecore">
+  <cgnode xsi:type="dynatail:CGCharacteristic" name="Customer Value"/>
+  <cgnode xsi:type="dynatail:CGAttribute" name="BacklogQuality"/>
+  <cgnode xsi:type="dynatail:CGActivity" name="EstimateTask"/>
+  <cgnode xsi:type="dynatail:CGPractice" name="Team-based Estimation" description=""/>
+  <cginfluence source="//@cgnode.3" target="//@cgnode.2" value="2.0"/>
+  <cginfluence source="//@cgnode.2" target="//@cgnode.1" value="0.6"/>
+  <cginfluence source="//@cgnode.1" target="//@cgnode.0" value="0.7"/>
+</dynatail:CGModel>

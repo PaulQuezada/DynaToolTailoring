@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Modal from './Modal.svelte';
 	import { createForm } from 'felte';
-	import type { Context } from './interfaces';
+	import type { Context } from '../interfaces';
 
 	export let toggle = false;
 	export let context: Context;

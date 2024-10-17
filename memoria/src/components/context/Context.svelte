@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import type { Context } from './interfaces';
+	import type { Context } from '../interfaces';
 	import AttributesModal from './AttributesModal.svelte';
 	import DimensionsModal from './DimensionsModal.svelte';
     

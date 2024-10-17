@@ -21,7 +21,7 @@
             : 'bg-gradient-to-br from-[#14111b] to-[#281428]'} transition duration-500"
     >
         <div class="h-screen w-screen">
-            <div class="flex-1 h-1/6 flex justify-between">
+            <div class="flex-1 h-[80px] flex justify-between">
                 <div class="flex my-auto mx-5">
                     <span
                         class="material-symbols-outlined text-3xl mr-3 font-bold {$themeStore ===
@@ -106,7 +106,7 @@
             </div>
             <div class="flex-1 h-5/6">
                 <div
-                    class="w-full -mt-8 h-[1px] {$themeStore === 'Light'
+                    class="w-full h-[1px] {$themeStore === 'Light'
                         ? 'bg-[#f6f6f6]'
                         : 'bg-[#2e1e4d]'}"
                 ></div>

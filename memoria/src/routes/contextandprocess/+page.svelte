@@ -54,7 +54,7 @@
 
     // Variable reactiva para cuando cambie successTransform
     $: {
-        if(successContext){
+        if (successContext) {
             addNotification({
                 text: "The context was correctly saved in the system.",
                 position: "top-right",
@@ -62,7 +62,7 @@
                 removeAfter: 2000,
             });
         }
-        if(successProcess){
+        if (successProcess) {
             addNotification({
                 text: "The process was correctly saved in the system.",
                 position: "top-right",
@@ -108,11 +108,33 @@
         <strong class="text-[#7442c0]">Stage 1: &nbsp;</strong> Creating the files
     </h1>
     <div
-        class="mx-auto w-2/3 overflow-y-auto mt-3 flex flex-col rounded-lg shadow-lg border-2 {$themeStore ===
+        class="relative mx-auto w-2/3 overflow-y-visible mt-3 flex flex-col rounded-lg shadow-lg border-2 {$themeStore ===
         'Light'
             ? 'bg-[#ffffff] border-[#f0eaf9] shadow-[0_0_30px_#f0eaf9]'
             : 'bg-[#14111c] border-[#14111c] shadow-[0_0_30px_#31214c]'} transition duration-300"
     >
+        {#if $currentStage === 3}
+            <div
+                class="absolute top-0 right-0 -mt-8 border border-[#d5c0f0] rounded-t"
+            >
+                <button on:click={
+                    () => {
+                        goto("/influencegraph");
+                    }
+                }>
+                    <div class="flex">
+                        <span
+                            class="my-auto text-[#641eb8] material-symbols-outlined text-lg mx-2"
+                        >
+                            bubble_chart
+                        </span>
+                        <h1 class="text-[#641eb8] my-auto mx-2 text-sm">
+                            Influence graph
+                        </h1>
+                    </div>
+                </button>
+            </div>
+        {/if}
         <!-- Etapas -->
         <div class="mt-8 flex justify-center">
             {#each [1, 2, 3] as stage}
