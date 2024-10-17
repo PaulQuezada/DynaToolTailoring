@@ -78,18 +78,6 @@
                     </h1>
                     <div class="flex flex-row">
                         <h1 class="text-[#7442bf]">OCM_Dynatool.xmi</h1>
-                        <button
-                            class="mx-2 rounded-xl border-2 {$themeStore ===
-                            'Light'
-                                ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
-                                : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
-                        >
-                            <span
-                                class="text-xs mx-2 material-symbols-outlined"
-                            >
-                                edit
-                            </span>
-                        </button>
                     </div>
                 </div>
             </div>
@@ -148,18 +136,6 @@
                     </h1>
                     <div class="flex flex-row">
                         <h1 class="text-[#7442bf]">RULES.atl</h1>
-                        <button
-                            class="mx-2 rounded-xl border-2 {$themeStore ===
-                            'Light'
-                                ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
-                                : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
-                        >
-                            <span
-                                class="text-xs mx-2 material-symbols-outlined"
-                            >
-                                edit
-                            </span>
-                        </button>
                     </div>
                 </div>
             </div>
