@@ -38,14 +38,14 @@
         <strong class="text-[#7442c0]">Stage 3: &nbsp;</strong> Save files
     </h1>
     <div
-        class="mx-auto w-2/3 mt-10 flex flex-col rounded-lg shadow-lg border-2 {$themeStore ===
+        class="mx-auto w-2/3 mt-5 flex flex-col rounded-lg shadow-lg border-2 {$themeStore ===
         'Light'
             ? 'bg-[#ffffff] border-[#f0eaf9] shadow-[0_0_30px_#f0eaf9]'
             : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c]'} transition duration-300"
     >
         <!-- Titulo -->
         <h1
-            class="mt-10 mb-2 mx-auto text-3xl font-bold {$themeStore ===
+            class="mt-10 mb-5 mx-auto text-3xl font-bold {$themeStore ===
             'Light'
                 ? 'text-[#14111b]'
                 : 'text-[#b498df]'}"
@@ -59,7 +59,7 @@
         ></div>
         <!-- Apartado para descargar el Modelo -->
         <div
-            class="relative my-10 mx-auto w-2/3 border-2 border-dashed border-[#858b98] rounded-xl"
+            class="relative my-5 mx-auto w-2/3 border-2 border-dashed border-[#858b98] rounded-xl"
         >
             <div class="p-10 flex flex-row text-center items-center mx-auto">
                 <svg
@@ -199,7 +199,7 @@
         </div>
 
         <!-- Botones para seguir avanzando o no -->
-        <div class="mt-10 flex justify-between mx-10 mb-4">
+        <div class="flex justify-between mx-10 mb-4">
             <button
                 class="font-bold border rounded-md p-2 hover:shadow-2xl transition duration-300 {$themeStore ===
                 'Light'
