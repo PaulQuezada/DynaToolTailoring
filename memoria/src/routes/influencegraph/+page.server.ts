@@ -14,6 +14,17 @@ export async function load(event: PageServerLoadEvent & { params: RouteParams & 
 }
 
 export const actions: Actions = {
+	evaluate: async ({ request }: RequestEvent) => {
+		const formData = await request.formData();
+		const { aggregated_value, optimization_type } = Object.fromEntries(formData.entries());
+		const result = (Math.random() * 10).toFixed(2);
+		return {
+			success: true,
+			aggregated_value,
+			optimization_type,
+			result
+		};
+	},
 	context: async ({ request }: RequestEvent) => {
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData.entries());
@@ -22,7 +33,7 @@ export const actions: Actions = {
 			JSON.parse(fields as string) as Context,
 			selected as { [key: string]: string }
 		);
-		mkdirSync(`files/`, { recursive: true }); // Create the folder if it doesn't exist
+		mkdirSync(`files`, { recursive: true }); // Create the folder if it doesn't exist
 		writeFileSync(`files/context.xmi`, xmi);
 		return {
 			success: true
@@ -49,6 +60,7 @@ export const actions: Actions = {
 			'injectorExtractor/InjectorInput/process.bpmn',
 			Buffer.from(await process.arrayBuffer())
 		);
+
 		return {
 			success: true
 		};
