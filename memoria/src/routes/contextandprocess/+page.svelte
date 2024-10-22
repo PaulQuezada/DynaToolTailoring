@@ -10,6 +10,7 @@
     import TransformView from "../../components/transform/Transform.svelte";
     import "../types";
     import "../../app.css";
+    import { onMount } from "svelte";
     const { addNotification } = getNotificationsContext();
     let successContext: boolean = false;
     let successProcess: boolean = false;
@@ -21,6 +22,11 @@
     // Variable para saber que etapas estan listas
     let stageImportContext: boolean = false;
     let stageImportBpmn: boolean = false;
+
+    onMount(() => {
+        // Eliminamos todo del localStorage
+        localStorage.clear();
+    });
 
     // Función para manejar el avance a la siguiente etapa
     function handleNext() {
