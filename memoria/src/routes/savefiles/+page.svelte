@@ -198,11 +198,11 @@
                     ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
                     : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
                      on:click={() => {
-                        goto("/");
+                        goto("/influencegraph");
                     }}
             >
                 <div class="flex my-auto">
-                    <h1 class="my-auto text-sm mx-2">Finish</h1>
+                    <h1 class="my-auto text-sm mx-2">Next Stage</h1>
                     <span class="material-symbols-outlined text-lg ml-1">
                         arrow_forward_ios
                     </span>
