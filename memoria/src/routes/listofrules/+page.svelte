@@ -144,8 +144,10 @@
     $: {
         numberRulesDeleteOrKeep = 0;
         numberRulesReplace = 0;
+        numberRulesWithoutType = 0;
         percentageRemoveOrKeep = 0;
         percentageReplace = 0;
+        percentageWithoutType = 0;
         if ($activities.length !== 0) {
             $activities.forEach((regla_activity: activity) => {
                 if (regla_activity.deleted !== undefined) {
