@@ -48,3 +48,7 @@ La herramienta para crear reglas de transformación y generar el código ATL eje
 
 ## Menciones importantes
 Antes, cuando se guardaban los archivos del contexto del proyecto y el archivo BPMN importado, estos se almacenaban en una carpeta personalizada según el nombre que el usuario asignaba al proyecto. Ahora, ya no se solicita el nombre del proyecto, por lo que los archivos se guardan directamente en la carpeta *files*.
+
+## Visualización de uso
+
+[![Visualización de DynaTool](https://i.ibb.co/G7JXbNp/logo-Dyna-World.jpg)](https://youtu.be/imQGYoPhEaU)
