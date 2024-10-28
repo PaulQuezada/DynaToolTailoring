@@ -6,7 +6,8 @@
 	import BpmnVisualizerView from "./BpmnVisualizer.svelte";
 	export let successProcess = false;
 	let xml: string;
-	let dropFile = writable(false);
+	let droppingFile = writable(false); // Si se está soltando un archivo dentro del dropzone
+	let dropFile = writable(false); // Su el archivo se soltó dentro del dropzone
 	let showProcess = false;
 
 	onMount(() => {
@@ -68,7 +69,9 @@
 						</span>
 						<h1 class="my-auto ml-1">View process</h1>
 					{:else}
-						<span class="mx-2 text-[#742dc3] material-symbols-outlined">
+						<span
+							class="mx-2 text-[#742dc3] material-symbols-outlined"
+						>
 							upload_file
 						</span>
 						<h1 class="my-auto ml-1">View file</h1>
@@ -84,15 +87,15 @@
 			: 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'} border-2 border-dashed transform transition-transform duration-150 ease-in-out hover:scale-[1.01]"
 		on:dragover={(e) => {
 			e.preventDefault();
-			$dropFile = true;
+			$droppingFile = true;
 		}}
 		on:dragleave={(e) => {
 			e.preventDefault();
-			$dropFile = false;
+			$droppingFile = false;
 		}}
 		on:durationchange={(e) => {
 			e.preventDefault();
-			$dropFile = false;
+			$droppingFile = false;
 		}}
 	>
 		<!-- Visualizador del proceso -->
@@ -122,7 +125,7 @@
 			}}
 		/>
 		<div
-			class="absolute mt-10 p-10 flex flex-col text-center items-center mx-auto {$dropFile
+			class="absolute mt-10 p-10 flex flex-col text-center items-center mx-auto {$droppingFile
 				? 'animate-pulse'
 				: ''}"
 		>
