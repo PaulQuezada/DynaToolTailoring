@@ -3,7 +3,8 @@
     import { goto } from "$app/navigation";
     import "../app.css";
     import { themeStore } from "../stores";
-    import Loader from "../routes/loader.svelte";
+    import CreateProjectModal from '../components/config/CreateProjectModal.svelte';
+	let showCreateModal = false;
     onMount(() => {
         // Eliminamos todo del localStorage
         localStorage.clear();
@@ -62,9 +63,7 @@
         class="w-1/4 h-[400px] {$themeStore === 'Light'
             ? 'bg-[#ffffff] border-[#f3ecfa] shadow-[0_0_30px_#f3ecfa] hover:shadow-[0_0_2px_#812fc9]'
             : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c] hover:shadow-[0_0_2px_#f3ecfa]'} border-2 mr-2 rounded-lg transition duration-300"
-        on:click={() => {
-            goto("/contextandprocess");
-        }}
+        on:click={() => (showCreateModal = true)}
     >
         <div
             class="flex flex-col items-center mx-auto justify-center text-center"
@@ -112,3 +111,5 @@
         </div>
     </button>
 </div>
+
+<CreateProjectModal bind:toggle={showCreateModal} />
