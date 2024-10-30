@@ -1,19 +1,38 @@
 <!-- src/routes/index.svelte -->
 <script lang="ts">
     import "../../app.css";
+    import { enhance } from "$app/forms";
     import { themeStore } from "../../stores";
     import { goto } from "$app/navigation";
     import {
         downloadXMIFile,
         createCompleteModel,
     } from "../../functions/exportdata";
-    import { downloadATL, baseATL } from "../../functions/atlcreation";
+    import { downloadATL, generateATL } from "../../functions/atlcreation";
+    import { getNotificationsContext } from "svelte-notifications";
+    const { addNotification } = getNotificationsContext();
 
     // Variables
     let showModalData = false;
     let titledatashow = "";
     let datashow: string = "";
     let code_copy: boolean = false;
+
+    let atlCodeInput: HTMLInputElement;
+    let tailoringModelInput: HTMLInputElement;
+    let projectNameInput: HTMLInputElement;
+
+    let successSendData = false;
+
+    $: if (successSendData) {
+        addNotification({
+            text: "Files save successfully",
+            position: "top-right",
+            type: "success",
+            removeAfter: 2000,
+        });
+         goto("/influencegraph");
+    }
 
     function copyToClipboard() {
         code_copy = true;
@@ -23,6 +42,31 @@
         setTimeout(() => {
             code_copy = false;
         }, 2000); // 2 segundos
+    }
+
+    async function saveData() {
+        const atlCode = generateATL();
+        const tailoringModel = createCompleteModel();
+        const projectName = localStorage.getItem("projectName")!;
+
+        if (!projectName) {
+            console.error("Project name not found in localStorage.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("atlCode", atlCode);
+        formData.append("tailoringModel", tailoringModel);
+        formData.append("projectName", projectName);
+
+        try {
+            const response = await fetch("/savefiles", {
+                method: "POST",
+                body: formData,
+            });
+        } catch (error) {
+            console.error("Error sending files:", error);
+        }
     }
 </script>
 
@@ -165,7 +209,7 @@
                     class="mx-3"
                     on:click={() => {
                         titledatashow = "Tailoring rules code";
-                        datashow = baseATL();
+                        datashow = generateATL();
                         showModalData = true;
                     }}
                 >
@@ -192,22 +236,54 @@
                     <h1 class="my-auto text-sm mx-2">Back</h1>
                 </div>
             </button>
-            <button
-                class="font-bold border rounded-md p-2 hover:shadow-2xl transition duration-300 {$themeStore ===
-                'Light'
-                    ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
-                    : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
-                     on:click={() => {
-                        goto("/influencegraph");
-                    }}
+            <form
+                method="POST"
+                action="?/sendData"
+                enctype="multipart/form-data"
+                use:enhance={() => {
+                    return async ({ update, result }) => {
+                        update({ reset: false });
+                        if (result.type === "success") {
+                            successSendData = true;
+                        }
+                    };
+                }}
             >
-                <div class="flex my-auto">
-                    <h1 class="my-auto text-sm mx-2">Next Stage</h1>
-                    <span class="material-symbols-outlined text-lg ml-1">
-                        arrow_forward_ios
-                    </span>
-                </div>
-            </button>
+                <button
+                    type="submit"
+                    class="font-bold border rounded-md p-2 hover:shadow-2xl transition duration-300 {$themeStore ===
+                    'Light'
+                        ? 'border-[#855dc7] bg-[#f1e9f9] text-[#855dc7]'
+                        : 'border-[#6d44ba] bg-[#231833] text-[#6d44ba]'}"
+                    on:click={() => {
+                        // Guardar datos en los campos ocultos del formulario
+                        atlCodeInput.value = generateATL();
+                        tailoringModelInput.value = createCompleteModel();
+                        projectNameInput.value =
+                            localStorage.getItem("projectName") || "";
+                    }}
+                >
+                    <div class="flex my-auto">
+                        <h1 class="my-auto text-sm mx-2">Save data</h1>
+                        <span class="material-symbols-outlined text-lg ml-1">
+                            arrow_forward_ios
+                        </span>
+                    </div>
+                </button>
+
+                <!-- Campos ocultos para enviar los datos -->
+                <input type="hidden" name="atlCode" bind:this={atlCodeInput} />
+                <input
+                    type="hidden"
+                    name="tailoringModel"
+                    bind:this={tailoringModelInput}
+                />
+                <input
+                    type="hidden"
+                    name="projectName"
+                    bind:this={projectNameInput}
+                />
+            </form>
         </div>
     </div>
 </div>

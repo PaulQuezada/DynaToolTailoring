@@ -128,6 +128,22 @@ export function deleteDataNameRuleForActivities(){
     localStorage.removeItem("nameRuleForActivities");
 }
 
+// Función para eliminar los datos del modelo de persistencia de las reglas de transformación
+export function deleteDataModelRules(){
+    localStorage.removeItem("xmiModelRules");
+}
+
+// Función para eliminar todos los datos del sistema
+export function deleteAll(){
+    deleteDataContext();
+    deleteDataProcess();
+    deleteDataRulesTask();
+    deleteDataSelectedActivity();
+    deleteDataSelectedActivities();
+    deleteDataNameRuleForActivities();
+    deleteDataModelRules();
+}
+
 
 // ********************** FUNCION PARA LIMPIAR LOS DATOS DEL SISTEMA ****************
 

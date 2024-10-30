@@ -1,6 +1,7 @@
 <!-- src/routes/index.svelte -->
 <script lang="ts">
     // Importaciones de módulos
+    import { onMount } from "svelte";
     import { goto } from "$app/navigation";
     import { writable } from "svelte/store";
     import { themeStore } from "../../stores";
@@ -8,6 +9,7 @@
     import ContextView from "../../components/context/Context.svelte";
     import ProcessView from "../../components/process/Process.svelte";
     import TransformView from "../../components/transform/Transform.svelte";
+    import {deleteAll} from "../../functions/datamanager";
     import "../types";
     import "../../app.css";
     import { onMount } from "svelte";
@@ -15,6 +17,7 @@
     let successContext: boolean = false;
     let successProcess: boolean = false;
     let successTransform: boolean = false;
+    let projectName: string = "";
 
     // Estado de la etapa actual
     let currentStage = writable(1);
@@ -24,6 +27,8 @@
     let stageImportBpmn: boolean = false;
 
     onMount(() => {
+        // Eliminamos todo lo del sistema
+        deleteAll();
         // Eliminamos todo del localStorage
         localStorage.clear();
     });
@@ -83,7 +88,7 @@
                 type: "success",
                 removeAfter: 2000,
             });
-            goto("/listofrules");
+            goto(`/listofrules`);
         }
     }
 
