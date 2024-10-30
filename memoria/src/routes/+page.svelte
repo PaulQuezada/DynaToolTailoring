@@ -3,10 +3,11 @@
     import { goto } from "$app/navigation";
     import "../app.css";
     import { themeStore } from "../stores";
-    import CreateProjectModal from '../components/config/CreateProjectModal.svelte';
-    import { deleteAll } from "../functions/datamanager"
-	let showCreateModal = false;
+    import CreateProjectModal from "../components/config/CreateProjectModal.svelte";
+    import { deleteAll } from "../functions/datamanager";
+    let showCreateModal = false;
     let projectName = "";
+    let forWhat = "start";
     onMount(() => {
         // Obtenemos el nombre del proyecto en base64
         projectName = localStorage.getItem("projectName")!;
@@ -15,7 +16,24 @@
     });
 </script>
 
-<div class="mt-5 flex flex-col">
+<div class="mt-5 flex flex-col relative">
+    <div class="absolute top-0 right-0 mx-2">
+        <button
+            class="bg-[#812fc9] text-white px-3 py-1 rounded-lg hover:animate-pulse"
+            on:click={() => {
+                forWhat = "testing";
+                showCreateModal = true;
+            }}
+        >
+            <div class="flex">
+                <span class="my-auto mr-1 material-symbols-outlined">
+                    code
+                </span>
+                <h1 class="my-auto mx-1">Testing</h1>
+            </div>
+        </button>
+    </div>
+
     <svg
         class="mx-auto"
         width="100px"
@@ -67,23 +85,26 @@
         class="w-1/4 h-[400px] {$themeStore === 'Light'
             ? 'bg-[#ffffff] border-[#f3ecfa] shadow-[0_0_30px_#f3ecfa] hover:shadow-[0_0_2px_#812fc9]'
             : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c] hover:shadow-[0_0_2px_#f3ecfa]'} border-2 mr-2 rounded-lg transition duration-300"
-        on:click={() => (showCreateModal = true)}
+        on:click={() => {
+            forWhat = "start";
+            showCreateModal = true;
+        }}
     >
         <div
             class="flex flex-col items-center mx-auto justify-center text-center"
         >
             <svg
-                width="120px"
+                xmlns="http://www.w3.org/2000/svg"
                 height="120px"
-                viewBox="0 0 32 32"
-                fill="none"
-                stroke="#812fc9"
-                stroke-linejoin="round"
-                stroke-width="2"
+                width="120px"
+                viewBox="0 -960 960 960"
+                fill="#812fc9"
             >
-                <path d="M30 18 L16 5 2 18Z M2 25 L30 25" />
+                <path
+                    d="M320-320h80v-320h-80v320Zm160 0 240-160-240-160v320Zm0 240q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"
+                />
             </svg>
-            <h1 class="mt-10 text-[#812fc9] text-2xl font-bold">Get started</h1>
+            <h1 class="mt-10 text-[#812fc9] text-2xl font-bold">Create new project</h1>
         </div>
     </button>
 
@@ -92,7 +113,8 @@
             ? 'bg-[#ffffff] border-[#f3ecfa] shadow-[0_0_30px_#f3ecfa] hover:shadow-[0_0_2px_#812fc9]'
             : 'bg-[#14111c] border-[#31214c] shadow-[0_0_30px_#31214c] hover:shadow-[0_0_2px_#f3ecfa]'} border-2 mr-2 rounded-lg transition duration-300"
         on:click={() => {
-            goto(`/importmodel`);
+            forWhat = "import";
+            showCreateModal = true;
         }}
     >
         <div
@@ -110,10 +132,10 @@
                 />
             </svg>
             <h1 class="mt-10 text-[#812fc9] text-2xl font-bold">
-                Import model of tailoring rules
+                Import project
             </h1>
         </div>
     </button>
 </div>
 
-<CreateProjectModal bind:toggle={showCreateModal} />
+<CreateProjectModal bind:toggle={showCreateModal} bind:forWhat />

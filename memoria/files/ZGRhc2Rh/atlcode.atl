@@ -1,0 +1,172 @@
+
+module BPMNTailoringRules;
+-- @path MM=/TestPaulTesis/BPMN20.ecore
+-- @path MM2=/TestPaulTesis/CMM.ecore
+-- @path MM1=/TestPaulTesis/BPMN20.ecore
+
+create OUT : MM1 from IN : MM, IN1 : MM2;
+
+-- To obtain the context elements
+
+helper def: getContextAttributeConfiguration (nameAttribute: String) :
+	                 MM2!ContextAttributeConfiguration = MM2!ContextAttributeConfiguration.allInstances()->asSequence()->select(a | a.myContextElement.name =nameAttribute )->first();
+helper def: getValue(nameAttribute: String):
+	                 String = thisModule.getContextAttributeConfiguration(nameAttribute).myContextAttributeValue.value;
+
+helper def:getTaskDefinition(taskDefinitionName:String): MM!TaskDefinition =
+			  MM!TaskDefinition.allInstances()->asSequence()->select(t|t.name = taskDefinitionName)->first();
+
+-- To obtain the next WorkBreakDownElement
+
+helper def:nextElement(a:MM!WorkBreakDownElement): MM!WorkBreakDownElement = MM!WorkBreakDownElement.allInstances()->select(t|t=a.next)->first();
+helper def:next(a:MM!WorkBreakDownElement): MM!WorkBreakDownElement = if(thisModule.optionalRule(thisModule.nextElement(a).name)) then a else thisModule.next(thisModule.nextElement(a)) endif;
+
+helper def: selectTaskRule(tu:MM!TaskUse): MM!TaskDefinition = tu.linkTask; 
+
+-- To make changes in the tasks
+
+-- Rules for delete the activity or not
+helper def: optionalRule(name:String): Boolean =
+
+if(Sequence{'Estimate tasks','Create code'}.includes(name)) then
+(if ('Estimate tasks' = name) then
+		thisModule.ruleOpt1()	or
+		thisModule.ruleOpt2()
+	else
+		(if ('Create code' = name) then
+			thisModule.ruleOpt3()
+			else
+				true
+			endif)
+endif)
+else
+	true
+endif;
+
+-- Rules for replace the activity to another activity
+helper def: replaceRules(dd: MM!Task): String =
+dd.name;
+
+-- User-created rules to delete or keep
+helper def:ruleOpt1():Boolean=if (thisModule.getValue('Technology knowledge') = 'Low' or (thisModule.getValue('Project type') = 'Old' and thisModule.getValue('Project size') = 'Medium')) then false else true endif;
+helper def:ruleOpt2():Boolean=if (thisModule.getValue('Project type') = 'Old' and (thisModule.getValue('Technology knowledge') = 'Average') or (thisModule.getValue('Technology knowledge') = 'Low' or thisModule.getValue('Project type') = 'Old' or (thisModule.getValue('Project type') = 'Old' and thisModule.getValue('Technology knowledge') = 'Average')) and thisModule.getValue('Technology knowledge') = 'Average') then false else true endif;
+helper def:ruleOpt3():Boolean=if (thisModule.getValue('Resource') = 'Medium') then false else true endif;
+
+-- User-created rules to replace
+
+
+rule Definitions {
+from	d:MM!Definitions
+to		dd:MM1!Definitions(
+        --exporter <- d.exporter,
+		exporterVersion <- d.exporterVersion,
+		--expressionLanguage<- d.expressionLanguage,
+		name <- d.name,
+		targetNamespace <- d.targetNamespace,
+		typeLanguage <- d.typeLanguage,
+		id <- d.id,
+		rootElements <- d.rootElements,		
+		diagrams <- d.diagrams
+		--extensionDefinitions <- d.extensionDefinitions
+        )
+}
+
+rule Collaboration {
+from	d:MM!Collaboration
+to		dd:MM1!Collaboration(
+		--artifacts <- d.artifacts,
+		--choreographyRef <- d.choreographyRef,
+		--conversationAssociations <- d.conversationAssociations,
+		isClosed <- d.isClosed,
+		--messageFlows <- d. messageFlows,
+		name <- d.name,
+		participants <- d.participants,
+		id <-d.id
+        )
+}
+
+rule Participant {
+from	d:MM!Participant(
+		 thisModule.optionalRuleParticipant(d.name)	
+)
+to		dd:MM1!Participant(
+        name <- d.name,
+		--participantMultiplicity <- d.participantMultiplicity,
+		--processRef <- d.processRef,
+		id <- d.id
+        )
+}
+
+rule Process {
+from	d:MM!Process
+to		dd:MM1!Process(
+		isClosed <- d.isClosed,
+		isExecutable <- d.isExecutable,
+		processType <- d.processType,
+		id <- d.id,
+		name <- d.name,
+		flowElements <- d.flowElements,
+		documentation <- d.documentation
+        )
+}
+
+rule DataObject {
+from	d:MM!DataObject
+to		dd:MM1!DataObject(
+		name <- d.name
+        )
+}
+
+
+rule DataObjectReference {
+    from	d:MM!DataObjectReference
+    to		dd:MM1!DataObjectReference(
+            name <- d.name
+            )
+    }
+            
+rule Documentation {
+from	d:MM!Documentation
+to		dd:MM1!Documentation(
+		text <- d.text
+        )
+}
+	
+rule ExclusiveGateway {
+from	d:MM!ExclusiveGateway
+to		dd:MM1!ExclusiveGateway(
+		name <- d.name
+        )
+}
+
+rule SequenceFlow {
+from	d:MM!SequenceFlow
+to		dd:MM1!SequenceFlow(
+		name <- d.name
+        )
+}
+
+rule StartEvent {
+from	d:MM!StartEvent
+to		dd:MM1!StartEvent(
+		name <- d.name
+        )
+}
+
+rule IntermediateThrowEvent {
+from	d:MM!IntermediateThrowEvent
+to		dd:MM1!IntermediateThrowEvent(
+		name <- d.name
+        )
+}
+ 
+rule Task {
+from    d:MM!Task(
+         thisModule.optionalRule(d.name)
+)
+
+to        dd:MM1!Task(
+        name <- thisModule.replaceRules(d)
+        )
+
+}

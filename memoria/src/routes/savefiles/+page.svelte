@@ -1,6 +1,7 @@
 <!-- src/routes/index.svelte -->
 <script lang="ts">
     import "../../app.css";
+    import { enhance } from "$app/forms";
     import { themeStore } from "../../stores";
     import { goto } from "$app/navigation";
     import {
@@ -20,6 +21,17 @@
     let atlCodeInput: HTMLInputElement;
     let tailoringModelInput: HTMLInputElement;
     let projectNameInput: HTMLInputElement;
+
+    let successSendData = false;
+
+    $: if (successSendData) {
+        addNotification({
+            text: "Files save successfully",
+            position: "top-right",
+            type: "success",
+            removeAfter: 2000,
+        });
+    }
 
     function copyToClipboard() {
         code_copy = true;
@@ -47,17 +59,10 @@
         formData.append("projectName", projectName);
 
         try {
-            // Cambia "/savefiles/sendData" a solo "/savefiles"
             const response = await fetch("/savefiles", {
                 method: "POST",
                 body: formData,
             });
-
-            if (!response.ok) {
-                console.log("Failed to send files");
-            } else {
-                console.log("Files sent successfully");
-            }
         } catch (error) {
             console.error("Error sending files:", error);
         }
@@ -230,7 +235,19 @@
                     <h1 class="my-auto text-sm mx-2">Back</h1>
                 </div>
             </button>
-            <form method="POST" action="?/sendData" enctype="multipart/form-data">
+            <form
+                method="POST"
+                action="?/sendData"
+                enctype="multipart/form-data"
+                use:enhance={() => {
+                    return async ({ update, result }) => {
+                        update({ reset: false });
+                        if (result.type === "success") {
+                            successSendData = true;
+                        }
+                    };
+                }}
+            >
                 <button
                     type="submit"
                     class="font-bold border rounded-md p-2 hover:shadow-2xl transition duration-300 {$themeStore ===
@@ -241,7 +258,8 @@
                         // Guardar datos en los campos ocultos del formulario
                         atlCodeInput.value = generateATL();
                         tailoringModelInput.value = createCompleteModel();
-                        projectNameInput.value = localStorage.getItem("projectName") || "";
+                        projectNameInput.value =
+                            localStorage.getItem("projectName") || "";
                     }}
                 >
                     <div class="flex my-auto">
@@ -251,13 +269,20 @@
                         </span>
                     </div>
                 </button>
-            
+
                 <!-- Campos ocultos para enviar los datos -->
                 <input type="hidden" name="atlCode" bind:this={atlCodeInput} />
-                <input type="hidden" name="tailoringModel" bind:this={tailoringModelInput} />
-                <input type="hidden" name="projectName" bind:this={projectNameInput} />
+                <input
+                    type="hidden"
+                    name="tailoringModel"
+                    bind:this={tailoringModelInput}
+                />
+                <input
+                    type="hidden"
+                    name="projectName"
+                    bind:this={projectNameInput}
+                />
             </form>
-            
         </div>
     </div>
 </div>
@@ -347,5 +372,3 @@
         </div>
     </div>
 {/if}
-
-

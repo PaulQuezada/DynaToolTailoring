@@ -2,13 +2,20 @@
 	import Modal from '../context/Modal.svelte';
 	import { createForm } from 'felte';
 	import { goto } from '$app/navigation';
+	export let forWhat;
 
 	export let toggle = false;
 	const { errors, form } = createForm({
 		onSubmit: async ({ name }) => {
 			const parsedName = btoa(name); // Encode the name to base64
 			localStorage.setItem('projectName', parsedName);
-			await goto(`/contextandprocess?projectName=${parsedName}`);
+			if(forWhat== "start"){
+				await goto(`/contextandprocess?projectName=${parsedName}`);
+			}else if(forWhat == "import"){
+				await goto(`/importmodel?projectName=${parsedName}`);
+			}else if(forWhat == "testing"){
+				await goto(`/fortesting?projectName=${parsedName}`);
+			}
 		},
 		validate: (values) => {
 			const errors: { name?: string } = {};

@@ -16,9 +16,10 @@ export const actions: Actions = {
 			writeFileSync(`files/${projectName}/atlcode.atl`, atlCode);
 			writeFileSync(`files/${projectName}/tailoringmodel.xmi`, tailoringModel);
 
+			console.log("Archivos guardados correctamente.");
 			return {
 				success: true
-			};
+			}
 		} catch (error) {
 			console.error("Error al guardar los archivos:", error);
 			return {
