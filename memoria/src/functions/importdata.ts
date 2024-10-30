@@ -93,7 +93,7 @@ export function filtertypes(element: any, otherTypes?: String[]) {
 
 function detectDuplicateData(tasks: any): any[] {
     let seenNames = new Set();
-    
+
     // Filtramos las tareas y solo mantenemos aquellas con nombres únicos
     let uniqueTasks = tasks.filter((task: any) => {
         if (!seenNames.has(task.name)) {
@@ -102,7 +102,7 @@ function detectDuplicateData(tasks: any): any[] {
         }
         return false; // Descarta las tareas con nombres duplicados
     });
-    
+
     return uniqueTasks;
 }
 
@@ -195,20 +195,22 @@ export function loadAtributtes(): any[] {
             ? dim.myContextAttributes
             : [dim.myContextAttributes];
 
-        contextAttributes.forEach((attr: any) => {
-            const values = Array.isArray(attr.posibleValues)
-                ? attr.posibleValues
-                : attr.posibleValues
-                    ? [attr.posibleValues]
-                    : [];
-            const attributeData = {
-                Attribute: attr.name,
-                values: values.map((val: any) =>
-                    val.name ? val.name : "Unknown",
-                ),
-            };
-            attributesAndValues.push(attributeData);
-        });
+        if (JSON.stringify(contextAttributes) != JSON.stringify([null])) {
+            contextAttributes.forEach((attr: any) => {
+                const values = Array.isArray(attr.posibleValues)
+                    ? attr.posibleValues
+                    : attr.posibleValues
+                        ? [attr.posibleValues]
+                        : [];
+                const attributeData = {
+                    Attribute: attr.name,
+                    values: values.map((val: any) =>
+                        val.name ? val.name : "Unknown",
+                    ),
+                };
+                attributesAndValues.push(attributeData);
+            });
+        }
     });
 
     // Extraer solo los atributos de la variable

@@ -12,6 +12,7 @@
     import {deleteAll} from "../../functions/datamanager";
     import "../types";
     import "../../app.css";
+    import { onMount } from "svelte";
     const { addNotification } = getNotificationsContext();
     let successContext: boolean = false;
     let successProcess: boolean = false;
@@ -28,6 +29,8 @@
     onMount(() => {
         // Eliminamos todo lo del sistema
         deleteAll();
+        // Eliminamos todo del localStorage
+        localStorage.clear();
     });
 
     // Función para manejar el avance a la siguiente etapa
