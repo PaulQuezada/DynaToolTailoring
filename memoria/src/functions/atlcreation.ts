@@ -2,7 +2,7 @@ import "../routes/types";
 import { createCompleteModel } from "./exportdata";
 import { loadAtributtes, parseRules } from "./importdata";
 
-export function baseATL() {
+export function generateATL() {
     // Función para obtener las reglas de transformación a través del modelo completo
     const taskActivities = obtainTransformationRules();
     // Buscamos las reglas opcionales(las que se eliminan o no) y las reglas de reemplazo
@@ -456,7 +456,7 @@ function parseRule(rule: any): string {
 }
 
 export function downloadATL() {
-    const atlCode = baseATL();
+    const atlCode = generateATL();
     const blob = new Blob([atlCode], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");

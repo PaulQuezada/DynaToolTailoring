@@ -2,7 +2,6 @@ import type { RequestEvent } from '@sveltejs/kit';
 import type { Actions } from '@sveltejs/kit';
 import type { Context } from '../../components/interfaces';
 import { mkdirSync, writeFileSync } from 'fs';
-import type { PageServerLoadEvent, RouteParams } from './$types';
 import { fail } from '@sveltejs/kit';
 import { readFileSync } from 'fs';
 import type { File } from 'buffer';

@@ -1486,7 +1486,7 @@
                                     type: "success",
                                     removeAfter: 3000,
                                 });
-                                goto("/listofrules");
+                                goto(`/listofrules`);
                             } else {
                                 addNotification({
                                     text: "Please fill in all the fields or the configuration of the rule",
@@ -1570,7 +1570,7 @@
                         clearAllRules();
                         showModal = false;
                         showModalDelete = false;
-                        goto("/listofrules");
+                        goto(`/listofrules`);
                     }}>Delete</button
                 >
             </div>

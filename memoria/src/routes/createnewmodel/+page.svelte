@@ -1,11 +1,13 @@
 <!-- src/routes/index.svelte -->
 <script lang="ts">
     // Importaciones de módulos
+    import { onMount } from "svelte";
     import { goto } from "$app/navigation";
     import { writable } from "svelte/store";
     import { themeStore } from "../../stores";
     import { getNotificationsContext } from "svelte-notifications";
     import { XMLParser } from "fast-xml-parser";
+    import {deleteAll} from "../../functions/datamanager";
     import {
         setDataContext,
         setDataProcess,
@@ -29,6 +31,15 @@
         parseAttributeValue: true,
     };
     const parser = new XMLParser(parserOptions);
+
+
+    let projectName: string = "";
+    onMount(() => {
+        // Obtenemos el nombre del proyecto en base64
+        projectName = localStorage.getItem("projectName")!;
+        // Eliminamos todo lo del sistema
+        deleteAll();
+    });
 
     // Variable para saber si dropearan un archivo
     let dropFile = writable(false);

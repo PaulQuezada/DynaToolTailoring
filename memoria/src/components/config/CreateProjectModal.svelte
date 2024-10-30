@@ -7,6 +7,7 @@
 	const { errors, form } = createForm({
 		onSubmit: async ({ name }) => {
 			const parsedName = btoa(name); // Encode the name to base64
+			localStorage.setItem('projectName', parsedName);
 			await goto(`/contextandprocess?projectName=${parsedName}`);
 		},
 		validate: (values) => {

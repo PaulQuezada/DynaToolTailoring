@@ -1,6 +1,7 @@
 <!-- src/routes/index.svelte -->
 <script lang="ts">
     // Importaciones de módulos
+    import { onMount } from "svelte";
     import { goto } from "$app/navigation";
     import { writable } from "svelte/store";
     import { themeStore } from "../../stores";
@@ -8,12 +9,14 @@
     import ContextView from "../../components/context/Context.svelte";
     import ProcessView from "../../components/process/Process.svelte";
     import TransformView from "../../components/transform/Transform.svelte";
+    import {deleteAll} from "../../functions/datamanager";
     import "../types";
     import "../../app.css";
     const { addNotification } = getNotificationsContext();
     let successContext: boolean = false;
     let successProcess: boolean = false;
     let successTransform: boolean = false;
+    let projectName: string = "";
 
     // Estado de la etapa actual
     let currentStage = writable(1);
@@ -21,6 +24,11 @@
     // Variable para saber que etapas estan listas
     let stageImportContext: boolean = false;
     let stageImportBpmn: boolean = false;
+
+    onMount(() => {
+        // Eliminamos todo lo del sistema
+        deleteAll();
+    });
 
     // Función para manejar el avance a la siguiente etapa
     function handleNext() {
@@ -77,7 +85,7 @@
                 type: "success",
                 removeAfter: 2000,
             });
-            goto("/listofrules");
+            goto(`/listofrules`);
         }
     }
 
@@ -113,28 +121,6 @@
             ? 'bg-[#ffffff] border-[#f0eaf9] shadow-[0_0_30px_#f0eaf9]'
             : 'bg-[#14111c] border-[#14111c] shadow-[0_0_30px_#31214c]'} transition duration-300"
     >
-        {#if $currentStage === 3}
-            <div
-                class="absolute top-0 right-0 -mt-8 border border-[#d5c0f0] rounded-t"
-            >
-                <button on:click={
-                    () => {
-                        goto("/influencegraph");
-                    }
-                }>
-                    <div class="flex">
-                        <span
-                            class="my-auto text-[#641eb8] material-symbols-outlined text-lg mx-2"
-                        >
-                            bubble_chart
-                        </span>
-                        <h1 class="text-[#641eb8] my-auto mx-2 text-sm">
-                            Influence graph
-                        </h1>
-                    </div>
-                </button>
-            </div>
-        {/if}
         <!-- Etapas -->
         <div class="mt-8 flex justify-center">
             {#each [1, 2, 3] as stage}
