@@ -31,6 +31,7 @@
             type: "success",
             removeAfter: 2000,
         });
+         goto("/influencegraph");
     }
 
     function copyToClipboard() {
