@@ -260,7 +260,7 @@ function generateOptionalRule(elements: activity[]): string {
         activities.forEach(() => {
             singlerule += `\n\t\tthisModule.ruleOpt${index + 1}()`;
             if (index < activities.length - 1) {
-                singlerule += `\tor`;
+                singlerule += `\tand`;
             }
             index++;
         });
@@ -279,7 +279,7 @@ function generateOptionalRule(elements: activity[]): string {
             activities.forEach((element, index_activities) => {
                 rule += `\n\t\tthisModule.ruleOpt${index + 1}()`;
                 if (index_activities < activities.length - 1) {
-                    rule += `\tor`;
+                    rule += `\tand`;
                 }
                 index++;
             });
@@ -289,7 +289,7 @@ function generateOptionalRule(elements: activity[]): string {
             activities.forEach((element, index_activities) => {
                 rule += `\n\t\t\tthisModule.ruleOpt${index + 1}()`;
                 if (index_activities < activities.length - 1) {
-                    rule += `\tor`;
+                    rule += `\tand`;
                 }
                 index++;
             });
@@ -324,7 +324,7 @@ function generateReplaceRule(elements: activity[]): string {
         activities.forEach(() => {
             singlerule += `\n\t\tthisModule.ruleRep${index + 1}(dd)`;
             if (index < activities.length - 1) {
-                singlerule += `\tor`;
+                singlerule += `\tand`;
             }
             index++;
         });
@@ -343,7 +343,7 @@ function generateReplaceRule(elements: activity[]): string {
             activities.forEach((element, index_activities) => {
                 rule += `\n\t\tthisModule.ruleRep${index + 1}(dd)`;
                 if (index_activities < activities.length - 1) {
-                    rule += `\tor`;
+                    rule += `\tand`;
                 }
                 index++;
             });
@@ -353,7 +353,7 @@ function generateReplaceRule(elements: activity[]): string {
             activities.forEach((element, index_activities) => {
                 rule += `\n\t\t\tthisModule.ruleRep${index + 1}(dd)`;
                 if (index_activities < activities.length - 1) {
-                    rule += `\tor`;
+                    rule += `\tand`;
                 }
                 index++;
             });
