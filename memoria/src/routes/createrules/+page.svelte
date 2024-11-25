@@ -13,7 +13,15 @@
     } from "../../functions/importdata";
     import * as functionRulecreation from "../../functions/rulecreation";
     import { getNotificationsContext } from "svelte-notifications";
-    import { getDataContext, getDataNameRuleForActivities, getDataProcess, getDataRulesTask, getDataSelectedActivities, getDataSelectedActivity, setDataRulesTask } from "../../functions/datamanager";
+    import {
+        getDataContext,
+        getDataNameRuleForActivities,
+        getDataProcess,
+        getDataRulesTask,
+        getDataSelectedActivities,
+        getDataSelectedActivity,
+        setDataRulesTask,
+    } from "../../functions/datamanager";
     const { addNotification } = getNotificationsContext();
 
     // Variables
@@ -21,9 +29,11 @@
     let selectedAction = "";
     let selectedAction1 = "Delete Action";
     let selectedAction2 = "";
+    let showDropdown = false;
     let actions = ["Delete Action", "Replace Action"];
     let deleteaction = ["Not delete this activity", "Delete this activity"];
     let replaceaction: any[] = [];
+    let filteredActions = [...replaceaction];
     let showModal = false;
     let showModalNivel1 = false;
     let showModalNivel2 = false;
@@ -165,7 +175,7 @@
         await handleFileUploadContext();
         await loadDataBPMN();
         // Obtenemos la actividad seleccionada o actividades seleccionadas
-        var activitySelect = getDataSelectedActivity(); 
+        var activitySelect = getDataSelectedActivity();
         var selectedActivities = getDataSelectedActivities();
         if (activitySelect != null) {
             activity_select = activitySelect;
@@ -207,7 +217,7 @@
     // Función para manejar la carga de archivos BPMN
     async function loadDataBPMN() {
         // Extraemos los datos el archivo BPMN
-        xmlBpmn =  getDataProcess();
+        xmlBpmn = getDataProcess();
         var task = await fileUploadBpmn(xmlBpmn);
         /* Los convertimos a un objeto JSON para manejarlos de mejor forma, 
         dandole un id a cada actividad, subnombre y reglas (que por ahora estan vacias SOLO de manera local en esta vista)
@@ -320,8 +330,7 @@
                 index = 0;
             }
             var addRulesActivities: activity[] = [];
-            const nameOfRule = getDataNameRuleForActivities() ??
-                "";
+            const nameOfRule = getDataNameRuleForActivities() ?? "";
             // Ahora buscamos en jsonTask los objetos de las actividades seleccionadas y le agregamos las reglas
             activities_selected.forEach((activity) => {
                 // creamos las reglas para cada una de las actividades seleccionadas
@@ -356,10 +365,34 @@
                 index++;
             });
             // Guardamos las nuevas reglas para las actividades en el sistema
-            setDataRulesTask(
-                JSON.stringify([...task, ...addRulesActivities]),
-            );
+            setDataRulesTask(JSON.stringify([...task, ...addRulesActivities]));
         }
+    }
+
+    function filterActions(event: Event) {
+        const target = event.target as HTMLInputElement;
+        const query = target.value.toLowerCase();
+        if (query) {
+            filteredActions = replaceaction.filter((action) =>
+                action.toLowerCase().includes(query),
+            );
+        } else {
+            filteredActions = [...replaceaction];
+        }
+        showDropdown = true; // Asegurar que el dropdown esté visible
+    }
+
+    function selectAction(action: string) {
+        selectedAction2 = action;
+        showDropdown = false; // Ocultar el dropdown al seleccionar
+    }
+
+    function toggleDropdown() {
+        // Mostrar el dropdown al hacer clic en el input si no hay texto escrito
+        if (!selectedAction2) {
+            filteredActions = [...replaceaction];
+        }
+        showDropdown = true;
     }
 
     // Limpiar todas las reglas realizadas
@@ -863,15 +896,32 @@
                     </select>
                 {/if}
                 {#if selectedAction1 === "Replace Action"}
-                    <select
-                        bind:value={selectedAction2}
-                        id="actions"
-                        class="mt-5 w-1/2 mx-auto h-[30px] rounded-md p-1 border border-[#5b5966]"
-                    >
-                        {#each replaceaction as action}
-                            <option value={action}>{action}</option>
-                        {/each}
-                    </select>
+                    <div class="relative mt-5 w-1/2 mx-auto">
+                        <input
+                            type="text"
+                            bind:value={selectedAction2}
+                            on:input={filterActions}
+                            on:focus={toggleDropdown}
+                            class="h-[30px] w-full rounded-md p-1 border border-[#5b5966]"
+                            placeholder="Selecciona o escribe una acción"
+                        />
+
+                        <!-- Lista desplegable -->
+                        {#if showDropdown && filteredActions.length > 0}
+                            <ul
+                                class="absolute z-10 w-full bg-white border border-gray-300 rounded-md max-h-40 overflow-y-auto"
+                            >
+                                {#each filteredActions as action}
+                                    <li
+                                        on:click={() => selectAction(action)}
+                                        class="p-2 cursor-pointer hover:bg-gray-100"
+                                    >
+                                        {action}
+                                    </li>
+                                {/each}
+                            </ul>
+                        {/if}
+                    </div>
                 {/if}
                 <h1
                     class="text-lg font-bold mt-12 mx-auto {$themeStore ===
